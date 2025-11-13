@@ -1,9 +1,4 @@
 # 11-13 Meeting Progress Report
-Progress report: how last week went, alignment to development plan
-Design changes: what changes were made to the design since the last meeting
-Issues: list of problems and issues to address with a sentence or two explaining each
-Plans & decisions: plans for next week and decisions made
-
 ## Status Update
 The last week was focused on creating the first two deliverables for the project: (1) the team contract and (2) the problem framing document.
 
@@ -19,8 +14,34 @@ The last week was focused on creating the first two deliverables for the project
 Obviously, our idea is quite fresh, so it has not changed since our submission of the problem framing document. We look forward to receiving feedback and are open to making changes as we work through each step of the design and development process.
 
 ## Issues
-Currently, the concern raised by TAs over email is the main issue that we are working to address:
-- Accessibilty of song data - We are looking into potential sources of song data and will work to evaluate the feasibility of our overall design given what we find.
+We had one main concern, brought forward by the TAs, to address: Accessibilty of song data - We are looking into potential sources of song data and will work to evaluate the feasibility of our overall design given what we find.
+
+Here are our thoughts so far:
+No specific API has been settled on. There are several different approaches to tackling the issue of songs, and of course the purpose is that the app has to be usable & fun since the purpose is for beginners to feel motivated and inspired to keep playing. Our plan is not to simply scrape a database of chord sheets since solely relying on that can be messy technically and legally; instead, we aim to combine several sources, and ambitiously, an audio-based chord analysis pipeline so we’re not bottlenecked entirely by free scores. This could look like:
+1. A small but curated, legal song set. 
+A thousand songs dataset is not needed but a focused-set of beginner friendly (and hopefully relevant) dataset that covers the most open common chords (C, G, D, Am, Em).
+
+- Idea: Using public-domain / CC-licensed songs and encode them in a JSON format (or after doing research some ChordPro: Lyrics + Chords format)
+- Even if 30-50 songs, if they are chosen well, it is enough to drive the core mechanic and idea
+- The first milestone could be a CLEAN, hand-curated beginner library. Some sources could be Ultimate-Guitar or something on Kaggle/Hugging Face (need to investigate Kaggle still)
+
+2. Existing research datasets on CHORD progressions.
+- Do not need to redistribute copyrighted lyrics or full scores, mainly just need: 
+{chords}: Am, Cm, Em + {song metadata}: tempo, key, etc.
+- This idea is enough to power a recommendation & progression system (Learn X chord, unlock Y more songs). Some of these datasets from our research could use:
+    - Chordonomicom - 600k+ chord progressions dataset
+    - Songster
+- We still need to be careful here about licensing for the datasets but it shows that our app should be scalable and feasible to implement now.
+3. Audio-based chord analysis pipeline
+- To avoid being limited by chord sheets, datasets, and licensing, we could also potentially develop and integrate our own chord analysis system. The pipeline would be as follows:
+    - A user uploads their own audio
+    - Run it through an AI-stem splitter
+    - Apply a chord recognition model 
+    - Generate a chord sheet + teaching progression
+- This way, we are not scraping any data, a user can supply their own audio and we can do our own analysis. Gives us content directly that a user cares about 
+4. Community & user-generated sheets: “Musescore”-esque (alternative)
+- Could support user-generated and community-added sheets
+
 
 ## Plans & Decisions
 With the problem framing done, our focus falls on preparing the two upcoming deliverables: (1) [project pitch](/design/project-pitch-plan.md) and (2) [functional design doc](/design/functional-design.md). 
