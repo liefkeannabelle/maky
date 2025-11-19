@@ -31,6 +31,16 @@ Through its various features, ChordConnect is able to not only help Maky stay mo
 ## UI sketches
 Low-fidelity sketches of your user interface that show the primary user interface elements and their rough layout, annotated with pointers or comments to explain anything that might not be obvious.
 
+We began with a few high-level sketches of what the main pages of the app should look like: \
+![UI Sketch 1](./visuals/ui-sketch-1.png) \
+![UI Sketch 2](./visuals/ui-sketch-2.png) \
+![UI Sketch 3](./visuals/ui-sketch-3.png) \
+
+We then expanded this with a few of the more specific, operational pages: \
+![UI Sketch 4](./visuals/ui-sketch-4.png) \
+![UI Sketch 5](./visuals/ui-sketch-5.png)
+
+
 ## Visual design study
 First, we explored the colors and typography that we would like to use in our app.
 ![Visual Design Study 1](./visuals/vds-colorfont.png)
