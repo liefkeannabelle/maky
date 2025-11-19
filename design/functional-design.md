@@ -1,12 +1,30 @@
 # Functional Design
 ## Problem framing
-A revision of your problem framing to reflect your latest understanding <-- ask group abt this
+For the most part, our problem framing is largely unchanged from our original [problem framing document](problem-framing.md). After the TA feedback, internal reflections, and questions during our project pitch, we have a few additional considerations to include:
+- In our original design, we had considered the state of learning chords to be binary: "haven't learned" or "learned". Now, we have begun to consider the possibility of incorporating a mastery level -- like we are planning to have for the songs -- for the chords as well. While this would complicate the song recommendation features, it is worthwhile if we find it better reflects the learning experience.
+
+- As we worked through our [project pitch](project-pitch-plan.md), we realized that our features could likely be broken down further, allowing us to focus on individual functionalities rather than aggregated purposes. Now, we are considering our project to have five -- increased from three -- main features:
+    1. Inventory of known chords
+    2. AI-augmented "next best chord" recommendations + unlocked songs
+    3. Journal of songs + social feed 
+    4. Jam groups + common songs
+    5. Local group formation
 
 ## Concept design
 A collection of concept specifications and syncs; include a note section in each concept and sync to explain any non-obvious design decisions or to mark issues to be resolved.
 
 ## User journey
-A narrative that follows a single stakeholder as they encounter the problem and use your designed app to address it.
+Maky is a beginner guitarist who is struggling to stay motivated practicing guitar. They find that they are not making progress as quickly as they hope and are frustrated that they can’t play any songs yet. Maky only knows the Em and B7 chord… but what can Maky do with that?
+
+That’s where ChordConnect can help!
+
+Maky makes an account and is taken to a screen with a brief questionnaire about the chords they know and genres of music they are interested in learning. After inputting this info, they are presented with a list of songs they can play with their current skills and interests. Additionally, ChordConnect recommends the potential next best chord to learn that would optimize either: learning more songs, learning a specific song, or focusing on a genre!
+
+As Maky continues their guitar learning journey, they document the chords and songs they are learning, making posts about their progress. They connect with friends on the app and are able to see their progress updates as well. Maky finds it very motivating to be able to see and share incremental updates through the music learning journey.
+
+Unfortunately, Maky’s friends are interested in very different styles of music than them. Luckily, they were able to use the group formation feature to find other local musicians with similar musical interests and skills. When they get together, they use ChordConnect to find songs they all know.
+
+Through its various features, ChordConnect is able to not only help Maky stay motivated and excel in their guitar-learning journey but to connect with others who are doing the same. With ChordConnect, Maky is learning new chords and songs, staying consistent, and having fun!
 
 ## UI sketches
 Low-fidelity sketches of your user interface that show the primary user interface elements and their rough layout, annotated with pointers or comments to explain anything that might not be obvious.
