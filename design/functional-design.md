@@ -31,13 +31,34 @@ Low-fidelity sketches of your user interface that show the primary user interfac
 
 ## Visual design study
 First, we explored the colors and typography that we would like to use in our app.
-![Visual Design Study 1](/design/vds-colorfont.png)
+![Visual Design Study 1](./visuals/vds-colorfont.png)
 
 Then, we explored existing platforms and identified what components of their layout we would like to emulate within ChordConnect.
-![Visual Design Study 2](/design/vds-layout.png)
+![Visual Design Study 2](./visuals/vds-layout.png)
 
 ## Design summary
-A summary of the overall design: how the concepts work together to solve the problem; how the design addresses any concerns that your ethics analysis raised; which issues remain unclear.
+### How concepts work together
+ChordConnect addresses the main reasons beginners quit guitar—uncertainty, limited progress, and isolation—by linking three domains: personalized progress, social support, and group play.
+
+First, we mitigate the beginner's uncertainty with the UserChord and Library concepts. Instead of guessing what to practice, users enter the chords they know. The RecommendationEngine then acts as a filter, showing users exactly what songs they have the ability to play right now. This turns learning into a clear game: learn one specific chord to unlock five new songs.
+
+Second, we use social features – like the Post, Reaction, and UserProfile concepts – to inspire motivation. When a user marks a song as "Mastered" in their library, they can share that update with their friends and followers. By limiting Reactions to positive types (Like, Love, Celebrate) and removing "dislike" buttons, we create a supportive environment where beginners feel comfortable sharing small wins without fear of judgment.
+
+Finally, we move users from practicing alone to playing together using GroupFinder and JamGroup. GroupFinder helps solo musicians find others with common skills and interest to play with. For groups formed on the app or existing friend groups, the groups can get their CommonSongs – a list of songs that everyone in the group already knows or can easily learn given the chord and song inventories of all group members. This helps groups play together more easily and spend more time doing what they enjoy: playing guitar!
+
+### Addressing ethical concerns
+- Child Safety: We added an isKidAccount flag directly to the UserAccount concept. We use a synchronization rule (BlockKids) that strictly prevents these accounts from using GroupFinder or joining JamGroups with strangers. This keeps the app educational for kids while keeping them off the social grid.
+
+- Harassment & Safety: To prevent unwanted interactions, the GroupFinder profiles are only visible if a user explicitly sets isActive to true. Furthermore, the Friendship concept requires mutual acceptance before users can message or invite each other to private sessions, preventing spam or harassment.
+
+- Inclusivity: To ensure we don't just recommend pop music, the UserProfile concept includes genrePreferences. The recommendation engine uses this to prioritize songs that match the user's music background or musical taste. Our song database we are using to pool songs has genre resources that we plan to use.
+
+- Positivity: We designed the Reaction concept to technically enforce positivity. Since "dislike" or "downvote" options do not exist in the state, users cannot use the mechanism to discourage others.
+
+### Lingering Concerns & Issues
+1. Song Data Availability: The Library concept requires a large database of songs mapped to specific chords. We are still determining if we can get this data reliably from public APIs or if we will need to build it manually, which could limit the number of songs available at launch.\
+2. Recommendation Quality: We are betting that an algorithm can determine the "next best chord." It is unclear if a computer can accurately judge which chord is easiest for a human to learn next, or if we will need to fall back to a set of pre-written deterministic paths.\
+3. Recommendation Diversity: To allow for different learning goals (learn a chord to use in a specific song, learn chords that are easiest, learn chords to be able to play many songs), we have a set of different recommendation paths for next steps. Ultimately, we might only find out in the user testing phase if these goals are indeed the most popular, or if the users have other priorities in mind. 
 
 ## Development plan
 A table showing which features you expect to deliver at various stages, including at least the two checkpoints; an assignment of responsibilities to team members; a discussion of the key risks you face and how you will mitigate them (and your fallback option will be if something turns out to be unimplementable).
@@ -61,4 +82,4 @@ Key risks and plans for mitigation
 
 3. High complexity of social features <br>
 **Risk:** In our current design, there are a large number of social features (posting learning updates, reactions, jam groups, group formation). Depending on the difficulty of implementation, it may not be feasible to implement these all at a satisfactory level. It is also possible that, even with satisifactory implementation, the user experience is overwhelming and certain features are not contributing a net positive. <br>
-**Mitigation:** If run into these problems, we plan to scale down the scope of ChordConnect to focus on learning concepts as this is the primary functionality and value of our app. To make this possible, we will construct a tiered list of concepts with respect to the order in which we would cut them. This would allow us to decrease complexity of implementation or experience will sacrificing the least amount of value possible.s
+**Mitigation:** If run into these problems, we plan to scale down the scope of ChordConnect to focus on learning concepts as this is the primary functionality and value of our app. To make this possible, we will identify the order in which features would be removed from our design plan. To deteremine this ordering -- as well as the ordering of our implementation--, we created [dependency graph](./visuals/dependency-graph.png) which showcases the ways in which different features depend on the existence of others. This would allow us to decrease complexity of implementation or experience will sacrificing the least amount of value possible.
