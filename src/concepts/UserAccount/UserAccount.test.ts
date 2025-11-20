@@ -1,6 +1,6 @@
 import { assert, assertEquals, assertExists } from "jsr:@std/assert";
 import { testDb } from "@utils/database.ts";
-import UserAccountConcept from "../UserAccountConcept.ts";
+import UserAccountConcept from "./UserAccountConcept.ts";
 import { ID } from "@utils/types.ts";
 
 // Helper function to create a user for testing and return their ID.
