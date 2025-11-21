@@ -10,3 +10,4 @@ src/syncs/syncs.ts
 config.json
 node_modules/
 context/
+bin\ctx.cmd
