@@ -91,7 +91,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 **Description:** Authenticates a user and returns both their user object and a session ID.
 
 **Requirements:**
-- A User exists with the given `usernameOrEmail` and the provided `password` matches their `passwordHash`.
+- A User exists with the given `username` and the provided `password` matches their `passwordHash`.
 
 **Effects:**
 - Returns the matching user and creates a new session, returning the `sessionId`. The `sessionId` should be stored by the frontend and included in all subsequent authenticated requests.
@@ -99,7 +99,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 **Request Body:**
 ```json
 {
-  "usernameOrEmail": "string",
+  "username": "string",
   "password": "string"
 }
 ```
