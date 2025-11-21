@@ -1,0 +1,8 @@
+# Working Development Plan
+|Day|Date | Milestone        | Features to Deliver + Responsible Team Members             |
+|---|-----|------------------|----------------------------------------------------|  
+|Sat|11/22| Alpha Midpoint   | <ul> <li> Proof of concept for song/chord data + learning features - Yahir & Annabelle </li> </ul> |
+|Tue|11/25| Alpha Checkpoint | <ul> <li> Establish song and chord database - Yahir & Annabelle </li> <li> Implement AI-augmented song and chord suggestions - Yahir & Annabelle </li> <li> Establish user related functionality (account, profile, authentication) - Mada & Kali </li> <li> Create skeleton of social-related functionality (posts + friends) - Mada & Kali </li> <li> Basic frontend corresponding to all features - All </li> </ul>|
+|Sat|11/29| Beta Midpoint   | <ul> <li> Handle remaining issues from alpha phase - All </li> <li> Half of the leftover social components done at backend & UI level- Kali & Mada </li> <li> Refinements of existing concepts & syncs (backend) - Yahir </li> <li> Clean up pages & flow (front end) - Annabelle </li> </ul> |
+|Tue|12/2 | Beta Checkpoint  | <ul> <li> Finish social features - Mada & Kali </li> <li> Clean up frontend for desired visual impact - Annabelle</li> <li> Ensure quality recommendations and optimize learning pipeline - Yahir </ul> |
+|Tue|12/9 | Full Demo  | <ul> <li> Implement refinements feedback from user testing - distribute depending on necessary tasks </li> </ul> |
