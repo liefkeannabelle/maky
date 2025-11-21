@@ -18,7 +18,7 @@ register (username: String, email: String, password: String, isKidAccount: Boole
 
 login (username: String, password: String): (user: User)
 
-*   **requires** A User exists with the given `usernameOrEmail` and the provided `password` matches their `passwordHash`.
+*   **requires** A User exists with the given `username` and the provided `password` matches their `passwordHash`.
 *   **effects** Returns the matching user.
 
 changePassword (user: User, oldPassword: String, newPassword: String): (success: Boolean)

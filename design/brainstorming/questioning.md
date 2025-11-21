@@ -68,7 +68,7 @@ This document provides the API specification for the various concepts that make 
 **Description:** Authenticates a user and returns their user object.
 
 **Requirements:**
-- A User exists with the given `usernameOrEmail` and the provided `password` matches their `passwordHash`.
+- A User exists with the given `username` and the provided `password` matches their `passwordHash`.
 
 **Effects:**
 - Returns the matching user.
@@ -76,7 +76,7 @@ This document provides the API specification for the various concepts that make 
 **Request Body:**
 ```json
 {
-  "usernameOrEmail": "string",
+  "username": "string",
   "password": "string"
 }
 ```
