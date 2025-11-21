@@ -1,0 +1,669 @@
+[
+  {
+    "id": "g-sunrise-groove",
+    "title": "Sunrise Groove",
+    "artist": "Kelpy G",
+    "key": "G",
+    "tempo": 96,
+    "chords": [
+      "G",
+      "C",
+      "D"
+    ],
+    "simplifiedChords": [
+      "C",
+      "D",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "G",
+          "C",
+          "G",
+          "D"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "C",
+          "G",
+          "D",
+          "G"
+        ]
+      }
+    ],
+    "difficulty": 1,
+    "tags": [
+      "beginner",
+      "three-chord"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "c-four-chord-journey",
+    "title": "Four Chord Journey",
+    "artist": "Kelpy G",
+    "key": "C",
+    "tempo": 112,
+    "chords": [
+      "C",
+      "G",
+      "Am",
+      "F"
+    ],
+    "simplifiedChords": [
+      "Am",
+      "C",
+      "F",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "C",
+          "G",
+          "Am",
+          "F"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "Am",
+          "F",
+          "C",
+          "G"
+        ]
+      }
+    ],
+    "difficulty": 1,
+    "tags": [
+      "beginner",
+      "four-chord",
+      "barre"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "em-midnight-walk",
+    "title": "Midnight Walk",
+    "artist": "Kelpy G",
+    "key": "Em",
+    "tempo": 108,
+    "chords": [
+      "Em",
+      "C",
+      "G",
+      "D"
+    ],
+    "simplifiedChords": [
+      "C",
+      "D",
+      "Em",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "Em",
+          "C",
+          "G",
+          "D"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "G",
+          "D",
+          "Em",
+          "C"
+        ]
+      }
+    ],
+    "difficulty": 1,
+    "tags": [
+      "minor",
+      "four-chord"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "g-campfire-circle",
+    "title": "Campfire Circle",
+    "artist": "Kelpy G",
+    "key": "G",
+    "tempo": 104,
+    "chords": [
+      "G",
+      "Em",
+      "C",
+      "D"
+    ],
+    "simplifiedChords": [
+      "C",
+      "D",
+      "Em",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "G",
+          "Em",
+          "C",
+          "D"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "C",
+          "G",
+          "D",
+          "Em"
+        ]
+      }
+    ],
+    "difficulty": 1,
+    "tags": [
+      "beginner",
+      "four-chord"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "c-lazy-blues",
+    "title": "Lazy Blues",
+    "artist": "Kelpy G",
+    "key": "C",
+    "tempo": 90,
+    "chords": [
+      "C",
+      "F",
+      "G7"
+    ],
+    "simplifiedChords": [
+      "C",
+      "F",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "C",
+          "F",
+          "C",
+          "G7"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "F",
+          "C",
+          "G7",
+          "C"
+        ]
+      }
+    ],
+    "difficulty": 1,
+    "tags": [
+      "beginner",
+      "three-chord",
+      "barre"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "a-evening-porch",
+    "title": "Evening Porch",
+    "artist": "Keply G",
+    "key": "A",
+    "tempo": 92,
+    "chords": [
+      "A",
+      "D",
+      "E"
+    ],
+    "simplifiedChords": [
+      "A",
+      "D",
+      "E"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "A",
+          "D",
+          "A",
+          "E"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "D",
+          "A",
+          "E",
+          "A"
+        ]
+      }
+    ],
+    "difficulty": 1,
+    "tags": [
+      "beginner",
+      "three-chord"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "e-riff-road",
+    "title": "Riff Road",
+    "artist": "Keply G",
+    "key": "E",
+    "tempo": 116,
+    "chords": [
+      "E",
+      "A",
+      "B7"
+    ],
+    "simplifiedChords": [
+      "A",
+      "B",
+      "E"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "E",
+          "A",
+          "E",
+          "B7"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "A",
+          "E",
+          "B7",
+          "E"
+        ]
+      }
+    ],
+    "difficulty": 1,
+    "tags": [
+      "rock",
+      "three-chord"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "em-city-light",
+    "title": "City Lights",
+    "artist": "Kelpy G",
+    "key": "Em",
+    "tempo": 120,
+    "chords": [
+      "Em",
+      "G",
+      "D",
+      "C"
+    ],
+    "simplifiedChords": [
+      "C",
+      "D",
+      "Em",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "Em",
+          "G",
+          "D",
+          "C"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "C",
+          "G",
+          "Em",
+          "D"
+        ]
+      }
+    ],
+    "difficulty": 1,
+    "tags": [
+      "minor",
+      "four-chord"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "d-country-morning",
+    "title": "Country Morning",
+    "artist": "Kelpy G",
+    "key": "D",
+    "tempo": 96,
+    "chords": [
+      "D",
+      "G",
+      "A"
+    ],
+    "simplifiedChords": [
+      "A",
+      "D",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "D",
+          "G",
+          "D",
+          "A"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "G",
+          "D",
+          "A",
+          "D"
+        ]
+      }
+    ],
+    "difficulty": 1,
+    "tags": [
+      "country",
+      "three-chord"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "g-chilling",
+    "title": "Chilling",
+    "artist": "Kelpy G",
+    "key": "G",
+    "tempo": 102,
+    "chords": [
+      "G",
+      "D",
+      "C",
+      "Am"
+    ],
+    "simplifiedChords": [
+      "Am",
+      "C",
+      "D",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "G",
+          "D",
+          "Am",
+          "C"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "C",
+          "G",
+          "D",
+          "Am"
+        ]
+      }
+    ],
+    "difficulty": 1,
+    "tags": [
+      "four-chord"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "d-blue-sky-waltz",
+    "title": "Blue Sky Waltz",
+    "artist": "Kelpy G",
+    "key": "D",
+    "tempo": 88,
+    "chords": [
+      "D",
+      "G",
+      "A",
+      "Bm"
+    ],
+    "simplifiedChords": [
+      "A",
+      "Bm",
+      "D",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "D",
+          "G",
+          "D",
+          "A"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "G",
+          "D",
+          "A",
+          "Bm"
+        ]
+      }
+    ],
+    "difficulty": 2,
+    "tags": [
+      "waltz",
+      "barre"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "am-river-descend",
+    "title": "Descending River",
+    "artist": "Kelpy G",
+    "key": "Am",
+    "tempo": 80,
+    "chords": [
+      "Am",
+      "G",
+      "F",
+      "E"
+    ],
+    "simplifiedChords": [
+      "Am",
+      "E",
+      "F",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "Am",
+          "G",
+          "F",
+          "E"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "Am",
+          "F",
+          "G",
+          "Am"
+        ]
+      }
+    ],
+    "difficulty": 2,
+    "tags": [
+      "minor",
+      "descending",
+      "barre"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "d-open-anthem",
+    "title": "Open Anthem",
+    "artist": "Kelpy G",
+    "key": "D",
+    "tempo": 110,
+    "chords": [
+      "D",
+      "A",
+      "G",
+      "Em"
+    ],
+    "simplifiedChords": [
+      "A",
+      "D",
+      "Em",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "D",
+          "A",
+          "G",
+          "D"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "Em",
+          "G",
+          "D",
+          "A"
+        ]
+      }
+    ],
+    "difficulty": 2,
+    "tags": [
+      "four-chord"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "am-ocean-tides",
+    "title": "Ocean Tides",
+    "artist": "Kelpy G",
+    "key": "Am",
+    "tempo": 84,
+    "chords": [
+      "Am",
+      "C",
+      "G",
+      "F"
+    ],
+    "simplifiedChords": [
+      "Am",
+      "C",
+      "F",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "Am",
+          "F",
+          "C",
+          "G"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "C",
+          "G",
+          "Am",
+          "F"
+        ]
+      }
+    ],
+    "difficulty": 2,
+    "tags": [
+      "minor",
+      "four-chord",
+      "barre"
+    ],
+    "source": "curated"
+  },
+  {
+    "id": "c-meadow",
+    "title": "Meadow",
+    "artist": "Kelpy G",
+    "key": "C",
+    "tempo": 100,
+    "chords": [
+      "C",
+      "Am",
+      "F",
+      "G"
+    ],
+    "simplifiedChords": [
+      "Am",
+      "C",
+      "F",
+      "G"
+    ],
+    "sections": [
+      {
+        "name": "VERSE",
+        "progression": [
+          "C",
+          "Am",
+          "F",
+          "G"
+        ]
+      },
+      {
+        "name": "CHORUS",
+        "progression": [
+          "F",
+          "C",
+          "G",
+          "Am"
+        ]
+      }
+    ],
+    "difficulty": 2,
+    "tags": [
+      "four-chord",
+      "barre"
+    ],
+    "source": "curated"
+  }
+]

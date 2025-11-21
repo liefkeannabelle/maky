@@ -1,0 +1,34 @@
+id,title,artist,key,tempo,chords,progression,tags,difficulty
+g-sunrise-groove,Sunrise Groove,Kelpy G,G,96,"G,C,D","VERSE:G,C,G,D
+CHORUS:C,G,D,G","beginner, three-chord",1
+c-four-chord-journey,Four Chord Journey,Kelpy G,C,112,"C,G,Am,F","VERSE:C,G,Am,F
+CHORUS:Am,F,C,G","beginner, four-chord, barre",1
+em-midnight-walk,Midnight Walk,Kelpy G,Em,108,"Em,C,G,D","VERSE:Em,C,G,D
+CHORUS:G,D,Em,C","minor, four-chord",1
+g-campfire-circle,Campfire Circle,Kelpy G,G,104,"G,Em,C,D","VERSE:G,Em,C,D
+CHORUS:C,G,D,Em","beginner, four-chord",1
+c-lazy-blues,Lazy Blues,Kelpy G,C,90,"C,F,G7","VERSE:C,F,C,G7
+CHORUS:F,C,G7,C","beginner, three-chord, barre",1
+a-evening-porch,Evening Porch,Keply G,A,92,"A,D,E,","VERSE:A,D,A,E
+CHORUS:D,A,E,A","beginner, three-chord",1
+e-riff-road,Riff Road,Keply G,E,116,"E,A,B7","VERSE:E,A,E,B7
+CHORUS:A,E,B7,E","rock, three-chord",1
+em-city-light,City Lights,Kelpy G,Em,120,"Em,G,D,C","VERSE:Em,G,D,C
+CHORUS:C,G,Em,D","minor, four-chord",1
+d-country-morning,Country Morning,Kelpy G,D,96,"D,G,A","VERSE:D,G,D,A
+CHORUS:G,D,A,D","country, three-chord",1
+g-chilling,Chilling,Kelpy G,G,102,"G,D,C,Am","VERSE:G,D,Am,C
+CHORUS:C,G,D,Am",four-chord,1
+,,,,,,,,
+d-blue-sky-waltz,Blue Sky Waltz,Kelpy G,D,88,"D,G,A,Bm","VERSE:D,G,D,A
+CHORUS:G,D,A,Bm","waltz, barre",2
+am-river-descend,Descending River,Kelpy G,Am,80,"Am, G, F, E","VERSE:Am,G,F,E
+CHORUS:Am,F,G,Am","minor, descending, barre",2
+d-open-anthem,Open Anthem,Kelpy G,D,110,"D,A,G,Em","VERSE:D,A,G,D
+CHORUS:Em,G,D,A",four-chord,2
+am-ocean-tides,Ocean Tides,Kelpy G,Am,84,"Am,C,G,F","VERSE:Am,F,C,G
+CHORUS:C,G,Am,F","minor, four-chord, barre",2
+c-meadow,Meadow,Kelpy G,C,100,"C,Am,F,G","VERSE:C,Am,F,G
+CHORUS:F,C,G,Am","four-chord, barre",2
+,,,,,,,,
+,,,,,,, ,
