@@ -556,6 +556,40 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "error": "string"
 }
 ```
+
+### POST /api/UserProfile/_searchByDisplayName
+
+**Description:** Searches for user profiles by a partial match on their display name.
+
+**Requirements:**
+- This is a public query and does not require authentication.
+
+**Effects:**
+- Returns a set of users and their display names that partially match the query string.
+
+**Request Body:**
+```json
+{
+  "query": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "user": "string",
+    "displayName": "string"
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
 ---
 # API Specification: Post Concept
 
@@ -1119,6 +1153,40 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "error": "string"
 }
 ```
+---
+### POST /api/Friendship/_getFriends
+
+**Description:** Retrieves a list of all users who are friends with the specified user.
+
+**Requirements:**
+- The user `user` exists.
+
+**Effects:**
+- Returns a set of all users `f` for whom a `Friendship` exists with `status` `ACCEPTED` between `user` and `f`.
+
+**Request Body:**
+```json
+{
+  "user": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "friend": "string"
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
 ---
 # API Specification: JamGroup Concept
 

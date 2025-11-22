@@ -168,4 +168,44 @@ export default class FriendshipConcept {
 
     return [{ isFriend: !!friendship }];
   }
+  /**
+   * removeAllFriendshipsForUser (user: User)
+   *
+   * @requires true
+   * @effects Removes all `Friendship` objects from the state where the given `user` is either the `requester` or the `recipient`, regardless of the friendship's `status`.
+   */
+  async removeAllFriendshipsForUser(
+    { user }: { user: User },
+  ): Promise<Empty> {
+    await this.friendships.deleteMany({
+      $or: [{ requester: user }, { recipient: user }],
+    });
+    return {};
+  }
+  /**
+   * _getFriends (user: User): (friend: User)
+   *
+   * @requires The user `user` exists.
+   * @effects Returns an array of User IDs for all accepted friendships where the input `user` is either the requester or the recipient.
+   */
+  async _getFriends(
+    { user }: { user: User },
+  ): Promise<{ friend: User }[]> {
+    const friendships = await this.friendships.find({
+      status: FriendshipStatus.ACCEPTED,
+      $or: [
+        { requester: user },
+        { recipient: user },
+      ],
+    }).toArray();
+
+    const friends = friendships.map((friendship) => {
+      const friendId = friendship.requester === user
+        ? friendship.recipient
+        : friendship.requester;
+      return { friend: friendId };
+    });
+
+    return friends;
+  }
 }

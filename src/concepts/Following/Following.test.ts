@@ -176,3 +176,65 @@ Deno.test(
     await client.close();
   },
 );
+Deno.test(
+  "FollowingConcept - should remove all relationships when a user is deleted",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const followingConcept = new FollowingConcept(db);
+    await followingConcept.follows.deleteMany({});
+
+    // Setup:
+    // A follows B
+    // A follows C
+    // B follows A
+    // C follows A
+    await followingConcept.followUser({ follower: userA, followed: userB });
+    await followingConcept.followUser({ follower: userA, followed: userC });
+    await followingConcept.followUser({ follower: userB, followed: userA });
+    await followingConcept.followUser({ follower: userC, followed: userA });
+
+    // Verify initial state
+    assertEquals(
+      (await followingConcept._getFollowing({ user: userA })).following.length,
+      2,
+    );
+    assertEquals(
+      (await followingConcept._getFollowers({ user: userA })).followers.length,
+      2,
+    );
+
+    // Test removeUserFollowing: removes A's outbound follows (A is the 'follower')
+    await followingConcept.removeUserFollowing({ user: userA });
+
+    // Assertions for removeUserFollowing
+    // A should now be following no one.
+    const aFollowingAfter = await followingConcept._getFollowing({
+      user: userA,
+    });
+    assertEquals(aFollowingAfter.following.length, 0);
+    // A's followers (inbound follows) should be unaffected.
+    const aFollowersAfter = await followingConcept._getFollowers({
+      user: userA,
+    });
+    assertEquals(aFollowersAfter.followers.length, 2);
+    assertEquals(aFollowersAfter.followers.sort(), [userB, userC].sort());
+
+    // Test removeUserAsFollower: removes A's inbound follows (A is the 'followed')
+    await followingConcept.removeUserAsFollower({ user: userA });
+
+    // Assertions for removeUserAsFollower
+    // A should now have no followers.
+    const finalFollowers = await followingConcept._getFollowers({
+      user: userA,
+    });
+    assertEquals(finalFollowers.followers.length, 0);
+    // Check from the other side: B and C should no longer be following anyone, as A was their only follow.
+    const bFollowing = await followingConcept._getFollowing({ user: userB });
+    const cFollowing = await followingConcept._getFollowing({ user: userC });
+    assertEquals(bFollowing.following.length, 0);
+    assertEquals(cFollowing.following.length, 0);
+
+    await client.close();
+  },
+);

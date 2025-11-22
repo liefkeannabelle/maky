@@ -106,6 +106,13 @@ deleteProfile (user: User)
 *   **requires** The user exists and has an associated `Profile`.
 *   **effects** Removes the `Profile` associated with the user from the state. 
 
+**queries**
+
+_searchByDisplayName (query: String): (user: User, displayName: String)
+* **requires** true
+* **effects** Returns a set of users and their display names that partially match the query string.
+
+
 **notes**
 - UserProfile stores more app-specific and user-specific data as compared to UserAccount.
 - Genre preferences will be a set of genres, as described by strings, selected from a set bank.
@@ -255,10 +262,20 @@ removeFriend (user1: User, user2: User)
 *   **requires** A `Friendship` exists between `user1` and `user2` (where one is the requester and the other is the recipient).
 *   **effects** Removes the `Friendship` object associated with these two users from the state.
 
+removeAllFriendshipsForUser (user: User)
+
+* **requires** true
+* **effects** Removes all `Friendship` objects from the state where the given `user` is either the `requester` or the `recipient`, regardless of the friendship's `status`.
+
 **queries** \
 _areFriends (user1: User, user2: User): (isFriend: Boolean)
 *   **requires** The users `user1` and `user2` exist.
 *   **effects** Returns `true` if there exists a `Friendship` `f` such that `f.status` is `ACCEPTED` and the pair (`f.requester`, `f.recipient`) matches (`user1`, `user2`) in either order. Otherwise returns `false`.
+
+_getFriends (user: User): (friend: User)
+
+* **requires** The user `user` exists.
+* **effects** Returns a set of all users `f` for whom a `Friendship` exists with `status` `ACCEPTED` between `user` and `f`.
 
 
 **notes**
@@ -287,6 +304,16 @@ unfollowUser (follower: User, followed: User)
 
 *   **requires** A `Follow` object exists where `follower` is the follower and `followed` is the followed user.
 *   **effects** Removes the matching `Follow` object from the state.
+
+removeUserAsFollower (user: User)
+
+* **requires** The `user` exists.
+* **effects** Removes all `Follow` objects from the state where `followed` is the given `user`. This action is typically used when `user`'s account is deleted to clean up all their inbound follow relationships (i.e., remove all their followers).
+
+removeUserFollowing (user: User)
+
+* **requires** The `user` exists.
+* **effects** Removes all `Follow` objects from the state where the `follower` is the given `user`. This action is typically used when `user`'s account is deleted to clean up all their outbound follow relationships.
 
 **notes**
 - Following is the non-mutual, one-directional relationship between two users

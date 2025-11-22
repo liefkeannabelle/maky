@@ -235,4 +235,26 @@ export default class UserProfileConcept {
     }
     return {};
   }
+  /**
+   * _searchByDisplayName (query: String): (profiles: {user: User, displayName: String}[])
+   *
+   * **requires** true
+   * **effects** Returns a set of users and their display names that partially match the query string.
+   */
+  async _searchByDisplayName(
+    { query }: { query: string },
+  ): Promise<Array<{ user: User; displayName: string }>> {
+    if (!query || query.trim() === "") {
+      return [];
+    }
+
+    // Using a case-insensitive regex for partial matching.
+    // In production, for better performance on large datasets, consider a text index.
+    const results = await this.profiles.find({
+      displayName: { $regex: query, $options: "i" },
+    }).limit(20) // Add a limit to prevent huge result sets
+      .toArray();
+
+    return results.map((p) => ({ user: p.user, displayName: p.displayName }));
+  }
 }

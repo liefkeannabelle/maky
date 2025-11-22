@@ -1,6 +1,14 @@
 import { actions, Sync } from "@engine";
-import { Requesting, Sessioning, UserAccount } from "@concepts";
-
+import {
+  ChordLibrary,
+  Following,
+  Friendship,
+  Requesting,
+  Sessioning,
+  SongLibrary,
+  UserAccount,
+  UserProfile,
+} from "@concepts";
 // --- Registration (Public) ---
 
 /**
@@ -40,6 +48,33 @@ export const RespondToRegister: Sync = ({ request, user, error }) => ({
   ),
   then: actions(
     [Requesting.respond, { request, user, error }],
+  ),
+});
+
+/**
+ * After a successful user registration, this sync initializes the user's data
+ * in other related concepts like UserProfile, ChordLibrary, and SongLibrary.
+ */
+export const InitializeNewUser: Sync = ({ user, username }) => ({
+  // This sync triggers only when a UserAccount.register action is successful (i.e., returns a `user`).
+  when: actions([
+    UserAccount.register,
+    { username }, // Capture the username from the input.
+    { user }, // Capture the new user ID from the output.
+  ]),
+  // It then fires off the necessary setup actions in other concepts.
+  then: actions(
+    [
+      UserProfile.createProfile,
+      {
+        user,
+        displayName: username, // Use the username as the default display name.
+        genrePreferences: [], // Default to empty genre preferences.
+        skillLevel: "BEGINNER", // Default to BEGINNER skill level.
+      },
+    ],
+    [ChordLibrary.addUser, { user }],
+    [SongLibrary.addUser, { user }],
   ),
 });
 
@@ -270,5 +305,26 @@ export const RespondToDeleteAccount: Sync = ({ request, success, error }) => ({
   ),
   then: actions(
     [Requesting.respond, { request, success, error }],
+  ),
+});
+
+/**
+ * When a user account is successfully deleted, this synchronization cascades the deletion
+ * to all other concepts that hold user-specific data. This ensures data integrity
+ * and cleanup across the application.
+ */
+export const OnDeleteAccount: Sync = ({ user }) => ({
+  // This sync triggers only when a UserAccount.deleteAccount action is successful.
+  // It captures the `user` ID from the input of the successful action.
+  when: actions([UserAccount.deleteAccount, { user }, { success: true }]),
+  // It then fires off deletion/cleanup actions in all related concepts.
+  then: actions(
+    [UserProfile.deleteProfile, { user }],
+    [ChordLibrary.removeUser, { user }],
+    [SongLibrary.removeUser, { user }],
+    [Friendship.removeAllFriendshipsForUser, { user }],
+    [Following.removeUserFollowing, { user }], // Removes user's outbound follows
+    [Following.removeUserAsFollower, { user }], // Removes user's inbound follows
+    // [JamGroup.removeUserFromAllGroups, { user }], // Uncomment when JamGroup concept is implemented
   ),
 });
