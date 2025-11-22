@@ -1,4 +1,4 @@
-import { actions, Sync } from "@engine";
+import { actions, Frames, Sync } from "@engine";
 import { Requesting, Sessioning, UserProfile } from "@concepts";
 
 // --- Create Profile (Authenticated) ---
@@ -294,4 +294,48 @@ export const RespondToDeleteProfile: Sync = ({ request, error }) => ({
     [UserProfile.deleteProfile, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
+});
+
+/**
+ * Handles a request to search for users by their display name.
+ * This is treated as a public query, so no session authentication is performed.
+ * It responds with an array of matching profiles.
+ */
+export const HandleSearchByDisplayNameRequest: Sync = (
+  { request, query, user, displayName, results },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/UserProfile/_searchByDisplayName", query },
+    { request },
+  ]),
+  where: async (frames) => {
+    // Grab the original frame to preserve the `request` binding, in case the query returns no results.
+    const originalFrame = frames[0];
+
+    // The `_searchByDisplayName` method returns an array of objects `{ user, displayName }`.
+    // The `frames.query` method will expand this, creating a new frame for each result.
+    frames = await frames.query(
+      UserProfile._searchByDisplayName,
+      { query }, // Input to the query
+      { user, displayName }, // Output pattern to bind from each result
+    );
+
+    // If the query returns no results, the `frames` array will be empty.
+    // We must handle this explicitly to prevent a request timeout.
+    if (frames.length === 0) {
+      // Create a new Frames object containing the original `request` binding
+      // and a `results` binding with an empty array.
+      const responseFrame = { ...originalFrame, [results]: [] };
+      return new Frames(responseFrame);
+    }
+
+    // If there are results, collect all the expanded frames back into a single frame.
+    // The result will be one frame with a `results` property containing an array of `{ user, displayName }` objects.
+    return frames.collectAs([user, displayName], results);
+  },
+  then: actions([
+    Requesting.respond,
+    { request, results }, // Respond with the collected results
+  ]),
 });

@@ -7,20 +7,25 @@
 
 [@UserAccount.test.ts](../UserAccount/UserAccount.test.ts)
 
+[@api-extraction-from-code](../../../design/tools/api-extraction-from-code.md)
+
+[@api-extraction-from-spec](../../../design/tools/api-extraction-from-spec.md)
+
+[@api-specification](../../../design/api-specification.md)
 
 
-# implement: a few tests covering the _searchByDisplayName. Include   sanitizeOps: false,   sanitizeResources: false, in each of the deno tests, to prevent leaks. Don t do it with t.step stuff. preserve the structure it has in the other concept files. only print the added deno test testing search functionality
 
+# implement: make a spec in md format for _searchByDisplayName that I can add to userprofile.md. separately, make an api space for it that I can add to api-specification.md. Only output your additions or changes, nothing more.
 
 # response:
 
-# file: src\concepts\UserProfile\UserProfile.test.ts
+**For userprofile.md**
 
-```typescript
-import { assert, assertEquals } from "jsr:@std/assert";
-import { testDb } from "@utils/database.ts";
-import UserProfileConcept from "./UserProfileConcept.ts";
-import { ID } from "@utils/types.ts";
+```markdown
+***
 
+**For api-specification.md**
 
+```markdown
+```
 ```

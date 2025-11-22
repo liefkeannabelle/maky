@@ -51,6 +51,14 @@ deleteProfile (user: User)
 *   **requires** The user exists and has an associated `Profile`.
 *   **effects** Removes the `Profile` associated with the user from the state. 
 
+**queries**
+
+_searchByDisplayName (query: String): (user: User, displayName: String)
+* **requires** true
+* **effects** Returns a set of users and their display names that partially match the query string.
+```
+
+
 **notes**
 - UserProfile stores more app-specific and user-specific data as compared to UserAccount.
 - Genre preferences will be a set of genres, as described by strings, selected from a set bank.

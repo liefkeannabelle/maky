@@ -113,15 +113,15 @@ export const CreateSessionOnLogin: Sync = ({ user }) => ({
  * Responds to a successful login request after both the login and session creation have completed.
  * It returns both the user ID and the new session ID to the client.
  */
-export const RespondToLoginSuccess: Sync = ({ request, user, session }) => ({
+export const RespondToLoginSuccess: Sync = ({ request, user, sessionId }) => ({
   when: actions(
     // This `when` clause ensures all three actions occurred in the same flow.
     [Requesting.request, { path: "/UserAccount/login" }, { request }],
     [UserAccount.login, {}, { user }],
-    [Sessioning.create, { user }, { session }],
+    [Sessioning.create, { user }, { sessionId }],
   ),
   then: actions(
-    [Requesting.respond, { request, user, sessionId: session }],
+    [Requesting.respond, { request, user, sessionId: sessionId }],
   ),
 });
 
