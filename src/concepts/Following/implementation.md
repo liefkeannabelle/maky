@@ -9,15 +9,16 @@
 [@Following.test.ts](Following.test.ts)
 
 
-[@Reaction.test.ts](../Reaction/Reaction.test.ts)
 
+# implement (removeUserFollowing (user: User) removeUserAsFollower(user: User)) according to the spec. then, write a test for them (which is not modifying existing test, but making one additional). give me JUST the sections you are changing or modifying, nothing else from the concept and test file.
 
-
-# implement: a few tests covering all Following  actions. Reaction.test.ts shows you the structure of the tests, but refers to a different specs. DO NOT INCLUDE Reaction IN YOUR TESTS. WE ARE ONLY TESTING THE Following. Refer to Following.md for our spec, as well as the implementation in FollowingConcept.ts . Include   sanitizeOps: false,   sanitizeResources: false, in each of the deno tests, to prevent leaks. Don t do it with t.step stuff. the current code  in Following.test.md is weird and leads to compile errors. follow the imports from reaction.test.ts, to see how things are imported.
 
 # response:
 
-An implementation of tests for the `FollowingConcept` based on your specifications.
+# file: src\concepts\Following\FollowingConcept.ts
+
+```typescript
+```
 
 # file: src\concepts\Following\Following.test.ts
 

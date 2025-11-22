@@ -168,4 +168,18 @@ export default class FriendshipConcept {
 
     return [{ isFriend: !!friendship }];
   }
+  /**
+   * removeAllFriendshipsForUser (user: User)
+   *
+   * @requires true
+   * @effects Removes all `Friendship` objects from the state where the given `user` is either the `requester` or the `recipient`, regardless of the friendship's `status`.
+   */
+  async removeAllFriendshipsForUser(
+    { user }: { user: User },
+  ): Promise<Empty> {
+    await this.friendships.deleteMany({
+      $or: [{ requester: user }, { recipient: user }],
+    });
+    return {};
+  }
 }

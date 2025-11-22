@@ -246,6 +246,11 @@ removeFriend (user1: User, user2: User)
 *   **requires** A `Friendship` exists between `user1` and `user2` (where one is the requester and the other is the recipient).
 *   **effects** Removes the `Friendship` object associated with these two users from the state.
 
+removeAllFriendshipsForUser (user: User)
+
+* **requires** true
+* **effects** Removes all `Friendship` objects from the state where the given `user` is either the `requester` or the `recipient`, regardless of the friendship's `status`.
+
 **queries** \
 _areFriends (user1: User, user2: User): (isFriend: Boolean)
 *   **requires** The users `user1` and `user2` exist.
@@ -278,6 +283,16 @@ unfollowUser (follower: User, followed: User)
 
 *   **requires** A `Follow` object exists where `follower` is the follower and `followed` is the followed user.
 *   **effects** Removes the matching `Follow` object from the state.
+
+removeUserAsFollower (user: User)
+
+* **requires** The `user` exists.
+* **effects** Removes all `Follow` objects from the state where `followed` is the given `user`. This action is typically used when `user`'s account is deleted to clean up all their inbound follow relationships (i.e., remove all their followers).
+
+removeUserFollowing (user: User)
+
+* **requires** The `user` exists.
+* **effects** Removes all `Follow` objects from the state where the `follower` is the given `user`. This action is typically used when `user`'s account is deleted to clean up all their outbound follow relationships.
 
 **notes**
 - Following is the non-mutual, one-directional relationship between two users

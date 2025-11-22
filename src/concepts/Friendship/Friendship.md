@@ -31,6 +31,11 @@ removeFriend (user1: User, user2: User)
 *   **requires** A `Friendship` exists between `user1` and `user2` (where one is the requester and the other is the recipient).
 *   **effects** Removes the `Friendship` object associated with these two users from the state.
 
+removeAllFriendshipsForUser (user: User)
+
+* **requires** true
+* **effects** Removes all `Friendship` objects from the state where the given `user` is either the `requester` or the `recipient`, regardless of the friendship's `status`.
+
 **queries** \
 _areFriends (user1: User, user2: User): (isFriend: Boolean)
 *   **requires** The users `user1` and `user2` exist.

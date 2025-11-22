@@ -7,6 +7,7 @@ import { ID } from "@utils/types.ts";
 const userA = "user:A" as ID;
 const userB = "user:B" as ID;
 const userC = "user:C" as ID;
+const userD = "user:D" as ID;
 
 Deno.test(
   "FriendshipConcept - should successfully send a friend request",
@@ -288,6 +289,85 @@ Deno.test(
       user2: userA,
     });
     assertEquals(areFriends, [{ isFriend: true }]);
+
+    await client.close();
+  },
+);
+Deno.test(
+  "FriendshipConcept - should remove all friendships for a user",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const friendshipConcept = new FriendshipConcept(db);
+    await friendshipConcept.friendships.deleteMany({});
+
+    // Setup: User A has multiple friendships in different states
+    // 1. A sent a pending request to B
+    await friendshipConcept.sendFriendRequest({
+      requester: userA,
+      recipient: userB,
+    });
+    // 2. C sent an accepted request to A
+    const result1 = await friendshipConcept.sendFriendRequest({
+      requester: userC,
+      recipient: userA,
+    });
+    assert(
+      !("error" in result1),
+      "Test setup failed: could not send friend request from C to A",
+    );
+    // Only try to accept if the request was successfully created
+    await friendshipConcept.acceptFriendRequest({
+      requester: userC,
+      recipient: userA,
+    });
+
+    // 3. A sent a declined request to D
+    const result2 = await friendshipConcept.sendFriendRequest({
+      requester: userA,
+      recipient: userD,
+    });
+    assert(
+      !("error" in result2),
+      "Test setup failed: could not send friend request from A to D",
+    );
+    // Only try to decline if the request was successfully created
+    await friendshipConcept.declineFriendRequest({
+      requester: userA,
+      recipient: userD,
+    });
+
+    // 4. Unrelated friendship between B and C
+    await friendshipConcept.sendFriendRequest({
+      requester: userB,
+      recipient: userC,
+    });
+
+    // Action: Remove all friendships for userA
+    const result = await friendshipConcept.removeAllFriendshipsForUser({
+      user: userA,
+    });
+    assert(!("error" in result), "Removing all friendships should succeed.");
+
+    // Verification
+    const friendshipsOfA = await friendshipConcept.friendships.find({
+      $or: [{ requester: userA }, { recipient: userA }],
+    }).toArray();
+
+    assertEquals(
+      friendshipsOfA.length,
+      0,
+      "All friendships involving user A should be removed.",
+    );
+
+    const unrelatedFriendship = await friendshipConcept.friendships.findOne({
+      requester: userB,
+      recipient: userC,
+    });
+    assertExists(
+      unrelatedFriendship,
+      "The unrelated friendship between B and C should remain.",
+    );
 
     await client.close();
   },

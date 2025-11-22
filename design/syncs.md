@@ -112,7 +112,9 @@ in RecommendationEngine: result of recommendationId is recommendedChord \
 UserProfile.deleteProfile(user) \
 ChordLibrary.removeUser(user) \
 SongLibrary.removeUser(user) \
-Friendship.removeAllFriendships(user) (Iterate and remove) \
+Friendship.removeAllFriendshipsForUser(user) \
+Following.removeUserFollowing(user) \
+Following.removeUserAsFollower(user) \
 JamGroup.removeUserFromAllGroups(user)
 
 **notes**

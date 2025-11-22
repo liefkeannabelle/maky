@@ -126,4 +126,29 @@ export default class FollowingConcept {
     const follow = await this.follows.findOne({ follower, followed });
     return { isFollowing: !!follow };
   }
+  /**
+   * removeUserAsFollower (user: User)
+   *
+   * @requires The `user` exists.
+   * @effects Removes all `Follow` objects from the state where `followed` is the given `user`. This action is typically used when `user`'s account is deleted to clean up all their inbound follow relationships (i.e., remove all their followers).
+   */
+  async removeUserAsFollower(
+    { user }: { user: User },
+  ): Promise<Empty> {
+    await this.follows.deleteMany({ followed: user });
+    return {};
+  }
+
+  /**
+   * removeUserFollowing (user: User)
+   *
+   * @requires The `user` exists.
+   * @effects Removes all `Follow` objects from the state where the `follower` is the given `user`. This action is typically used when `user`'s account is deleted to clean up all their outbound follow relationships.
+   */
+  async removeUserFollowing(
+    { user }: { user: User },
+  ): Promise<Empty> {
+    await this.follows.deleteMany({ follower: user });
+    return {};
+  }
 }

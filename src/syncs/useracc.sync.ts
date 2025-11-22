@@ -1,13 +1,14 @@
 import { actions, Sync } from "@engine";
 import {
   ChordLibrary,
+  Following,
+  Friendship,
   Requesting,
   Sessioning,
   SongLibrary,
   UserAccount,
   UserProfile,
 } from "@concepts";
-
 // --- Registration (Public) ---
 
 /**
@@ -299,5 +300,26 @@ export const RespondToDeleteAccount: Sync = ({ request, success, error }) => ({
   ),
   then: actions(
     [Requesting.respond, { request, success, error }],
+  ),
+});
+
+/**
+ * When a user account is successfully deleted, this synchronization cascades the deletion
+ * to all other concepts that hold user-specific data. This ensures data integrity
+ * and cleanup across the application.
+ */
+export const OnDeleteAccount: Sync = ({ user }) => ({
+  // This sync triggers only when a UserAccount.deleteAccount action is successful.
+  // It captures the `user` ID from the input of the successful action.
+  when: actions([UserAccount.deleteAccount, { user }, { success: true }]),
+  // It then fires off deletion/cleanup actions in all related concepts.
+  then: actions(
+    [UserProfile.deleteProfile, { user }],
+    [ChordLibrary.removeUser, { user }],
+    [SongLibrary.removeUser, { user }],
+    [Friendship.removeAllFriendshipsForUser, { user }],
+    [Following.removeUserFollowing, { user }], // Removes user's outbound follows
+    [Following.removeUserAsFollower, { user }], // Removes user's inbound follows
+    // [JamGroup.removeUserFromAllGroups, { user }], // Uncomment when JamGroup concept is implemented
   ),
 });
