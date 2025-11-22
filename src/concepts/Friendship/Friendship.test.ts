@@ -243,7 +243,7 @@ Deno.test(
 );
 
 Deno.test(
-  "FriendshipConcept - _areFriends query should return correct status",
+  "FriendshipConcept - areFriends query should return correct status",
   { sanitizeOps: false, sanitizeResources: false },
   async () => {
     const [db, client] = await testDb();
@@ -251,7 +251,7 @@ Deno.test(
     await friendshipConcept.friendships.deleteMany({});
 
     // 1. Not friends
-    let areFriends = await friendshipConcept._areFriends({
+    let areFriends = await friendshipConcept.areFriends({
       user1: userA,
       user2: userB,
     });
@@ -262,7 +262,7 @@ Deno.test(
       requester: userA,
       recipient: userB,
     });
-    areFriends = await friendshipConcept._areFriends({
+    areFriends = await friendshipConcept.areFriends({
       user1: userA,
       user2: userB,
     });
@@ -277,14 +277,14 @@ Deno.test(
       requester: userA,
       recipient: userB,
     });
-    areFriends = await friendshipConcept._areFriends({
+    areFriends = await friendshipConcept.areFriends({
       user1: userA,
       user2: userB,
     });
     assertEquals(areFriends, [{ isFriend: true }]);
 
     // 4. Accepted request (query with reversed users)
-    areFriends = await friendshipConcept._areFriends({
+    areFriends = await friendshipConcept.areFriends({
       user1: userB,
       user2: userA,
     });

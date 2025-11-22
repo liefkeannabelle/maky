@@ -268,7 +268,7 @@ removeAllFriendshipsForUser (user: User)
 * **effects** Removes all `Friendship` objects from the state where the given `user` is either the `requester` or the `recipient`, regardless of the friendship's `status`.
 
 **queries** \
-_areFriends (user1: User, user2: User): (isFriend: Boolean)
+areFriends (user1: User, user2: User): (isFriend: Boolean)
 *   **requires** The users `user1` and `user2` exist.
 *   **effects** Returns `true` if there exists a `Friendship` `f` such that `f.status` is `ACCEPTED` and the pair (`f.requester`, `f.recipient`) matches (`user1`, `user2`) in either order. Otherwise returns `false`.
 

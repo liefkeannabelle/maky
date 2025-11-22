@@ -150,12 +150,12 @@ export default class FriendshipConcept {
   }
 
   /**
-   * _areFriends (user1: User, user2: User): (isFriend: Boolean)
+   * areFriends (user1: User, user2: User): (isFriend: Boolean)
    *
    * @requires The users `user1` and `user2` exist.
    * @effects Returns `true` if there exists a `Friendship` `f` such that `f.status` is `ACCEPTED` and the pair (`f.requester`, `f.recipient`) matches (`user1`, `user2`) in either order. Otherwise returns `false`.
    */
-  async _areFriends(
+  async areFriends(
     { user1, user2 }: { user1: User; user2: User },
   ): Promise<{ isFriend: boolean }[]> {
     const friendship = await this.friendships.findOne({

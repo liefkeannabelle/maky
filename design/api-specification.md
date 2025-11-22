@@ -1118,7 +1118,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
-### POST /api/Friendship/_areFriends
+### POST /api/Friendship/areFriends
 
 **Description:** Checks if two users have an accepted friendship.
 

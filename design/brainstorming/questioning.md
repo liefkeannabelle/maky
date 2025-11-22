@@ -944,7 +944,7 @@ This document provides the API specification for the various concepts that make 
 }
 ```
 ---
-### POST /api/Friendship/_areFriends
+### POST /api/Friendship/areFriends
 
 **Description:** Checks if two users have an accepted friendship.
 

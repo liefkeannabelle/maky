@@ -185,7 +185,7 @@ _getFriends (user: User): (friend: User)
 }
 ```
 ---
-### POST /api/Friendship/_areFriends
+### POST /api/Friendship/areFriends
 
 **Description:** Checks if two users have an accepted friendship.
 

@@ -74,7 +74,7 @@ export const exclusions: Array<string> = [
   "/api/Friendship/acceptFriendRequest",
   "/api/Friendship/declineFriendRequest",
   "/api/Friendship/removeFriend",
-  "/api/Friendship/_areFriends",
+  "/api/Friendship/areFriends",
   "/api/Post/createPost",
   "/api/Post/deletePost",
   "/api/Post/editPost",

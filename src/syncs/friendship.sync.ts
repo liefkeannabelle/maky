@@ -144,7 +144,7 @@ export const RespondToRemoveFriend: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
-// --- _areFriends (Authenticated Query) ---
+// --- areFriends (Authenticated Query) ---
 
 /**
  * Handles a query to check if the authenticated user is friends with another user.
@@ -154,16 +154,16 @@ export const HandleAreFriendsQuery: Sync = (
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/Friendship/_areFriends", sessionId, otherUser },
+    { path: "/Friendship/areFriends", sessionId, otherUser },
     { request },
   ]),
   where: (frames) =>
     frames.query(Sessioning._getUser, { session: sessionId }, { user: user1 }),
-  then: actions([Friendship._areFriends, { user1, user2: otherUser }]),
+  then: actions([Friendship.areFriends, { user1, user2: otherUser }]),
 });
 
 /**
- * Responds to the _areFriends query with the boolean result.
+ * Responds to the areFriends query with the boolean result.
  * Note: Queries return an array of results. In this case, it will be a single-element array.
  * The sync engine will create one frame, and we extract the `isFriend` property to respond.
  */
@@ -171,9 +171,9 @@ export const RespondToAreFriendsQuery: Sync = (
   { request, isFriend, error },
 ) => ({
   when: actions(
-    [Requesting.request, { path: "/Friendship/_areFriends" }, { request }],
+    [Requesting.request, { path: "/Friendship/areFriends" }, { request }],
     // The query returns `[{ isFriend: boolean }]`. The pattern matching extracts `isFriend`.
-    [Friendship._areFriends, {}, { isFriend, error }],
+    [Friendship.areFriends, {}, { isFriend, error }],
   ),
   then: actions([Requesting.respond, { request, isFriend, error }]),
 });
