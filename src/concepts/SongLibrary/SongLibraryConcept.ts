@@ -22,8 +22,8 @@ export interface Song {
   title: string;
   artist: string;
   chords: Chord[];
-  genre?: Genre; 
-  
+  genre?: Genre;
+
   // Extended metadata from JSON requirements
   key?: string;
   tempo?: number;
@@ -59,7 +59,7 @@ export default class SongLibraryConcept {
 
   /**
    * addSong (title: String, artist: String, chords: String[], genre: optional Genre, ...extras): (song: Song)
-   * 
+   *
    * **requires** No Song with the given `title` and `artist` already exists (to avoid duplicates).
    * **effects** Creates a new Song; sets the metadata; returns the new song.
    */
@@ -85,7 +85,7 @@ export default class SongLibraryConcept {
 
     if (existing) {
       return { error: "Song already exists" };
-    } 
+    }
 
     const newSong: Song = {
       _id: (params.id as ID) ?? freshID(),
@@ -108,11 +108,13 @@ export default class SongLibraryConcept {
 
   /**
    * removeSong (song: Song)
-   * 
+   *
    * **requires** The Song `song` exists.
    * **effects** Removes the `song` from the set of Songs. Also removes all `SongProgress` entries across all users.
    */
-  async removeSong(params: { song: SongID }): Promise<Empty | { error: string }> {
+  async removeSong(
+    params: { song: SongID },
+  ): Promise<Empty | { error: string }> {
     const songExists = await this.songs.findOne({ _id: params.song });
     if (!songExists) {
       return { error: "Song does not exist" };
@@ -124,7 +126,7 @@ export default class SongLibraryConcept {
     // 2. Remove references from all users' progress
     await this.users.updateMany(
       {},
-      { $pull: { progress: { song: params.song } } }
+      { $pull: { progress: { song: params.song } } },
     );
 
     return {};
@@ -132,11 +134,13 @@ export default class SongLibraryConcept {
 
   /**
    * addUser (user: User)
-   * 
+   *
    * **requires** The `user` does not already exist in the set of Users.
    * **effects** Adds the `user` to the set of Users with an empty set of `SongProgresses`.
    */
-  async addUser(params: { user: UserID }): Promise<Empty | { error: string }> {
+  async addUser(
+    params: { user: UserID },
+  ): Promise<{ success: boolean } | { error: string }> {
     const existing = await this.users.findOne({ _id: params.user });
     if (existing) {
       return { error: "User already exists in library" };
@@ -147,16 +151,18 @@ export default class SongLibraryConcept {
       progress: [],
     });
 
-    return {};
+    return { success: true };
   }
 
   /**
    * removeUser (user: User)
-   * 
+   *
    * **requires** The `user` exists.
    * **effects** Removes the `user` and all their associated `SongProgress` entries from the state.
    */
-  async removeUser(params: { user: UserID }): Promise<Empty | { error: string }> {
+  async removeUser(
+    params: { user: UserID },
+  ): Promise<Empty | { error: string }> {
     const result = await this.users.deleteOne({ _id: params.user });
     if (result.deletedCount === 0) {
       return { error: "User not found" };
@@ -166,7 +172,7 @@ export default class SongLibraryConcept {
 
   /**
    * startLearningSong (user: User, song: Song, mastery: MasteryLevel)
-   * 
+   *
    * **requires** The `user` and `song` exist. The user does not already have a `SongProgress` entry for this `song`.
    * **effects** Creates a new `SongProgress` entry for the given `user`.
    */
@@ -181,7 +187,9 @@ export default class SongLibraryConcept {
     const userDoc = await this.users.findOne({ _id: params.user });
     if (!userDoc) return { error: "User not found" };
 
-    const alreadyLearning = userDoc.progress.some((p) => p.song === params.song);
+    const alreadyLearning = userDoc.progress.some((p) =>
+      p.song === params.song
+    );
     if (alreadyLearning) {
       return { error: "User is already learning this song" };
     }
@@ -194,7 +202,7 @@ export default class SongLibraryConcept {
 
     await this.users.updateOne(
       { _id: params.user },
-      { $push: { progress: newProgress } }
+      { $push: { progress: newProgress } },
     );
 
     return {};
@@ -202,7 +210,7 @@ export default class SongLibraryConcept {
 
   /**
    * updateSongMastery (user: User, song: Song, newMastery: MasteryLevel)
-   * 
+   *
    * **requires** A `SongProgress` entry exists for the given `user` and `song`.
    * **effects** Updates the `mastery` of the existing `SongProgress` entry.
    */
@@ -222,12 +230,12 @@ export default class SongLibraryConcept {
 
     await this.users.updateOne(
       { _id: params.user, "progress.song": params.song },
-      { 
-        $set: { 
+      {
+        $set: {
           "progress.$.mastery": params.newMastery,
-          "progress.$.updatedAt": new Date()
-        } 
-      }
+          "progress.$.updatedAt": new Date(),
+        },
+      },
     );
 
     return {};
@@ -235,7 +243,7 @@ export default class SongLibraryConcept {
 
   /**
    * stopLearningSong (user: User, song: Song)
-   * 
+   *
    * **requires** A `SongProgress` entry exists for the given `user` and `song`.
    * **effects** Deletes the `SongProgress` entry.
    */
@@ -245,7 +253,7 @@ export default class SongLibraryConcept {
   }): Promise<Empty | { error: string }> {
     const result = await this.users.updateOne(
       { _id: params.user },
-      { $pull: { progress: { song: params.song } } }
+      { $pull: { progress: { song: params.song } } },
     );
 
     if (result.modifiedCount === 0) {
@@ -259,8 +267,8 @@ export default class SongLibraryConcept {
 
   /**
    * _getPlayableSongs (knownChords: set of Chord, genres: optional set of Genre): (songs: set of Song)
-   * 
-   * **effects** Returns songs whose `chords` are a subset of `knownChords`. 
+   *
+   * **effects** Returns songs whose `chords` are a subset of `knownChords`.
    * If `genres` are provided, filters by genre.
    */
   async _getPlayableSongs(params: {
@@ -275,7 +283,7 @@ export default class SongLibraryConcept {
       // Check both 'genre' field and 'tags' array from JSON shape
       filter.$or = [
         { genre: { $in: params.genres } },
-        { tags: { $in: params.genres } }
+        { tags: { $in: params.genres } },
       ];
     }
 
@@ -297,10 +305,12 @@ export default class SongLibraryConcept {
 
   /**
    * _getSongsInProgress (user: User): (progresses: set of {song: Song, mastery: MasteryLevel})
-   * 
+   *
    * **effects** Returns all `SongProgress` entries for the given `user` with full song details.
    */
-  async _getSongsInProgress(params: { user: UserID }): Promise<Array<{ song: Song; mastery: MasteryLevel }>> {
+  async _getSongsInProgress(
+    params: { user: UserID },
+  ): Promise<Array<{ song: Song; mastery: MasteryLevel }>> {
     const userDoc = await this.users.findOne({ _id: params.user });
     if (!userDoc || !userDoc.progress.length) {
       return [];
@@ -311,10 +321,10 @@ export default class SongLibraryConcept {
 
     // Fetch song details
     const songs = await this.songs.find({ _id: { $in: songIds } }).toArray();
-    
+
     // Map back to result structure
     const result: Array<{ song: Song; mastery: MasteryLevel }> = [];
-    
+
     for (const progress of userDoc.progress) {
       const songDetails = songs.find((s) => s._id === progress.song);
       if (songDetails) {
@@ -330,32 +340,34 @@ export default class SongLibraryConcept {
 
   /**
    * _filterSongsByGenre (genre: Genre): (songs: set of Song)
-   * 
+   *
    * **effects** Returns songs associated with the specified `genre`.
    */
-  async _filterSongsByGenre(params: { genre: Genre }): Promise<Array<{ song: Song }>> {
+  async _filterSongsByGenre(
+    params: { genre: Genre },
+  ): Promise<Array<{ song: Song }>> {
     const songs = await this.songs.find({
       $or: [
         { genre: params.genre },
-        { tags: params.genre }
-      ]
+        { tags: params.genre },
+      ],
     }).toArray();
 
     return songs.map((s) => ({ song: s }));
   }
-  
+
   /**
    * _getAllSongs (): (songs: Song[])
    * Utility query to list entire catalog
    */
   async _getAllSongs(_params: Empty): Promise<Array<{ song: Song }>> {
     const songs = await this.songs.find({}).toArray();
-    return songs.map(s => ({ song: s }));
+    return songs.map((s) => ({ song: s }));
   }
 
   /**
    * _searchByTitleOrArtist (query: String): (songs: set of Song)
-   * 
+   *
    * **effects** Returns songs where the title or artist matches the query string (case-insensitive).
    */
   async _searchByTitleOrArtist(
