@@ -1,5 +1,12 @@
 import { actions, Sync } from "@engine";
-import { Requesting, Sessioning, UserAccount } from "@concepts";
+import {
+  ChordLibrary,
+  Requesting,
+  Sessioning,
+  SongLibrary,
+  UserAccount,
+  UserProfile,
+} from "@concepts";
 
 // --- Registration (Public) ---
 
@@ -40,6 +47,33 @@ export const RespondToRegister: Sync = ({ request, user, error }) => ({
   ),
   then: actions(
     [Requesting.respond, { request, user, error }],
+  ),
+});
+
+/**
+ * After a successful user registration, this sync initializes the user's data
+ * in other related concepts like UserProfile, ChordLibrary, and SongLibrary.
+ */
+export const InitializeNewUser: Sync = ({ user, username }) => ({
+  // This sync triggers only when a UserAccount.register action is successful (i.e., returns a `user`).
+  when: actions([
+    UserAccount.register,
+    { username }, // Capture the username from the input.
+    { user }, // Capture the new user ID from the output.
+  ]),
+  // It then fires off the necessary setup actions in other concepts.
+  then: actions(
+    [
+      UserProfile.createProfile,
+      {
+        user,
+        displayName: username, // Use the username as the default display name.
+        genrePreferences: [], // Default to empty genre preferences.
+        skillLevel: "BEGINNER", // Default to BEGINNER skill level.
+      },
+    ],
+    [ChordLibrary.addUser, { user }],
+    [SongLibrary.addUser, { user }],
   ),
 });
 
