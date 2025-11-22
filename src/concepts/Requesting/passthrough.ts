@@ -27,7 +27,7 @@
 export const inclusions: Record<string, string> = {
   // Feel free to delete these example inclusions
   // "/api/LikertSurvey/_getSurveyQuestions": "this is a public query",
-  "/api/UserAccount/register": "anyone can register",
+  // "/api/UserAccount/register": "anyone can register",
 };
 
 /**
