@@ -6,6 +6,9 @@
  * ChordLibrary with 'in-progress' mastery.
  */
 export function autoAddChordsSync(concepts: any) {
+  if (!concepts.songLibrary || typeof concepts.songLibrary.on !== 'function') {
+      return { when: [], then: [] };
+  }
   concepts.songLibrary.on("startLearningSong", async (payload: any) => {
     const { user, song } = payload;
 
@@ -13,15 +16,23 @@ export function autoAddChordsSync(concepts: any) {
 
     try {
       // 1. Get the list of chords required for the song
-      // Assuming 'song' object in payload is complete, otherwise we might need to fetch it
-      const songChords: string[] = song.chords || [];
+      // Fetch song details because payload only has ID
+      const allSongs = await concepts.songLibrary._getAllSongs({});
+      const songEntry = allSongs.find((s: any) => s.song._id === song);
+      
+      if (!songEntry) {
+        console.log(`[Sync] AutoAddChords: Song ${song} not found`);
+        return;
+      }
+      
+      const songChords: string[] = songEntry.song.chords || [];
 
       if (songChords.length === 0) {
         return;
       }
 
       // 2. Get user's currently known chords to check for duplicates
-      const knownChordsObjs = await concepts.chordLibrary.getKnownChords({ user });
+      const knownChordsObjs = await concepts.chordLibrary._getKnownChords({ user });
       // Map to a Set of chord symbols (e.g., "Am", "G") for O(1) lookup
       const knownChordSet = new Set(knownChordsObjs.map((c: any) => c.chord || c.symbol));
 
