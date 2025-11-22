@@ -100,8 +100,11 @@ export const HandleLoginRequest: Sync = ({ request, username, password }) => ({
 /**
  * When a login is successful, this synchronization automatically creates a new session for that user.
  */
-export const CreateSessionOnLogin: Sync = ({ user }) => ({
+export const CreateSessionOnLogin: Sync = ({ request, user }) => ({
   when: actions(
+    // Tie session creation to the specific login request so the created session
+    // is correlated with that request's flow.
+    [Requesting.request, { path: "/UserAccount/login" }, { request }],
     [UserAccount.login, {}, { user }], // Fires only on successful login.
   ),
   then: actions(
@@ -118,10 +121,12 @@ export const RespondToLoginSuccess: Sync = ({ request, user, sessionId }) => ({
     // This `when` clause ensures all three actions occurred in the same flow.
     [Requesting.request, { path: "/UserAccount/login" }, { request }],
     [UserAccount.login, {}, { user }],
+    // Sessioning.create now returns `{ sessionId: <id> }` so bind `sessionId` here.
     [Sessioning.create, { user }, { sessionId }],
   ),
   then: actions(
-    [Requesting.respond, { request, user, sessionId: sessionId }],
+    // Respond with `sessionId` to match frontend expectation.
+    [Requesting.respond, { request, user, sessionId }],
   ),
 });
 
@@ -162,7 +167,7 @@ export const HandleChangePasswordRequest: Sync = (
   // The 'where' clause is crucial for authentication. It queries the Sessioning concept
   // to get the user associated with the provided sessionId. If no user is found, the sync stops.
   where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+    frames.query(Sessioning._getUser, { sessionId: sessionId }, { user }),
   then: actions(
     [UserAccount.changePassword, { user, oldPassword, newPassword }],
   ),
@@ -204,7 +209,7 @@ export const HandleUpdateCredentialsRequest: Sync = (
     ],
   ),
   where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+    frames.query(Sessioning._getUser, { sessionId: sessionId }, { user }),
   then: actions(
     [UserAccount.updateCredentials, { user, newUsername, newEmail }],
   ),
@@ -245,7 +250,7 @@ export const HandleSetKidStatusRequest: Sync = (
     ],
   ),
   where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+    frames.query(Sessioning._getUser, { sessionId: sessionId }, { user }),
   then: actions(
     [UserAccount.setKidAccountStatus, { user, status }],
   ),
@@ -284,7 +289,7 @@ export const HandleDeleteAccountRequest: Sync = (
     ],
   ),
   where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+    frames.query(Sessioning._getUser, { sessionId: sessionId }, { user }),
   then: actions(
     [UserAccount.deleteAccount, { user, password }],
   ),

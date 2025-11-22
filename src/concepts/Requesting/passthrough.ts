@@ -28,7 +28,6 @@ export const inclusions: Record<string, string> = {
   // Feel free to delete these example inclusions
   // "/api/LikertSurvey/_getSurveyQuestions": "this is a public query",
   "/api/UserAccount/register": "anyone can register",
-  "/api/UserAccount/login": "anyone can register",
 };
 
 /**
@@ -48,6 +47,7 @@ export const exclusions: Array<string> = [
   "/api/Sessioning/delete",
   "/api/Sessioning/_getUser",
   "/api/UserAccount/changePassword",
+  "/api/UserAccount/login",
   "/api/UserAccount/updateCredentials",
   "/api/UserAccount/setKidAccountStatus",
   "/api/UserAccount/deleteAccount",

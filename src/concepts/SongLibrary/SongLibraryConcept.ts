@@ -352,4 +352,24 @@ export default class SongLibraryConcept {
     const songs = await this.songs.find({}).toArray();
     return songs.map(s => ({ song: s }));
   }
+
+  /**
+   * _searchByTitleOrArtist (query: String): (songs: set of Song)
+   * 
+   * **effects** Returns songs where the title or artist matches the query string (case-insensitive).
+   */
+  async _searchByTitleOrArtist(
+    { query }: { query: string },
+  ): Promise<Array<{ song: Song }>> {
+    if (!query || query.trim() === "") return [];
+
+    const results = await this.songs.find({
+      $or: [
+        { title: { $regex: query, $options: "i" } },
+        { artist: { $regex: query, $options: "i" } },
+      ],
+    }).limit(20).toArray();
+
+    return results.map((s) => ({ song: s }));
+  }
 }

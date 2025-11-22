@@ -36,14 +36,14 @@ export default class SessioningConcept {
    *
    * **effects**: creates a new Session `s`; associates it with the given `user`; returns `s` as `session`.
    */
-  async create({ user }: { user: User }): Promise<{ session: Session }> {
+  async create({ user }: { user: User }): Promise<{ sessionId: Session }> {
     const newSessionId = freshID() as Session;
     const doc: SessionDoc = {
       _id: newSessionId,
       user: user,
     };
     await this.sessions.insertOne(doc);
-    return { session: newSessionId };
+    return { sessionId: newSessionId };
   }
 
   /**
@@ -54,12 +54,12 @@ export default class SessioningConcept {
    * **effects**: removes the session `s`.
    */
   async delete(
-    { session }: { session: Session },
+    { sessionId }: { sessionId: Session },
   ): Promise<Empty | { error: string }> {
-    const result = await this.sessions.deleteOne({ _id: session });
+    const result = await this.sessions.deleteOne({ _id: sessionId });
 
     if (result.deletedCount === 0) {
-      return { error: `Session with id ${session} not found` };
+      return { error: `Session with id ${sessionId} not found` };
     }
 
     return {};
@@ -73,12 +73,12 @@ export default class SessioningConcept {
    * **effects**: returns the user associated with the session.
    */
   async _getUser(
-    { session }: { session: Session },
+    { sessionId }: { sessionId: Session },
   ): Promise<Array<{ user: User }> | [{ error: string }]> {
-    const sessionDoc = await this.sessions.findOne({ _id: session });
+    const sessionDoc = await this.sessions.findOne({ _id: sessionId });
 
     if (!sessionDoc) {
-      return [{ error: `Session with id ${session} not found` }];
+      return [{ error: `Session with id ${sessionId} not found` }];
     }
 
     return [{ user: sessionDoc.user }];
