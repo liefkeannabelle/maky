@@ -163,3 +163,84 @@ Deno.test(
     await client.close();
   },
 );
+
+Deno.test(
+  "ReactionConcept - removeAllReactionsFromPost",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const reactionConcept = new ReactionConcept(db);
+    await reactionConcept.reactions.deleteMany({});
+
+    // Setup: Add multiple reactions to the same post
+    await reactionConcept.addReactionToPost({
+      user: userA,
+      post: postA,
+      type: ReactionType.LIKE,
+    });
+    await reactionConcept.addReactionToPost({
+      user: userB,
+      post: postA,
+      type: ReactionType.LOVE,
+    });
+
+    // Add a reaction to a different post to ensure we only delete from postA
+    await reactionConcept.addReactionToPost({
+      user: userA,
+      post: postB,
+      type: ReactionType.CELEBRATE,
+    });
+
+    // Verify setup: postA should have 2 reactions, postB should have 1
+    const reactionsForPostA = await reactionConcept.reactions.find({
+      post: postA,
+    }).toArray();
+    const reactionsForPostB = await reactionConcept.reactions.find({
+      post: postB,
+    }).toArray();
+    assertEquals(reactionsForPostA.length, 2);
+    assertEquals(reactionsForPostB.length, 1);
+
+    // 1. Test successful removal of all reactions from postA
+    const removeAllResult = await reactionConcept.removeAllReactionsFromPost({
+      post: postA,
+    });
+
+    assert(
+      !("error" in removeAllResult),
+      "removeAllReactionsFromPost should succeed",
+    );
+
+    // Verify all reactions for postA are removed
+    const reactionsForPostAAfter = await reactionConcept.reactions.find({
+      post: postA,
+    }).toArray();
+    assertEquals(
+      reactionsForPostAAfter.length,
+      0,
+      "All reactions for postA should be deleted",
+    );
+
+    // Verify reactions for postB are still intact
+    const reactionsForPostBAfter = await reactionConcept.reactions.find({
+      post: postB,
+    }).toArray();
+    assertEquals(
+      reactionsForPostBAfter.length,
+      1,
+      "Reactions for postB should remain unchanged",
+    );
+
+    // 2. Test removing all reactions from a post with no reactions (should still succeed)
+    const emptyPostResult = await reactionConcept.removeAllReactionsFromPost({
+      post: postA, // Already deleted all reactions
+    });
+
+    assert(
+      !("error" in emptyPostResult),
+      "removeAllReactionsFromPost should succeed even if no reactions exist",
+    );
+
+    await client.close();
+  },
+);

@@ -137,4 +137,17 @@ export default class CommentConcept {
     const foundComment = await this.comments.findOne({ _id: comment });
     return { comment: foundComment };
   }
+
+  /**
+   * removeAllCommentsFromPost (post: Post)
+   *
+   * **requires** The `post` exists.
+   * **effects** Removes all `Comment`s associated with the given `post` from the state.
+   */
+  async removeAllCommentsFromPost(
+    { post }: { post: Post },
+  ): Promise<Empty | { error: string }> {
+    await this.comments.deleteMany({ post });
+    return {};
+  }
 }

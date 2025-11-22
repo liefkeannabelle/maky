@@ -276,3 +276,80 @@ Deno.test(
     await client.close();
   },
 );
+
+Deno.test(
+  "CommentConcept - removeAllCommentsFromPost",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const commentConcept = new CommentConcept(db);
+    await commentConcept.comments.deleteMany({});
+
+    // Setup: Add multiple comments to the same post
+    await commentConcept.addCommentToPost({
+      post: post1,
+      author: userA,
+      content: "First comment on post1",
+    });
+    await commentConcept.addCommentToPost({
+      post: post1,
+      author: userB,
+      content: "Second comment on post1",
+    });
+
+    // Add a comment to a different post to ensure we only delete from post1
+    await commentConcept.addCommentToPost({
+      post: post2,
+      author: userA,
+      content: "Comment on post2",
+    });
+
+    // Verify setup: post1 should have 2 comments, post2 should have 1
+    const { comments: post1Comments } = await commentConcept
+      ._getCommentsForPost({ post: post1 });
+    const { comments: post2Comments } = await commentConcept
+      ._getCommentsForPost({ post: post2 });
+    assertEquals(post1Comments.length, 2);
+    assertEquals(post2Comments.length, 1);
+
+    // 1. Test successful removal of all comments from post1
+    const removeAllResult = await commentConcept.removeAllCommentsFromPost({
+      post: post1,
+    });
+
+    assert(
+      !("error" in removeAllResult),
+      "removeAllCommentsFromPost should succeed",
+    );
+
+    // Verify all comments for post1 are removed
+    const { comments: post1CommentsAfter } = await commentConcept
+      ._getCommentsForPost({ post: post1 });
+    assertEquals(
+      post1CommentsAfter.length,
+      0,
+      "All comments for post1 should be deleted",
+    );
+
+    // Verify comments for post2 are still intact
+    const { comments: post2CommentsAfter } = await commentConcept
+      ._getCommentsForPost({ post: post2 });
+    assertEquals(
+      post2CommentsAfter.length,
+      1,
+      "Comments for post2 should remain unchanged",
+    );
+
+    // 2. Test removing all comments from a post with no comments (should still succeed)
+    const emptyPostResult = await commentConcept.removeAllCommentsFromPost({
+      post: post1, // Already deleted all comments
+    });
+
+    assert(
+      !("error" in emptyPostResult),
+      "removeAllCommentsFromPost should succeed even if no comments exist",
+    );
+
+    await client.close();
+  },
+);

@@ -108,4 +108,17 @@ export default class ReactionConcept {
 
     return {};
   }
+
+  /**
+   * removeAllReactionsFromPost (post: Post)
+   *
+   * @requires The `post` exists.
+   * @effects Removes all `Reaction`s associated with the given `post` from the state.
+   */
+  async removeAllReactionsFromPost(
+    { post }: { post: Post },
+  ): Promise<Empty | { error: string }> {
+    await this.reactions.deleteMany({ post });
+    return {};
+  }
 }
