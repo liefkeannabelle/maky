@@ -63,3 +63,43 @@
 //     { request, results },
 //   ]),
 // });
+
+import { actions, Sync, Frames } from "@engine";
+import { Requesting, SongLibrary } from "@concepts";
+
+/**
+ * Sync: SearchSongs
+ * 
+ * Handles song search requests by title or artist.
+ * HTTP: GET /songs/search?query=<string>
+ */
+export const SearchSongs: Sync = ({ request, query, results }) => ({
+  when: actions(
+    [Requesting.request, { path: "songs/search", query }, { request }]
+  ),
+  where: async (frames) => {
+    // Query the SongLibrary for matching songs
+    frames = await frames.query(SongLibrary._searchByTitleOrArtist, { query }, { results });
+    
+    // Map results to a cleaner format if needed, or just pass through
+    // The query returns { song: Song }[], we might want to flatten or format it
+    const newFrames = frames.map(frame => {
+        const rawResults = frame[results] as any[];
+        const formattedResults = rawResults.map(r => ({
+            id: r.song._id,
+            title: r.song.title,
+            artist: r.song.artist,
+            source: r.song.source,
+            difficulty: r.song.difficulty,
+            genre: r.song.genre,
+            tags: r.song.tags
+        }));
+        return { ...frame, [results]: formattedResults };
+    });
+    
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    [Requesting.respond, { request, results }]
+  )
+});
