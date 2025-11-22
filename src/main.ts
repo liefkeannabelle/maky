@@ -11,7 +11,7 @@ import * as concepts from "@concepts";
 const { Engine } = concepts;
 import { Logging } from "@engine";
 import { startRequestingServer } from "@concepts/Requesting/RequestingConcept.ts";
-import syncs from "@syncs";
+import syncs from "./syncs.ts";
 
 /**
  * Available logging levels:

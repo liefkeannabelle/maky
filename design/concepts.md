@@ -181,6 +181,10 @@ editComment (comment: Comment, author: User, newContent: String)
 *   **requires** The `comment` exists and its `author` matches the provided `author`.
 *   **effects** Updates the `content` of the `comment` to `newContent` and sets `lastEditedAt` to the current timestamp.
 
+removeAllCommentsFromPost (post: Post)
+*   **requires** The `post` exists.
+*   **effects** Removes all `Comment`s associated with the given `post` from the state and from the `comments` set of `post`.
+
 **notes**
 - lastEditedAt will be used to track if/when a comment was edited
 ---
@@ -215,6 +219,11 @@ removeReactionFromPost (user: User, post: Post)
 
 *   **requires** A `Reaction` exists associated with the given `user` and `post`.
 *   **effects** Removes the matching `Reaction` from the state and from the `reactions` set of `post`.
+
+removeAllReactionsFromPost (post: Post)
+
+*   **requires** The `post` exists.
+*   **effects** Removes all `Reaction`s associated with the given `post` from the state and from the `reactions` set of `post`.
 
 **notes**
 There are no non-obvious design choices in this concept.

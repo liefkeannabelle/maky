@@ -64,12 +64,12 @@ export default class SongLibraryConcept {
    * **effects** Creates a new Song; sets the metadata; returns the new song.
    */
   async addSong(params: {
+    id?: string; // Allow manual ID override for seeding
     title: string;
     artist: string;
     chords: string[];
     genre?: string;
     // Optional fields to support the rich JSON dataset
-    id?: string; // Allow manual ID override for seeding
     key?: string;
     tempo?: number;
     simplifiedChords?: string[];
@@ -85,10 +85,10 @@ export default class SongLibraryConcept {
 
     if (existing) {
       return { error: "Song already exists" };
-    }
+    } 
 
     const newSong: Song = {
-      _id: (params.id as ID) || freshID(),
+      _id: (params.id as ID) ?? freshID(),
       title: params.title,
       artist: params.artist,
       chords: params.chords,

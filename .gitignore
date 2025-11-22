@@ -7,6 +7,7 @@ ctx.exe
 src/concepts/concepts.ts
 src/concepts/test_concepts.ts
 src/syncs/syncs.ts
+data/raw/chordonomicon_v2.csv
 config.json
 node_modules/
 context/

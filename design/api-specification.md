@@ -810,6 +810,37 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
+### POST /api/Comment/removeAllCommentsFromPost
+
+**Description:** Removes all comments from a post. This is typically used for cascade deletion when a post is deleted.
+
+**Authentication:** This endpoint is typically called internally by synchronizations and may not require user authentication. However, if exposed directly, it should require appropriate authorization (e.g., post author or administrator).
+
+**Requirements:**
+- The `post` exists.
+
+**Effects:**
+- Removes all `Comment`s associated with the specified `post` from the state and from the `comments` set of `post`.
+
+**Request Body:**
+```json
+{
+  "post": "string"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
 # API Specification: Reaction Concept
 
 **Purpose:** To allow users to express positive sentiment on posts.
@@ -902,6 +933,37 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ```json
 {
   "sessionId": "string",
+  "post": "string"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+### POST /api/Reaction/removeAllReactionsFromPost
+
+**Description:** Removes all reactions from a post. This is typically used for cascade deletion when a post is deleted.
+
+**Authentication:** This endpoint is typically called internally by synchronizations and may not require user authentication. However, if exposed directly, it should require appropriate authorization (e.g., post author or administrator).
+
+**Requirements:**
+- The `post` exists.
+
+**Effects:**
+- Removes all `Reaction`s associated with the specified `post` from the state and from the `reactions` set of `post`.
+
+**Request Body:**
+```json
+{
   "post": "string"
 }
 ```

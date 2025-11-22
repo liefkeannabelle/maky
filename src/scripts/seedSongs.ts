@@ -1,20 +1,25 @@
 // file: src/scripts/seedSongs.ts
 
-import songsData from "../../data/songs.json" with { type: "json" };
+import curatedSongsData from "../../data/songs.json" with { type: "json" };
+import chordonomiconSongsData from "../../data/chordonomicon_songs.json" with {
+  type: "json",
+};
+
 import { getDb } from "@utils/database.ts";
 import SongLibraryConcept, {
   Song,
 } from "@concepts/SongLibrary/SongLibraryConcept.ts";
 
 /**
- * Shape of each entry in data/songs.json.
- * Adjust if your JSON has slightly different field names.
+ * Shape of each entry in our song JSON files.
+ * Supports both curated_songs and chordonomicon_songs.
  */
 type RawSong = {
+  id: string;
   title: string;
   artist: string;
-  key?: string;
-  tempo?: number;
+  key?: string | null;
+  tempo?: number | null;
   chords: string[];
   simplifiedChords?: string[];
   sections?: Song["sections"];
@@ -24,7 +29,10 @@ type RawSong = {
 };
 
 async function main() {
-  const rawSongs = songsData as RawSong[];
+  const curated = curatedSongsData as RawSong[];
+  const chordonomicon = chordonomiconSongsData as RawSong[];
+
+  const rawSongs: RawSong[] = [...curated, ...chordonomicon];
 
   // Use the real DB, not testDb
   const [db /*, client*/] = await getDb();
@@ -34,15 +42,18 @@ async function main() {
   console.log(`Seeding ${rawSongs.length} songs into SongLibrary...`);
 
   for (const [idx, s] of rawSongs.entries()) {
+    console.log(`[debug] rawSongs[${idx}].id =`, s.id);
+
     try {
       await songLibrary.addSong({
+        id: s.id,
         title: s.title,
         artist: s.artist ?? "Unknown",
         chords: s.chords,
         // genre is optional; you can derive it from tags if you want
         genre: undefined,
-        key: s.key,
-        tempo: s.tempo,
+        key: s.key ?? undefined,
+        tempo: s.tempo ?? undefined,
         simplifiedChords: s.simplifiedChords,
         sections: s.sections,
         difficulty: s.difficulty,
@@ -51,7 +62,9 @@ async function main() {
       });
 
       console.log(
-        `[${idx}] Seeded: "${s.title}" – ${s.artist}`,
+        `[${idx}] Seeded: "${s.title}" – ${s.artist} [source: ${
+          s.source ?? "curated"
+        }]`,
       );
     } catch (err) {
       // SongLibraryConcept throws this on duplicates:
