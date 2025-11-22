@@ -345,3 +345,10 @@ export function generateChordVocabulary(
   // Ensure uniqueness and sort for stability.
   return Array.from(new Set(names)).sort();
 }
+
+export function listChordSymbols(): string[] {
+  // If you have generateChordVocabulary:
+  return generateChordVocabulary({ includeSlashChords: true });
+}
+
+

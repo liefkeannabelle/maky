@@ -1,6 +1,7 @@
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
+import { normalizeChordSymbol, isValidChordSymbol } from "../../theory/chords.ts";
 
 const PREFIX = "ChordLibrary.";
 
@@ -57,29 +58,38 @@ export default class ChordLibraryConcept {
    * **requires** The `user` exists. The `user` does not already have the specified `chord` in their inventory.
    * **effects** Creates a new `KnownChord` entry associating the `user`, `chord`, and `mastery` level.
    */
-  async addChordToInventory(input: {
-    user: User;
-    chord: Chord;
+  async addChordToInventory(params: {
+    user: ID;
+    chord: string;
     mastery: MasteryLevel;
-  }): Promise<Empty | { error: string }> {
-    const userExists = await this.users.findOne({ _id: input.user });
-    if (!userExists) {
-      return { error: "User does not exist" };
+  }) {
+    // 1) check user exists (you already do this)
+    const userDoc = await this.users.findOne({ _id: params.user });
+    if (!userDoc) {
+      return { error: "User does not exist in ChordLibrary" };
     }
 
-    const chordExists = await this.knownChords.findOne({
-      user: input.user,
-      chord: input.chord,
+    // 2) normalize + validate chord
+    const normalized = normalizeChordSymbol(params.chord);
+    if (!normalized || !isValidChordSymbol(normalized)) {
+      return { error: `Invalid chord symbol: ${params.chord}` };
+    }
+
+    // 3) enforce uniqueness on normalized chord
+    const existing = await this.knownChords.findOne({
+      user: params.user,
+      chord: normalized,
     });
-    if (chordExists) {
+    if (existing) {
       return { error: "Chord already in inventory" };
     }
 
+    // 4) insert
     await this.knownChords.insertOne({
       _id: freshID(),
-      user: input.user,
-      chord: input.chord,
-      mastery: input.mastery,
+      user: params.user,
+      chord: normalized,
+      mastery: params.mastery,
     });
 
     return {};

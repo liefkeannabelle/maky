@@ -4,7 +4,7 @@ import { Requesting, Sessioning, UserAccount } from "@concepts";
 // --- Registration (Public) ---
 
 /**
- * Catches a request to register a new user and triggers the UserAccount.register action.
+ * Cat`ch`es a request to register a new user and triggers the UserAccount.register action.
  * This is a public endpoint and does not require a session.
  */
 export const HandleRegisterRequest: Sync = (

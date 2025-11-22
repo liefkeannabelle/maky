@@ -1,6 +1,8 @@
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
+import { listChordSymbols, normalizeChordSymbol } from "../../theory/chords.ts";
+
 
 const PREFIX = "Chord.";
 

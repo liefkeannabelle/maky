@@ -66,6 +66,10 @@ async function main() {
 
   console.log(`Total songs in library: ${allSongs.length}`);
 
+  console.log(
+  "Song IDs and titles:",
+  allSongs.map((s) => ({ id: s._id, title: s.title })),
+  );
   if (allSongs.length === 0) {
     console.warn("No songs found in library. Did you run seedSongs.ts?");
     return;

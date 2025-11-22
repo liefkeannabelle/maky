@@ -11,6 +11,7 @@ import SongLibraryConcept, {
  * Adjust if your JSON has slightly different field names.
  */
 type RawSong = {
+  id: string;
   title: string;
   artist: string;
   key?: string;
@@ -34,8 +35,11 @@ async function main() {
   console.log(`Seeding ${rawSongs.length} songs into SongLibrary...`);
 
   for (const [idx, s] of rawSongs.entries()) {
+    console.log(`[debug] rawSongs[${idx}].id =`, s.id);
+
     try {
       await songLibrary.addSong({
+        id: s.id,
         title: s.title,
         artist: s.artist ?? "Unknown",
         chords: s.chords,
