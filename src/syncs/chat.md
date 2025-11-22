@@ -1,43 +1,21 @@
+
 [@sync-compilation](sync-compilation.md)
 
-**sync**
-	OnDeleteAccount \
-**when**
-	UserAccount.deleteAccount(user, password) returns true \
-**then** \
-UserProfile.deleteProfile(user) \
-ChordLibrary.removeUser(user) \
-SongLibrary.removeUser(user) \
-Friendship.removeAllFriendshipsForUser(user) \
-Following.removeUserFollowing(user) \
-Following.removeUserAsFollower(user) \
-JamGroup.removeUserFromAllGroups(user) (this action comment it because we don't have hjamgroup implmeent yet, but assume normal syntax for it, the rest should work well)
 
-
-# implement the ondeleteaccount sync, calling the other concepts appropriately. follow the guidelines on how to implement syncs, and the examples in useracc.sync.ts and userprofile.sync.ts. we will need to modify the sync for user account registration . don't output the entire file. only the syncs and sections you modified and added to useracc.sync.ts
+# implement each action of the "friendship" concept, that i will paste into friendship.sync.ts. it needs to pass through the sessioning to get the user, and it takes from the request concept. follow other sync files to see how to set it up properly. don't stray away from structure and conventions of sync implementations.
 
 # response:
 
-Based on your design and the provided concept implementations, here is the implementation for the `OnDeleteAccount` sync. This new sync should be added to `src/syncs/useracc.sync.ts`.
+Of course. Here is the implementation for the synchronizations that handle the `Friendship` concept's actions, designed to be placed in `src/syncs/friendship.sync.ts`.
 
-I have also updated the import statement in that file to include the newly required concepts. The existing `InitializeNewUser` sync already correctly implements the specified behavior, so no modifications were necessary for it.
+This implementation follows the established conventions from your other sync files by:
+1.  Creating a "request handler" sync for each API endpoint that triggers the concept action.
+2.  Creating a "response handler" sync that sends the result back to the client.
+3.  Using a `where` clause with `Sessioning._getUser` to authenticate requests and retrieve the user ID.
+4.  Correctly aliasing variables (e.g., `user: requester`) to match the concept's action parameters.
 
-### file: src/syncs/useracc.sync.ts
+# file: src/syncs/friendship.sync.ts
 
 ```typescript
-import { actions, Sync } from "@engine";
-import {
-  ChordLibrary,
-  Following,
-  Friendship,
-  Requesting,
-  Sessioning,
-  SongLibrary,
-  UserAccount,
-  UserProfile,
-} from "@concepts";
-
-// ... existing syncs for Registration, Login, Change Password, etc. ...
-
 
 ```
