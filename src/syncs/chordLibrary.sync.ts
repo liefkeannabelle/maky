@@ -1,3 +1,7 @@
+import { actions, Sync, Frames } from "@engine";
+import { SongLibrary, ChordLibrary } from "@concepts";
+import { ID } from "@utils/types.ts";
+
 /**
  * Sync: AutoAddChordsForNewSong
  * 
@@ -5,51 +9,45 @@
  * chords the user does not yet know. If so, it adds them to the user's 
  * ChordLibrary with 'in-progress' mastery.
  */
-export function autoAddChordsSync(concepts: any) {
-  if (!concepts.songLibrary || typeof concepts.songLibrary.on !== 'function') {
-      return { when: [], then: [] };
-  }
-  concepts.songLibrary.on("startLearningSong", async (payload: any) => {
-    const { user, song } = payload;
+export const AutoAddChordsForNewSong: Sync = ({ user, song, chord }) => ({
+  when: actions(
+    [SongLibrary.startLearningSong, { user, song }]
+  ),
+  where: async (frames) => {
+    // 1. Get Song Details
+    // We need to find the song object to get its chords
+    const allSongsObjs = await SongLibrary._getAllSongs({});
+    
+    // 2. Get User's Known Chords
+    // We need to filter out chords the user already knows
+    
+    const newFrames = [];
+    for (const frame of frames) {
+        const currentSongId = frame[song];
+        const currentUser = frame[user] as ID;
 
-    console.log(`[Sync] AutoAddChords: Checking chords for user ${user} learning song ${song._id}`);
+        const songEntry = allSongsObjs.find((s: any) => s.song._id === currentSongId);
+        if (!songEntry) continue;
 
-    try {
-      // 1. Get the list of chords required for the song
-      // Fetch song details because payload only has ID
-      const allSongs = await concepts.songLibrary._getAllSongs({});
-      const songEntry = allSongs.find((s: any) => s.song._id === song);
-      
-      if (!songEntry) {
-        console.log(`[Sync] AutoAddChords: Song ${song} not found`);
-        return;
-      }
-      
-      const songChords: string[] = songEntry.song.chords || [];
+        const chordsInSong = songEntry.song.chords || [];
+        if (chordsInSong.length === 0) continue;
 
-      if (songChords.length === 0) {
-        return;
-      }
+        const knownChordsObjs = await ChordLibrary._getKnownChords({ user: currentUser });
+        const knownChordSet = new Set(knownChordsObjs.map((c: any) => c.chord));
 
-      // 2. Get user's currently known chords to check for duplicates
-      const knownChordsObjs = await concepts.chordLibrary._getKnownChords({ user });
-      // Map to a Set of chord symbols (e.g., "Am", "G") for O(1) lookup
-      const knownChordSet = new Set(knownChordsObjs.map((c: any) => c.chord || c.symbol));
-
-      // 3. Iterate and add missing chords
-      for (const chordSymbol of songChords) {
-        if (!knownChordSet.has(chordSymbol)) {
-          console.log(`[Sync] AutoAddChords: Adding new chord ${chordSymbol} to inventory`);
-          
-          await concepts.chordLibrary.addChordToInventory({
-            user,
-            chord: chordSymbol,
-            mastery: "in-progress"
-          });
+        for (const chordSymbol of chordsInSong) {
+            if (!knownChordSet.has(chordSymbol)) {
+                // Create a new frame for each new chord to add
+                newFrames.push({
+                    ...frame,
+                    [chord]: chordSymbol
+                });
+            }
         }
-      }
-    } catch (err) {
-      console.error(`[Sync] AutoAddChords: Error processing song ${song?._id}`, err);
     }
-  });
-}
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    [ChordLibrary.addChordToInventory, { user, chord, mastery: "in-progress" }]
+  )
+});
