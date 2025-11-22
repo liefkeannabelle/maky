@@ -372,3 +372,74 @@ Deno.test(
     await client.close();
   },
 );
+Deno.test(
+  "FriendshipConcept - _getFriends query should return a list of friends",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const friendshipConcept = new FriendshipConcept(db);
+    await friendshipConcept.friendships.deleteMany({});
+
+    // Setup:
+    // A and B are friends
+    await friendshipConcept.sendFriendRequest({
+      requester: userA,
+      recipient: userB,
+    });
+    await friendshipConcept.acceptFriendRequest({
+      requester: userA,
+      recipient: userB,
+    });
+
+    // A and C are friends
+    await friendshipConcept.sendFriendRequest({
+      requester: userC,
+      recipient: userA,
+    });
+    await friendshipConcept.acceptFriendRequest({
+      requester: userC,
+      recipient: userA,
+    });
+
+    // A and D have a pending request (not friends)
+    await friendshipConcept.sendFriendRequest({
+      requester: userA,
+      recipient: userD,
+    });
+
+    // B and D have a declined request (not friends)
+    await friendshipConcept.sendFriendRequest({
+      requester: userB,
+      recipient: userD,
+    });
+    await friendshipConcept.declineFriendRequest({
+      requester: userB,
+      recipient: userD,
+    });
+
+    // Test for userA (should have B and C as friends)
+    const friendsOfA = await friendshipConcept._getFriends({ user: userA });
+    assertEquals(friendsOfA.length, 2, "User A should have 2 friends.");
+    const friendAIds = friendsOfA.map((f) => f.friend).sort();
+    assertEquals(
+      friendAIds,
+      [userB, userC].sort(),
+      "The friend list for A is incorrect.",
+    );
+
+    // Test for userB (should have A as a friend)
+    const friendsOfB = await friendshipConcept._getFriends({ user: userB });
+    assertEquals(friendsOfB.length, 1, "User B should have 1 friend.");
+    assertEquals(
+      friendsOfB[0].friend,
+      userA,
+      "The friend list for B is incorrect.",
+    );
+
+    // Test for userD (no friends)
+    const friendsOfD = await friendshipConcept._getFriends({ user: userD });
+    assertEquals(friendsOfD.length, 0, "User D should have no friends.");
+
+    await client.close();
+  },
+);

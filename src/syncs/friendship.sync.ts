@@ -1,4 +1,4 @@
-import { actions, Sync } from "@engine";
+import { actions, Frames, Sync } from "@engine";
 import { Friendship, Requesting, Sessioning } from "@concepts";
 
 // --- Send Friend Request (Authenticated) ---
@@ -176,4 +176,45 @@ export const RespondToAreFriendsQuery: Sync = (
     [Friendship._areFriends, {}, { isFriend, error }],
   ),
   then: actions([Requesting.respond, { request, isFriend, error }]),
+});
+/**
+ * Handles an authenticated request to retrieve the current user's friend list.
+ * This sync demonstrates a common authenticated query pattern:
+ * 1. A request is made with a `sessionId`.
+ * 2. The `where` clause uses `Sessioning._getUser` to validate the session and get the user ID.
+ * 3. The user ID is then used to query the target concept (`Friendship._getFriends`).
+ * 4. The results are collected and returned in the response.
+ */
+export const HandleGetFriendsRequest: Sync = (
+  { request, sessionId, user, friend, friends },
+) => ({
+  // WHEN: A request is made to get the friends list, providing a session ID for authentication.
+  when: actions([
+    Requesting.request,
+    { path: "/Friendship/_getFriends", sessionId },
+    { request },
+  ]),
+
+  // WHERE: We authenticate the user and fetch the data.
+  where: async (frames: Frames) => {
+    // Step 1: Get the user from the session. If the session is invalid, `frames` will become empty,
+    // and this sync will not proceed to the `then` clause.
+    frames = await frames.query(Sessioning._getUser, { session: sessionId }, {
+      user,
+    });
+
+    // Step 2: Get the list of friends for that user. This query returns one frame per friend.
+    frames = await frames.query(Friendship._getFriends, { user }, { friend });
+
+    // Step 3: Collect all the individual `friend` frames into a single `friends` array.
+    // This gracefully handles the case of having zero friends (resulting in an empty array).
+    return frames.collectAs([friend], friends);
+  },
+
+  // THEN: Respond to the original request with the collected list of friends.
+  then: actions([
+    Requesting.respond,
+    // The final JSON response will be an object like: { friends: [{ friend: "..." }, ...] }
+    { request, friends },
+  ]),
 });

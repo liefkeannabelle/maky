@@ -229,3 +229,103 @@ Deno.test(
     await client.close();
   },
 );
+Deno.test(
+  "UserProfileConcept - _searchByDisplayName",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const userProfile = new UserProfileConcept(db);
+    await userProfile.profiles.deleteMany({});
+
+    // Create test data
+    await userProfile.createProfile({
+      user: "user:1" as ID,
+      displayName: "Alice Wonderland",
+      genrePreferences: ["Pop"],
+      skillLevel: "BEGINNER",
+    });
+    await userProfile.createProfile({
+      user: "user:2" as ID,
+      displayName: "Bob Builder",
+      genrePreferences: ["Rock"],
+      skillLevel: "INTERMEDIATE",
+    });
+    await userProfile.createProfile({
+      user: "user:3" as ID,
+      displayName: "Alicia Keys",
+      genrePreferences: ["R&B"],
+      skillLevel: "ADVANCED",
+    });
+    await userProfile.createProfile({
+      user: "user:4" as ID,
+      displayName: "Charlie Chaplin",
+      genrePreferences: ["Classical"],
+      skillLevel: "ADVANCED",
+    });
+
+    // Test 1: Partial, case-insensitive match returning multiple results
+    const multiMatchResult = await userProfile._searchByDisplayName({
+      query: "ali",
+    });
+    assertEquals(
+      multiMatchResult.length,
+      2,
+      "Should find 'Alice' and 'Alicia'",
+    );
+    assert(
+      multiMatchResult.some((p) => p.displayName === "Alice Wonderland"),
+      "Should contain Alice Wonderland",
+    );
+    assert(
+      multiMatchResult.some((p) => p.displayName === "Alicia Keys"),
+      "Should contain Alicia Keys",
+    );
+
+    // Test 2: Exact match
+    const exactMatchResult = await userProfile._searchByDisplayName({
+      query: "Bob Builder",
+    });
+    assertEquals(exactMatchResult.length, 1, "Should find exact match");
+    assertEquals(exactMatchResult[0].displayName, "Bob Builder");
+    assertEquals(exactMatchResult[0].user, "user:2" as ID);
+
+    // Test 3: No match
+    const noMatchResult = await userProfile._searchByDisplayName({
+      query: "Zelda",
+    });
+    assertEquals(noMatchResult.length, 0, "Should find no matches");
+
+    // Test 4: Empty query
+    const emptyQueryResult = await userProfile._searchByDisplayName({
+      query: "",
+    });
+    assertEquals(
+      emptyQueryResult.length,
+      0,
+      "Should return empty array for empty query",
+    );
+
+    // Test 5: Whitespace query
+    const whitespaceQueryResult = await userProfile._searchByDisplayName({
+      query: "   ",
+    });
+    assertEquals(
+      whitespaceQueryResult.length,
+      0,
+      "Should return empty array for whitespace query",
+    );
+
+    // Test 6: Another partial match
+    const partialMatchResult = await userProfile._searchByDisplayName({
+      query: "Chap",
+    });
+    assertEquals(
+      partialMatchResult.length,
+      1,
+      "Should find 'Charlie Chaplin' from 'Chap'",
+    );
+    assertEquals(partialMatchResult[0].displayName, "Charlie Chaplin");
+
+    await client.close();
+  },
+);

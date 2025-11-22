@@ -1058,6 +1058,40 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
+### POST /api/Friendship/_getFriends
+
+**Description:** Retrieves a list of all users who are friends with the specified user.
+
+**Requirements:**
+- The user `user` exists.
+
+**Effects:**
+- Returns a set of all users `f` for whom a `Friendship` exists with `status` `ACCEPTED` between `user` and `f`.
+
+**Request Body:**
+```json
+{
+  "user": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "friend": "string"
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
+---
 # API Specification: JamGroup Concept
 
 **Purpose:** To allow users to create and manage private groups for collaborative jamming.
