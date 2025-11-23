@@ -14,18 +14,9 @@ Existing syncs:
 
 Concepts:
 
-[@UserProfileConcept.ts](../concepts/UserProfile/UserProfileConcept.ts)
-
-[@ChordLibraryConcept.ts](../concepts/ChordLibrary/ChordLibraryConcept.ts)
-
-[@SongLibraryConcept.ts](../concepts/SongLibrary/SongLibraryConcept.ts)
+[@ReactionConcept.ts](../concepts/Reaction/ReactionConcept.ts)
 
 [@SessioningConcept.ts](../concepts/Sessioning/SessioningConcept.ts)
 
 [@RequestingConcept.ts](../concepts/Requesting/RequestingConcept.ts)
 
-[@FollowingConcept.ts](../concepts/Following/FollowingConcept.ts)
-
-[@FriendshipConcept.ts](../concepts/Friendship/FriendshipConcept.ts)
-
-[@UserAccountConcept.ts](../concepts/UserAccount/UserAccountConcept.ts)

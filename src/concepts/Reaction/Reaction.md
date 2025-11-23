@@ -30,5 +30,12 @@ removeReactionFromPost (user: User, post: Post)
 *   **requires** A `Reaction` exists associated with the given `user` and `post`.
 *   **effects** Removes the matching `Reaction` from the state and from the `reactions` set of `post`.
 
+**queries**
+_getReactionsForPostId (post: Post): (type: ReactionType, count: number)
+
+*   **requires** The `post` exists.
+*   **effects** Returns an array of objects, each containing a reaction type and its total count for the given `post`. Includes types with a count of 0.
+
+
 **notes**
 There are no non-obvious design choices in this concept.

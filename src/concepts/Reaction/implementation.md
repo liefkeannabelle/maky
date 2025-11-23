@@ -2,20 +2,30 @@
 
 [@Reaction](Reaction.md)
 
-[@UserProfile.test.ts](../UserProfile/UserProfile.test.ts)
-
-
 [@ReactionConcept.ts](ReactionConcept.ts)
 
+[@Reaction.test.ts](Reaction.test.ts)
+
+[@api-extraction-from-code](../../../design/tools/api-extraction-from-code.md)
 
 
 
-# implement: a few tests covering all Reaction actions. userprofile.test.ts shows you the structure of the tests, but referes to a different specs. Refer to reaction.md for our spec, as well as the implementation in reactionconcept.ts . Include   sanitizeOps: false,   sanitizeResources: false, in each of the deno tests, to prevent leaks. Don t do it with t.step stuff. 
-
+# implement: make a _getReactionsForPostId (post) which outputs a json of reaction text string and its frequency. if no one reacted with a reaction type, the frequency is 0. then, make a concept spec for it. then, also make an api spec for it. and finally, make a minimal deno test for it. minimal code as possible! also, only output the parts you added or modified. I dont need unchanged existing code pasted here. 
 # response:
 
-# file: src\concepts\Reaction\Reaction.test.ts
+Here are the additions and modifications to implement the `_getReactionsForPostId` query.
+
+# concept: Reaction (modified)
+
+# file: src\concepts\Reaction\ReactionConcept.ts (modified)
+
+
+# API Specification: Reaction Concept (addition)
+
+### POST /api/Reaction/_getReactionsForPostId
+
+
+# file: src\concepts\Reaction\Reaction.test.ts (addition)
 
 ```typescript
-
 ```
