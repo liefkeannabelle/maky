@@ -6,9 +6,9 @@ import chordonomiconSongsData from "../../data/chordonomicon_songs.json" with {
 };
 
 import { getDb } from "@utils/database.ts";
-import SongLibraryConcept, {
+import SongConcept, {
   Song,
-} from "@concepts/SongLibrary/SongLibraryConcept.ts";
+} from "@concepts/Song/SongConcept.ts";
 
 /**
  * Shape of each entry in our song JSON files.
@@ -37,15 +37,15 @@ async function main() {
   // Use the real DB, not testDb
   const [db /*, client*/] = await getDb();
 
-  const songLibrary = new SongLibraryConcept(db);
+  const songConcept = new SongConcept(db);
 
-  console.log(`Seeding ${rawSongs.length} songs into SongLibrary...`);
+  console.log(`Seeding ${rawSongs.length} songs into Song...`);
 
   for (const [idx, s] of rawSongs.entries()) {
     console.log(`[debug] rawSongs[${idx}].id =`, s.id);
 
     try {
-      await songLibrary.addSong({
+      await songConcept.createSong({
         id: s.id,
         title: s.title,
         artist: s.artist ?? "Unknown",
@@ -67,8 +67,8 @@ async function main() {
         }]`,
       );
     } catch (err) {
-      // SongLibraryConcept throws this on duplicates:
-      // "Song already exists in SongLibrary"
+      // SongConcept throws this on duplicates:
+      // "Song already exists"
       if (err instanceof Error && err.message.includes("Song already exists")) {
         console.log(`Skipping duplicate: "${s.title}" – ${s.artist}`);
       } else {

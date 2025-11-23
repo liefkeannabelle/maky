@@ -65,7 +65,7 @@
 // });
 
 import { actions, Sync, Frames } from "@engine";
-import { Requesting, SongLibrary } from "@concepts";
+import { Requesting, Song } from "@concepts";
 
 /**
  * Sync: SearchSongs
@@ -79,7 +79,7 @@ export const SearchSongs: Sync = ({ request, query, results }) => ({
   ),
   where: async (frames) => {
     // Query the SongLibrary for matching songs
-    frames = await frames.query(SongLibrary._searchByTitleOrArtist, { query }, { results });
+    frames = await frames.query(Song._searchByTitleOrArtist, { query }, { results });
     
     // Map results to a cleaner format if needed, or just pass through
     // The query returns { song: Song }[], we might want to flatten or format it

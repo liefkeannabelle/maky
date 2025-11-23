@@ -1,50 +1,26 @@
-import { assertEquals, assertNotEquals } from "jsr:@std/assert";
+import { assertEquals } from "jsr:@std/assert";
 import { testDb } from "@utils/database.ts";
 import SongLibraryConcept, { SongID, UserID } from "./SongLibraryConcept.ts";
-import { freshID } from "@utils/database.ts";
+import SongConcept from "../Song/SongConcept.ts";
 
 Deno.test("SongLibraryConcept - Action Tests", async (t) => {
   const [db, client] = await testDb();
   const songLibrary = new SongLibraryConcept(db);
+  const songConcept = new SongConcept(db);
 
   // Shared data
   const songId = "song:sunrise-groove" as SongID;
   const userId = "user:alice" as UserID;
 
-  await t.step(
-    "addSong: requires unique song; effects creates song",
-    async () => {
-      const result = await songLibrary.addSong({
-        id: songId,
-        title: "Sunrise Groove",
-        artist: "Kelpy G",
-        chords: ["G", "C", "D"],
-        genre: "Jazz",
-        difficulty: 1,
-      });
-
-      assertNotEquals(
-        (result as any).song,
-        undefined,
-        "Should return the created song",
-      );
-      const song = (result as any).song;
-      assertEquals(song.title, "Sunrise Groove");
-      assertEquals(song._id, songId);
-
-      // Test Requirement: Unique song
-      const duplicate = await songLibrary.addSong({
-        title: "Sunrise Groove",
-        artist: "Kelpy G",
-        chords: ["A"],
-      });
-      assertEquals(
-        (duplicate as any).error,
-        "Song already exists",
-        "Should fail to add duplicate song",
-      );
-    },
-  );
+  // Setup: Create song
+  await songConcept.createSong({
+    id: songId,
+    title: "Sunrise Groove",
+    artist: "Kelpy G",
+    chords: ["G", "C", "D"],
+    genre: "Jazz",
+    difficulty: 1,
+  });
 
   await t.step(
     "addUser: requires unique user; effects creates user",
@@ -54,7 +30,8 @@ Deno.test("SongLibraryConcept - Action Tests", async (t) => {
 
       // Test Requirement: Unique user
       const duplicate = await songLibrary.addUser({ user: userId });
-      assertEquals((duplicate as any).error, "User already exists in library");
+      if (!("error" in duplicate)) throw new Error("Should have failed");
+      assertEquals(duplicate.error, "User already exists in library");
     },
   );
 
@@ -80,8 +57,9 @@ Deno.test("SongLibraryConcept - Action Tests", async (t) => {
         song: songId,
         mastery: "mastered",
       });
+      if (!("error" in duplicate)) throw new Error("Should have failed");
       assertEquals(
-        (duplicate as any).error,
+        duplicate.error,
         "User is already learning this song",
       );
     },
@@ -116,98 +94,13 @@ Deno.test("SongLibraryConcept - Action Tests", async (t) => {
     },
   );
 
-  await t.step(
-    "removeSong: effects removes song and associated progress",
-    async () => {
-      // Setup: Add song back and user learning it
-      await songLibrary.startLearningSong({
-        user: userId,
-        song: songId,
-        mastery: "in-progress",
-      });
-
-      const result = await songLibrary.removeSong({ song: songId });
-      assertEquals(result, {}, "Should remove song successfully");
-
-      // Verify song gone
-      const songs = await songLibrary._getAllSongs({});
-      const exists = songs.find((s) => s.song._id === songId);
-      assertEquals(exists, undefined);
-
-      // Verify user progress cleared (would be error if not cleared properly or logic broken)
-      // We re-add song just to make the query valid if it relies on join,
-      // but simpler is to check raw DB or check that _getSongsInProgress is empty
-      // Since _getSongsInProgress filters out songs that don't exist in songs collection,
-      // this effectively tests the requirement.
-      const progress = await songLibrary._getSongsInProgress({ user: userId });
-      assertEquals(progress.length, 0);
-    },
-  );
-
-  await client.close();
-});
-
-Deno.test("SongLibraryConcept - Query Logic", async (t) => {
-  const [db, client] = await testDb();
-  const songLibrary = new SongLibraryConcept(db);
-
-  // Seed songs
-  await songLibrary.addSong({
-    title: "Simple",
-    artist: "A",
-    chords: ["C", "G"],
-    genre: "Folk",
-  });
-  await songLibrary.addSong({
-    title: "Medium",
-    artist: "B",
-    chords: ["C", "G", "Am"],
-    genre: "Pop",
-  });
-  await songLibrary.addSong({
-    title: "Complex",
-    artist: "C",
-    chords: ["C", "G", "Am", "F"],
-    genre: "Rock",
-  });
-
-  await t.step(
-    "_getPlayableSongs: filters by subset of known chords",
-    async () => {
-      // Case 1: Know C and G
-      const result1 = await songLibrary._getPlayableSongs({
-        knownChords: ["C", "G"],
-      });
-      assertEquals(result1.length, 1);
-      assertEquals(result1[0].song.title, "Simple");
-
-      // Case 2: Know C, G, Am
-      const result2 = await songLibrary._getPlayableSongs({
-        knownChords: ["C", "G", "Am"],
-      });
-      assertEquals(result2.length, 2); // Simple + Medium
-
-      // Case 3: Know nothing
-      const result3 = await songLibrary._getPlayableSongs({ knownChords: [] });
-      assertEquals(result3.length, 0);
-    },
-  );
-
-  await t.step("_getPlayableSongs: filters by genre", async () => {
-    const result = await songLibrary._getPlayableSongs({
-      knownChords: ["C", "G", "Am", "F"],
-      genres: ["Rock"],
-    });
-    assertEquals(result.length, 1);
-    assertEquals(result[0].song.title, "Complex");
-  });
-
   await client.close();
 });
 
 Deno.test("SongLibraryConcept - Principle Trace", async (t) => {
   const [db, client] = await testDb();
   const songLibrary = new SongLibraryConcept(db);
+  const songConcept = new SongConcept(db);
 
   console.log("\n--- Principle Trace: User Learning Journey ---");
 
@@ -218,22 +111,26 @@ Deno.test("SongLibraryConcept - Principle Trace", async (t) => {
   const knownChords = ["C", "G", "D"];
 
   // Populate Library
-  const easySong =
-    (await songLibrary.addSong({
-      title: "Easy",
-      artist: "Me",
-      chords: ["C", "G"],
-    }) as any).song;
-  const hardSong =
-    (await songLibrary.addSong({
-      title: "Hard",
-      artist: "Me",
-      chords: ["Cm7", "F9"],
-    }) as any).song;
+  const easySongRes = await songConcept.createSong({
+    title: "Easy",
+    artist: "Me",
+    chords: ["C", "G"],
+  });
+  if ("error" in easySongRes) throw new Error(easySongRes.error);
+  const easySong = easySongRes.song;
+
+  const hardSongRes = await songConcept.createSong({
+    title: "Hard",
+    artist: "Me",
+    chords: ["Cm7", "F9"],
+  });
+  if ("error" in hardSongRes) throw new Error(hardSongRes.error);
+  const hardSong = hardSongRes.song;
 
   await t.step("1. User queries library for playable songs", async () => {
     // "...can query the library to find songs they can play."
-    const playable = await songLibrary._getPlayableSongs({ knownChords });
+    // Note: This query moved to SongConcept, but for the trace we can use SongConcept
+    const playable = await songConcept._getPlayableSongs({ knownChords });
     console.log("User knows C,G,D. Playable songs found:", playable.length);
 
     assertEquals(playable.length, 1);

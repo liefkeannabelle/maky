@@ -4,6 +4,7 @@ import {
   RecommendationEngine,
   Requesting,
   Sessioning,
+  Song,
   SongLibrary,
 } from "@concepts";
 import { ID } from "@utils/types.ts";
@@ -22,7 +23,7 @@ export const AutoAddChordsForNewSong: Sync = ({ user, song, chord }) => ({
   where: async (frames) => {
     // 1. Get Song Details
     // We need to find the song object to get its chords
-    const allSongsObjs = await SongLibrary._getAllSongs({});
+    const allSongsObjs = await Song._getAllSongs({});
 
     // 2. Get User's Known Chords
     // We need to filter out chords the user already knows
@@ -32,7 +33,7 @@ export const AutoAddChordsForNewSong: Sync = ({ user, song, chord }) => ({
       const currentSongId = frame[song];
       const currentUser = frame[user] as ID;
 
-      const songEntry = allSongsObjs.find((s: any) =>
+      const songEntry = allSongsObjs.find((s) =>
         s.song._id === currentSongId
       );
       if (!songEntry) continue;
@@ -43,7 +44,7 @@ export const AutoAddChordsForNewSong: Sync = ({ user, song, chord }) => ({
       const knownChordsObjs = await ChordLibrary._getKnownChords({
         user: currentUser,
       });
-      const knownChordSet = new Set(knownChordsObjs.map((c: any) => c.chord));
+      const knownChordSet = new Set(knownChordsObjs.map((c) => c.chord));
 
       for (const chordSymbol of chordsInSong) {
         if (!knownChordSet.has(chordSymbol)) {
@@ -108,13 +109,13 @@ export const RespondToChordAddition: Sync = (
       const knownChordsObjs = await ChordLibrary._getKnownChords({
         user: currentUser,
       });
-      const knownChordsList = knownChordsObjs.map((c: any) => c.chord);
+      const knownChordsList = knownChordsObjs.map((c) => c.chord);
 
       // 2. Get Playable Songs
-      const playableSongsObjs = await SongLibrary._getPlayableSongs({
+      const playableSongsObjs = await Song._getPlayableSongs({
         knownChords: knownChordsList,
       });
-      const playableSongs = playableSongsObjs.map((s: any) => ({
+      const playableSongs = playableSongsObjs.map((s) => ({
         id: s.song._id,
         title: s.song.title,
         artist: s.song.artist,
@@ -127,8 +128,8 @@ export const RespondToChordAddition: Sync = (
       // Or we can trigger the recommendation engine calculation here.
       // Let's do a quick stateless recommendation query if possible, or just return null.
       // To do it properly, we need all songs.
-      const allSongsObjs = await SongLibrary._getAllSongs({});
-      const allSongsList = allSongsObjs.map((s: any) => ({
+      const allSongsObjs = await Song._getAllSongs({});
+      const allSongsList = allSongsObjs.map((s) => ({
         _id: s.song._id,
         chords: s.song.chords,
         difficulty: s.song.difficulty,
