@@ -12,6 +12,8 @@ Existing syncs:
 
 [@userprofile.sync.ts](userprofile.sync.ts)
 
+[@post.sync.ts](post.sync.ts)
+
 Concepts:
 
 [@UserProfileConcept.ts](../concepts/UserProfile/UserProfileConcept.ts)
