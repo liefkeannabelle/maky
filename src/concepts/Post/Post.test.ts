@@ -219,4 +219,167 @@ describe("PostConcept", () => {
       assertEquals((result as { error: string }).error, "Post not found");
     });
   });
+
+  describe("_getPostsForUser", () => {
+    it("should return all posts for a user in descending order", async () => {
+      // Create multiple posts for userA with different timestamps
+      const post1 = await postConcept.createPost({
+        author: userA,
+        content: "First post",
+        postType: "GENERAL",
+      });
+      const post1Id = (post1 as { postId: ID }).postId;
+
+      // Wait a bit to ensure different timestamps
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const post2 = await postConcept.createPost({
+        author: userA,
+        content: "Second post",
+        postType: "PROGRESS",
+        item: itemA,
+      });
+      const post2Id = (post2 as { postId: ID }).postId;
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const post3 = await postConcept.createPost({
+        author: userA,
+        content: "Third post",
+        postType: "GENERAL",
+      });
+      const post3Id = (post3 as { postId: ID }).postId;
+
+      // Create a post for userB (should not be included)
+      await postConcept.createPost({
+        author: userB,
+        content: "User B post",
+        postType: "GENERAL",
+      });
+
+      const results = await postConcept._getPostsForUser({ user: userA });
+
+      assertEquals(results.length, 3, "Should return 3 posts for userA");
+      // Should be ordered newest first
+      assertEquals(results[0].post._id, post3Id, "First post should be newest");
+      assertEquals(results[1].post._id, post2Id, "Second post should be middle");
+      assertEquals(results[2].post._id, post1Id, "Third post should be oldest");
+      assertEquals(results[0].post.content, "Third post");
+      assertEquals(results[1].post.content, "Second post");
+      assertEquals(results[2].post.content, "First post");
+    });
+
+    it("should return empty array for user with no posts", async () => {
+      const results = await postConcept._getPostsForUser({ user: userA });
+      assertEquals(results.length, 0, "Should return empty array");
+    });
+
+    it("should only return posts for the specified user", async () => {
+      // Create posts for both users
+      await postConcept.createPost({
+        author: userA,
+        content: "User A post",
+        postType: "GENERAL",
+      });
+
+      await postConcept.createPost({
+        author: userB,
+        content: "User B post",
+        postType: "GENERAL",
+      });
+
+      const results = await postConcept._getPostsForUser({ user: userA });
+
+      assertEquals(results.length, 1, "Should return only userA's post");
+      assertEquals(results[0].post.author, userA);
+      assertEquals(results[0].post.content, "User A post");
+    });
+  });
+
+  describe("_getPostsForUsers", () => {
+    it("should return all posts for multiple users", async () => {
+      // Create posts for userA
+      const postA1 = await postConcept.createPost({
+        author: userA,
+        content: "User A post 1",
+        postType: "GENERAL",
+      });
+      const postA1Id = (postA1 as { postId: ID }).postId;
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const postA2 = await postConcept.createPost({
+        author: userA,
+        content: "User A post 2",
+        postType: "PROGRESS",
+        item: itemA,
+      });
+      const postA2Id = (postA2 as { postId: ID }).postId;
+
+      // Create posts for userB
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const postB1 = await postConcept.createPost({
+        author: userB,
+        content: "User B post 1",
+        postType: "GENERAL",
+      });
+      const postB1Id = (postB1 as { postId: ID }).postId;
+
+      // Create a post for a different user (should not be included)
+      const userC = "user:test-C" as ID;
+      await postConcept.createPost({
+        author: userC,
+        content: "User C post",
+        postType: "GENERAL",
+      });
+
+      const results = await postConcept._getPostsForUsers({
+        users: [userA, userB],
+      });
+
+      assertEquals(results.length, 3, "Should return 3 posts total");
+      // Should be ordered newest first
+      assertEquals(results[0].post._id, postB1Id, "First should be newest");
+      assertEquals(results[1].post._id, postA2Id);
+      assertEquals(results[2].post._id, postA1Id, "Last should be oldest");
+
+      // Verify all posts are from userA or userB
+      const authors = results.map((r) => r.post.author);
+      assert(authors.includes(userA), "Should include userA posts");
+      assert(authors.includes(userB), "Should include userB posts");
+      assert(!authors.includes(userC), "Should not include userC posts");
+    });
+
+    it("should return empty array for empty users list", async () => {
+      const results = await postConcept._getPostsForUsers({ users: [] });
+      assertEquals(results.length, 0, "Should return empty array");
+    });
+
+    it("should return empty array when users have no posts", async () => {
+      const results = await postConcept._getPostsForUsers({
+        users: [userA, userB],
+      });
+      assertEquals(results.length, 0, "Should return empty array");
+    });
+
+    it("should handle single user in the list", async () => {
+      await postConcept.createPost({
+        author: userA,
+        content: "User A post",
+        postType: "GENERAL",
+      });
+
+      await postConcept.createPost({
+        author: userB,
+        content: "User B post",
+        postType: "GENERAL",
+      });
+
+      const results = await postConcept._getPostsForUsers({ users: [userA] });
+
+      assertEquals(results.length, 1, "Should return only userA's post");
+      assertEquals(results[0].post.author, userA);
+    });
+  });
 });

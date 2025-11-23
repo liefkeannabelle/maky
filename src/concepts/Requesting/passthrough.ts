@@ -78,6 +78,8 @@ export const exclusions: Array<string> = [
   "/api/Post/createPost",
   "/api/Post/deletePost",
   "/api/Post/editPost",
+  "/api/Post/_getPostsForUser",
+  "/api/Post/_getPostsForUsers",
   "/api/Reaction/addReactionToPost",
   "/api/Reaction/changeReactionType",
   "/api/Reaction/removeReactionFromPost",

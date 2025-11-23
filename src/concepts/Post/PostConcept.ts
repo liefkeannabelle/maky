@@ -155,4 +155,37 @@ export default class PostConcept {
 
     return {};
   }
+
+  /**
+   * _getPostsForUser (user: User): (post: PostDoc)
+   *
+   * **requires** The `user` exists.
+   * **effects** Returns all posts authored by the given `user`, ordered by creation date (newest first).
+   */
+  async _getPostsForUser(
+    { user }: { user: User },
+  ): Promise<{ post: PostDoc }[]> {
+    const posts = await this.posts.find({ author: user })
+      .sort({ createdAt: -1 })
+      .toArray();
+    return posts.map((post) => ({ post }));
+  }
+
+  /**
+   * _getPostsForUsers (users: set of User): (post: PostDoc)
+   *
+   * **requires** All `users` exist.
+   * **effects** Returns all posts authored by any of the given `users`, ordered by creation date (newest first).
+   */
+  async _getPostsForUsers(
+    { users }: { users: User[] },
+  ): Promise<{ post: PostDoc }[]> {
+    if (!users || users.length === 0) {
+      return [];
+    }
+    const posts = await this.posts.find({ author: { $in: users } })
+      .sort({ createdAt: -1 })
+      .toArray();
+    return posts.map((post) => ({ post }));
+  }
 }

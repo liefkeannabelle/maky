@@ -742,6 +742,88 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
+### POST /api/Post/_getPostsForUser
+
+**Description:** Retrieves all posts authored by a specific user.
+
+**Requirements:**
+- The `user` must exist.
+
+**Effects:**
+- Returns an array of all posts authored by the specified `user`, ordered by creation date (newest first). If the user has no posts, an empty array is returned.
+
+**Request Body:**
+```json
+{
+  "user": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "post": {
+      "_id": "string",
+      "author": "string",
+      "content": "string",
+      "item": "string",
+      "postType": "string",
+      "createdAt": "string",
+      "editedAt": "string"
+    }
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+### POST /api/Post/_getPostsForUsers
+
+**Description:** Retrieves all posts authored by any of the specified users. Useful for building feeds that show posts from multiple users.
+
+**Requirements:**
+- All `users` in the array must exist.
+
+**Effects:**
+- Returns an array of all posts authored by any of the specified `users`, ordered by creation date (newest first). If none of the users have posts, an empty array is returned.
+
+**Request Body:**
+```json
+{
+  "users": ["string"]
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "post": {
+      "_id": "string",
+      "author": "string",
+      "content": "string",
+      "item": "string",
+      "postType": "string",
+      "createdAt": "string",
+      "editedAt": "string"
+    }
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
 # API Specification: Comment Concept
 
 **Purpose:** To allow users to interact with posts.
