@@ -257,3 +257,69 @@ export const HandleKnownChordsQuery: Sync = (
     [Requesting.respond, { request, knownChords }],
   ),
 });
+
+/**
+ * Sync: HandleAddChordToInventoryRequest
+ *
+ * Handles requests to add a chord to inventory via ChordLibrary path.
+ * Resolves user from session and adds the chord with specified mastery.
+ */
+export const HandleAddChordToInventoryRequest: Sync = (
+  { request, sessionId, chord, mastery, user },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      {
+        path: "/ChordLibrary/addChordToInventory",
+        sessionId,
+        chord,
+        mastery,
+      },
+      { request },
+    ],
+  ),
+  where: (frames) =>
+    frames.query(Sessioning._getUser, { sessionId }, { user }),
+  then: actions(
+    [ChordLibrary.addChordToInventory, { user, chord, mastery }],
+  ),
+});
+
+/**
+ * Sync: RespondToAddChordToInventory
+ *
+ * Responds to the add chord to inventory request.
+ * Currently, it just responds with the original request data.
+ */
+export const RespondToAddChordToInventorySuccess: Sync = (
+  { request },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/ChordLibrary/addChordToInventory" },
+      { request },
+    ],
+    [ChordLibrary.addChordToInventory, {}, {}],
+  ),
+  then: actions(
+    [Requesting.respond, { request, success: true }],
+  ),
+});
+
+export const RespondToAddChordToInventoryError: Sync = (
+  { request, error },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/ChordLibrary/addChordToInventory" },
+      { request },
+    ],
+    [ChordLibrary.addChordToInventory, {}, { error }],
+  ),
+  then: actions(
+    [Requesting.respond, { request, error }],
+  ),
+});

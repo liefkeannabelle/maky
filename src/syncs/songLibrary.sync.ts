@@ -49,3 +49,32 @@ export const GetPlayableSongs: Sync = (
     [Requesting.respond, { request, playableSongs }],
   ),
 });
+
+/**
+ * Sync: HandleGetSongsInProgress
+ * HTTP: GET /songs/in-progress?sessionId=<id>
+ */
+export const HandleGetSongsInProgress: Sync = (
+  { request, sessionId, user, songs },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/SongLibrary/_getSongsInProgress", sessionId },
+      { request },
+    ],
+  ),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
+    const newFrames = [];
+    for (const frame of frames) {
+      const currentUser = frame[user] as ID;
+      const result = await SongLibrary._getSongsInProgress({ user: currentUser });
+      newFrames.push({ ...frame, [songs]: result });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    [Requesting.respond, { request, songs }],
+  ),
+});
