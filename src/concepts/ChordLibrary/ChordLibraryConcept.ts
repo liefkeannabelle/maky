@@ -1,14 +1,21 @@
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
-import { normalizeChordSymbol, isValidChordSymbol } from "../../theory/chords.ts";
+import {
+  isValidChordSymbol,
+  normalizeChordSymbol,
+} from "../../theory/chords.ts";
 
 const PREFIX = "ChordLibrary.";
 
 // Concept Types
 type User = ID;
 type Chord = string; // e.g., "C", "Am7"
-export type MasteryLevel = "not started" | "in progress" | "proficient" | "mastered";
+export type MasteryLevel =
+  | "not started"
+  | "in progress"
+  | "proficient"
+  | "mastered";
 
 /**
  * a set of Users (to track existence context for this concept)
@@ -42,14 +49,16 @@ export default class ChordLibraryConcept {
    * **requires** The `user` does not already exist in the set of Users.
    * **effects** Adds the given `user` to the set of Users, creating an empty inventory for them.
    */
-  async addUser(input: { user: User }): Promise<Empty | { error: string }> {
+  async addUser(
+    input: { user: User },
+  ): Promise<{ success: boolean } | { error: string }> {
     const existing = await this.users.findOne({ _id: input.user });
     if (existing) {
       return { error: "User already exists in ChordLibrary" };
     }
 
     await this.users.insertOne({ _id: input.user });
-    return {};
+    return { success: true };
   }
 
   /**
@@ -108,7 +117,7 @@ export default class ChordLibraryConcept {
   }): Promise<Empty | { error: string }> {
     const result = await this.knownChords.updateOne(
       { user: input.user, chord: input.chord },
-      { $set: { mastery: input.newMastery } }
+      { $set: { mastery: input.newMastery } },
     );
 
     if (result.matchedCount === 0) {

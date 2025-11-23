@@ -40,14 +40,23 @@ export const HandleRegisterRequest: Sync = (
  * Responds to the original request after a user registration attempt.
  * This single synchronization handles both success (returns a `user`) and failure (returns an `error`).
  */
-export const RespondToRegister: Sync = ({ request, user, error }) => ({
+export const RespondToRegisterSuccess: Sync = ({ request, user }) => ({
   when: actions(
     [Requesting.request, { path: "/UserAccount/register" }, { request }],
-    // Pattern matches on the output of the register action, binding `user` on success or `error` on failure.
-    [UserAccount.register, {}, { user, error }],
+    [UserAccount.register, {}, { user }],
   ),
   then: actions(
-    [Requesting.respond, { request, user, error }],
+    [Requesting.respond, { request, user }],
+  ),
+});
+
+export const RespondToRegisterError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/UserAccount/register" }, { request }],
+    [UserAccount.register, {}, { error }],
+  ),
+  then: actions(
+    [Requesting.respond, { request, error }],
   ),
 });
 
@@ -73,8 +82,8 @@ export const InitializeNewUser: Sync = ({ user, username }) => ({
         skillLevel: "BEGINNER", // Default to BEGINNER skill level.
       },
     ],
-    [ChordLibrary.addUser, { user }],
-    [SongLibrary.addUser, { user }],
+    [ChordLibrary.addUser, { user }, { success: true }],
+    [SongLibrary.addUser, { user }, { success: true }],
   ),
 });
 
