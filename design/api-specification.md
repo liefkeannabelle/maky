@@ -1102,6 +1102,53 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
+**Description:** Retrieves a summary of reaction counts, grouped by type, for a specific post.
+
+**Requirements:**
+
+-   The `post` exists.
+
+**Effects:**
+
+-   Returns an array of objects, each containing a reaction type and its total count for the given `post`. Includes types with a count of 0.
+
+**Request Body:**
+
+```json
+{
+  "post": "ID"
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+[
+  {
+    "type": "LIKE",
+    "count": 5
+  },
+  {
+    "type": "LOVE",
+    "count": 2
+  },
+  {
+    "type": "CELEBRATE",
+    "count": 0
+  }
+]
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
 # API Specification: Friendship Concept
 
 **Purpose:** To allow users to establish and manage mutual connections.

@@ -244,3 +244,56 @@ Deno.test(
     await client.close();
   },
 );
+Deno.test(
+  "ReactionConcept - _getReactionsForPostId",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const reactionConcept = new ReactionConcept(db);
+    await reactionConcept.reactions.deleteMany({});
+
+    // Setup: Add 2 likes to postA and 1 love to postB
+    await reactionConcept.addReactionToPost({
+      user: userA,
+      post: postA,
+      type: ReactionType.LIKE,
+    });
+    await reactionConcept.addReactionToPost({
+      user: userB,
+      post: postA,
+      type: ReactionType.LIKE,
+    });
+    await reactionConcept.addReactionToPost({
+      user: userA,
+      post: postB,
+      type: ReactionType.LOVE,
+    });
+
+    // 1. Test counts for postA
+    const resultA = await reactionConcept._getReactionsForPostId({
+      post: postA,
+    });
+    resultA.sort((a, b) => a.type.localeCompare(b.type)); // Sort for deterministic test
+
+    assertEquals(resultA, [
+      { type: ReactionType.CELEBRATE, count: 0 },
+      { type: ReactionType.LIKE, count: 2 },
+      { type: ReactionType.LOVE, count: 0 },
+    ]);
+
+    // 2. Test counts for a post with no reactions
+    const postC = "post:PostC" as ID;
+    const resultC = await reactionConcept._getReactionsForPostId({
+      post: postC,
+    });
+    resultC.sort((a, b) => a.type.localeCompare(b.type)); // Sort for deterministic test
+
+    assertEquals(resultC, [
+      { type: ReactionType.CELEBRATE, count: 0 },
+      { type: ReactionType.LIKE, count: 0 },
+      { type: ReactionType.LOVE, count: 0 },
+    ]);
+
+    await client.close();
+  },
+);

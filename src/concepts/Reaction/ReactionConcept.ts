@@ -121,4 +121,40 @@ export default class ReactionConcept {
     await this.reactions.deleteMany({ post });
     return {};
   }
+
+  /**
+   * _getReactionsForPostId (post: Post): (type: ReactionType, count: number)
+   *
+   * @requires The `post` exists.
+   * @effects Returns an array of objects, each containing a reaction type and its total count for the given `post`. Includes types with a count of 0.
+   */
+  async _getReactionsForPostId(
+    { post }: { post: Post },
+  ): Promise<{ type: ReactionType; count: number }[]> {
+    // Use MongoDB's aggregation pipeline to group reactions by type and count them
+    const pipeline = [
+      { $match: { post } },
+      { $group: { _id: "$type", count: { $sum: 1 } } },
+    ];
+
+    const aggregationResult = await this.reactions.aggregate(pipeline)
+      .toArray() as { _id: ReactionType; count: number }[];
+
+    // Create a map of the results for efficient lookup
+    const countsMap = new Map<ReactionType, number>();
+    for (const result of aggregationResult) {
+      countsMap.set(result._id, result.count);
+    }
+
+    // Build the final array, ensuring all reaction types are included, defaulting to a count of 0
+    const finalCounts: { type: ReactionType; count: number }[] = [];
+    for (const type of Object.values(ReactionType)) {
+      finalCounts.push({
+        type: type,
+        count: countsMap.get(type) || 0,
+      });
+    }
+
+    return finalCounts;
+  }
 }

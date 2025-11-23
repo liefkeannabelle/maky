@@ -18,7 +18,7 @@ import { ID } from "@utils/types.ts";
  */
 export const AutoAddChordsForNewSong: Sync = ({ user, song, chord }) => ({
   when: actions(
-    [SongLibrary.startLearningSong, { user, song }],
+    [SongLibrary.startLearningSong, { user, song }, {}],
   ),
   where: async (frames) => {
     // 1. Get Song Details

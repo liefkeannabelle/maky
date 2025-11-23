@@ -78,25 +78,26 @@ export const SearchSongs: Sync = ({ request, query, results }) => ({
     [Requesting.request, { path: "songs/search", query }, { request }]
   ),
   where: async (frames) => {
-    // Query the SongLibrary for matching songs
-    frames = await frames.query(Song._searchByTitleOrArtist, { query }, { results });
-    
-    // Map results to a cleaner format if needed, or just pass through
-    // The query returns { song: Song }[], we might want to flatten or format it
-    const newFrames = frames.map(frame => {
-        const rawResults = frame[results] as any[];
-        const formattedResults = rawResults.map(r => ({
-            id: r.song._id,
-            title: r.song.title,
-            artist: r.song.artist,
-            source: r.song.source,
-            difficulty: r.song.difficulty,
-            genre: r.song.genre,
-            tags: r.song.tags
-        }));
-        return { ...frame, [results]: formattedResults };
-    });
-    
+    const newFrames = [];
+    for (const frame of frames) {
+      const q = frame[query] as string;
+      const songs = await Song._searchByTitleOrArtist({ query: q });
+      
+      const formattedResults = songs.map(r => ({
+          id: r.song._id,
+          title: r.song.title,
+          artist: r.song.artist,
+          source: r.song.source,
+          difficulty: r.song.difficulty,
+          genre: r.song.genre,
+          tags: r.song.tags
+      }));
+
+      newFrames.push({
+        ...frame,
+        [results]: formattedResults
+      });
+    }
     return new Frames(...newFrames);
   },
   then: actions(
