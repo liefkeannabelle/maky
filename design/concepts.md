@@ -151,6 +151,15 @@ editPost (postId: String, editor: User, newContent: String, newItem: optional It
 *   **requires** The `postId` exists. The `editor` (User) is the `author` of the `Post`.
 *   **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Optionally updates `item` to `newItem` and `postType` to `newPostType`. Sets `editedAt` to the current DateTime.
 
+**queries** \
+_getPostsForUser (user: User): (post: Post)
+*   **requires** The `user` exists.
+*   **effects** Returns all posts authored by the given `user`, ordered by creation date (newest first).
+
+_getPostsForUsers (users: set of User): (post: Post)
+*   **requires** All `users` exist.
+*   **effects** Returns all posts authored by any of the given `users`, ordered by creation date (newest first).
+
 **notes**
 - the optional item component will allow users to associate posts with certain songs or chords that are relevant to the update
 - postType will be used to capture the general content a post is focused on: "I mastered this song!", "Just practicing!", or a general update 

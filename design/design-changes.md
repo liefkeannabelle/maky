@@ -24,4 +24,18 @@
   - Implementation: Uses `deleteMany` to remove all comments for a given post in a single operation
   - Updated `CascadePostDeletion` sync to use this new action instead of iterating through individual comments
   - Added to passthrough exclusions (internal action used by synchronizations)
-  - Added comprehensive tests covering multiple comments and edge cases 
+  - Added comprehensive tests covering multiple comments and edge cases
+
+- Added `_getPostsForUser` query to Post concept
+  - Purpose: Retrieves all posts authored by a specific user, ordered by creation date (newest first)
+  - Implementation: Uses MongoDB `find` with `author` filter and `sort` by `createdAt` descending
+  - Returns array of post documents for use in user profiles and feeds
+  - Added to passthrough exclusions (queries should go through Requesting for authentication/authorization)
+  - Added comprehensive tests covering ordering, filtering, and edge cases
+
+- Added `_getPostsForUsers` query to Post concept
+  - Purpose: Retrieves all posts authored by any of the specified users, useful for building feeds
+  - Implementation: Uses MongoDB `find` with `$in` operator to match multiple authors and `sort` by `createdAt` descending
+  - Returns array of post documents from multiple users, ordered by creation date (newest first)
+  - Added to passthrough exclusions (queries should go through Requesting for authentication/authorization)
+  - Added comprehensive tests covering multiple users, ordering, filtering, and edge cases

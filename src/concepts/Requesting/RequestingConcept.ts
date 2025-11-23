@@ -188,6 +188,7 @@ export function startRequestingServer(
 ) {
   // deno-lint-ignore no-unused-vars
   const { Requesting, client, db, Engine, ...instances } = concepts;
+  console.log("Loaded concepts:", Object.keys(instances));
   if (!(Requesting instanceof RequestingConcept)) {
     throw new Error("Requesting concept missing or broken.");
   }

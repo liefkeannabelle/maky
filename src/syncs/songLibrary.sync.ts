@@ -1,5 +1,5 @@
 import { actions, Frames, Sync } from "@engine";
-import { ChordLibrary, Requesting, Sessioning, SongLibrary } from "@concepts";
+import { ChordLibrary, Requesting, Sessioning, Song, SongLibrary } from "@concepts";
 import { ID } from "@utils/types.ts";
 
 /**
@@ -24,13 +24,13 @@ export const GetPlayableSongs: Sync = (
       const knownChordsObjs = await ChordLibrary._getKnownChords({
         user: currentUser,
       });
-      const knownChordsList = knownChordsObjs.map((c: any) => c.chord);
+      const knownChordsList = knownChordsObjs.map((c) => c.chord);
 
       // 3. Get Playable Songs
-      const playableSongsObjs = await SongLibrary._getPlayableSongs({
+      const playableSongsObjs = await Song._getPlayableSongs({
         knownChords: knownChordsList,
       });
-      const formattedSongs = playableSongsObjs.map((s: any) => ({
+      const formattedSongs = playableSongsObjs.map((s) => ({
         id: s.song._id,
         title: s.song.title,
         artist: s.song.artist,
