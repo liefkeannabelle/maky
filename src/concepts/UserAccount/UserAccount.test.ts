@@ -383,3 +383,34 @@ Deno.test(
     await client.close();
   },
 );
+
+Deno.test(
+  "UserAccountConcept - _isUserById",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const userAccount = new UserAccountConcept(db);
+    await userAccount.users.deleteMany({});
+
+    const userId = await createUser(userAccount, {
+      username: "isUser",
+      email: "isuser@example.com",
+      password: "password123",
+      isKidAccount: false,
+    });
+
+    // Test with existing user
+    const existsResult = await userAccount._isUserById({ user: userId });
+    assertEquals(existsResult.length, 1);
+    assertEquals(existsResult[0], { result: true });
+
+    // Test with non-existent user
+    const notExistsResult = await userAccount._isUserById({
+      user: "nonexistent-user-id" as ID,
+    });
+    assertEquals(notExistsResult.length, 1);
+    assertEquals(notExistsResult[0], { result: false });
+
+    await client.close();
+  },
+);

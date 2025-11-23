@@ -29,6 +29,16 @@ function headingPrefix(step: Root) {
   throw new Error("Missing heading.");
 }
 
+// const MAX_PREFIX_LENGTH = 100;
+
+// function sanitizeSegment(value: string, fallback = "_") {
+//   const sanitized = sanitize(value, { replacement: "_" }).trim();
+//   if (sanitized.length === 0) {
+//     return fallback;
+//   }
+//   return sanitized.slice(0, MAX_PREFIX_LENGTH);
+// }
+
 function hash(text: string) {
   return crypto.hash("sha256", text, "hex");
 }

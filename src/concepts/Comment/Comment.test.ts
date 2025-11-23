@@ -353,3 +353,50 @@ Deno.test(
     await client.close();
   },
 );
+Deno.test(
+  "CommentConcept - _getCommentsForPostId",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const commentConcept = new CommentConcept(db);
+    await commentConcept.comments.deleteMany({});
+
+    // Setup: add comments
+    await commentConcept.addCommentToPost({
+      post: post1,
+      author: userA,
+      content: "First",
+    });
+    await commentConcept.addCommentToPost({
+      post: post1,
+      author: userB,
+      content: "Second",
+    });
+    await commentConcept.addCommentToPost({
+      post: post2,
+      author: userA,
+      content: "On another post",
+    });
+
+    // Test the query
+    const [{ comments }] = await commentConcept._getCommentsForPostId({
+      post: post1,
+    });
+
+    assertEquals(comments.length, 2);
+    assertEquals(comments[0], { content: "First", author: userA });
+    assertEquals(comments[1], { content: "Second", author: userB });
+
+    // Check that it doesn't have other fields
+    assert(
+      !("_id" in comments[0]),
+      "Projected comments should not have _id",
+    );
+    assert(
+      !("createdAt" in comments[0]),
+      "Projected comments should not have createdAt",
+    );
+
+    await client.close();
+  },
+);

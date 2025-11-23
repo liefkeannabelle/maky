@@ -208,4 +208,24 @@ export default class FriendshipConcept {
 
     return friends;
   }
+  /**
+   * _getPendingFriendships (user: User): (pendingFriendships: {requester: User}[])
+   *
+   * @requires The user `user` exists.
+   * @effects Returns a one-element array containing an object with a `pendingFriendships` key. The value is a set of all pending `Friendship` requests where the specified `user` is the `recipient`, each containing the `requester`.
+   */
+  async _getPendingFriendships(
+    { user }: { user: User },
+  ): Promise<{ pendingFriendships: { requester: User }[] }[]> {
+    const pending = await this.friendships.find({
+      recipient: user,
+      status: FriendshipStatus.PENDING,
+    }).toArray();
+
+    const pendingFriendships = pending.map((req) => ({
+      requester: req.requester,
+    }));
+
+    return [{ pendingFriendships }];
+  }
 }

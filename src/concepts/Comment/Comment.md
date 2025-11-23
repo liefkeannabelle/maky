@@ -28,6 +28,11 @@ editComment (comment: Comment, author: User, newContent: String)
 *   **requires** The `comment` exists and its `author` matches the provided `author`.
 *   **effects** Updates the `content` of the `comment` to `newContent` and sets `lastEditedAt` to the current timestamp.
 
+**queries**
+_getCommentsForPostId (post: Post): ([{ comments: {content: String, author: User}[] }])
+* **requires** The `post` exists.
+* **effects** Returns a single-element array; the element exposes a `comments` property containing the simplified comment objects (`{ content, author }`) for the given `post`.
+
 **notes**
 - lastEditedAt will be used to track if/when a comment was edited
 ---

@@ -443,3 +443,80 @@ Deno.test(
     await client.close();
   },
 );
+Deno.test(
+  "FriendshipConcept - _getPendingFriendships query should return incoming pending requests",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const friendshipConcept = new FriendshipConcept(db);
+    await friendshipConcept.friendships.deleteMany({});
+
+    // Setup:
+    // 1. User A sends a pending request TO User B (should appear in B's list)
+    await friendshipConcept.sendFriendRequest({
+      requester: userA,
+      recipient: userB,
+    });
+    // 2. User C sends a pending request TO User B (should appear in B's list)
+    await friendshipConcept.sendFriendRequest({
+      requester: userC,
+      recipient: userB,
+    });
+    // 3. User B sends a pending request TO User D (should NOT appear in B's list)
+    await friendshipConcept.sendFriendRequest({
+      requester: userB,
+      recipient: userD,
+    });
+    // 4. User D sends an ACCEPTED request to User A (should NOT appear)
+    await friendshipConcept.sendFriendRequest({
+      requester: userD,
+      recipient: userA,
+    });
+    await friendshipConcept.acceptFriendRequest({
+      requester: userD,
+      recipient: userA,
+    });
+
+    // Test for User B, who has two incoming requests
+    const resultForB = await friendshipConcept._getPendingFriendships({
+      user: userB,
+    });
+    assertEquals(
+      resultForB.length,
+      1,
+      "The outer array should always have one element.",
+    );
+    assertExists(resultForB[0].pendingFriendships);
+    assertEquals(
+      resultForB[0].pendingFriendships.length,
+      2,
+      "User B should have 2 pending incoming requests.",
+    );
+    const requestersForB = resultForB[0].pendingFriendships.map((f) =>
+      f.requester
+    ).sort();
+    assertEquals(
+      requestersForB,
+      [userA, userC].sort(),
+      "The list of requesters for B is incorrect.",
+    );
+
+    // Test for User A, who has no incoming pending requests
+    const resultForA = await friendshipConcept._getPendingFriendships({
+      user: userA,
+    });
+    assertEquals(
+      resultForA.length,
+      1,
+      "The outer array should always have one element for user A.",
+    );
+    assertExists(resultForA[0].pendingFriendships);
+    assertEquals(
+      resultForA[0].pendingFriendships.length,
+      0,
+      "User A should have no pending incoming requests.",
+    );
+
+    await client.close();
+  },
+);

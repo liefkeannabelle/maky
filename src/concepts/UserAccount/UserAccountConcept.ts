@@ -256,4 +256,16 @@ export default class UserAccountConcept {
     }
     return [];
   }
+  /**
+   * _isUserById (user: User): (result: Boolean)
+   *
+   * **requires**: true
+   * **effects**: returns `true` as `result` if a user with the given id exists, `false` otherwise.
+   */
+  async _isUserById(
+    { user: userId }: { user: User },
+  ): Promise<{ result: boolean }[]> {
+    const count = await this.users.countDocuments({ _id: userId });
+    return [{ result: count > 0 }];
+  }
 }

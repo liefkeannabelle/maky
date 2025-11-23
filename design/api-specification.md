@@ -259,6 +259,47 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
+# API Specification: UserAccount Concept
+
+**Purpose:** to allow users to establish and manage their identity within the app
+
+---
+
+## API Endpoints
+
+### POST /api/UserAccount/_isUserById
+
+**Description:** Checks if a user exists for a given user ID.
+
+**Requirements:**
+- This query can always be executed.
+
+**Effects:**
+- Returns `true` as `result` if a user with the given ID exists, `false` otherwise.
+
+**Request Body:**
+```json
+{
+  "user": "ID"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "result": true
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
 # API Specification: UserProfile Concept
 
 **Purpose:** To allow users to personalize their in-app identity and preferences.
@@ -963,6 +1004,53 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
+# API Specification: Comment Concept
+
+**Purpose:** to allow users to interact with posts
+
+---
+
+## API Endpoints
+
+### POST /api/Comment/_getCommentsForPostId
+
+**Description:** Retrieves a simplified list of comments for a specific post. The response is a single-element array whose first object exposes the `comments` array.
+
+**Requirements:**
+- The `post` must exist.
+
+**Effects:**
+- Returns a single-element array; the element contains a `comments` property holding the simplified comment objects (`{ content, author }`).
+
+**Request Body:**
+```json
+{
+  "post": "Post"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "comments": [
+      {
+        "content": "string",
+        "author": "User"
+      }
+    ]
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+
 # API Specification: Reaction Concept
 
 **Purpose:** To allow users to express positive sentiment on posts.
@@ -1355,6 +1443,42 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "error": "string"
 }
 ```
+---
+### POST /api/Friendship/\_getPendingFriendships
+
+**Description:** Retrieves a list of all incoming friend requests that are pending for a specific user.
+
+**Requirements:**
+- The user `user` exists.
+
+**Effects:**
+- Returns a one-element array containing an object. This object has a single key `pendingFriendships` whose value is a set of all pending `Friendship` requests where the specified `user` is the `recipient`. Each entry in the set contains the `requester`.
+
+**Request Body:**
+```json
+{
+  "user": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "pendingFriendships": [
+      {
+        "requester": "string"
+      }
+    ]
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
 
 ---
 # API Specification: JamGroup Concept

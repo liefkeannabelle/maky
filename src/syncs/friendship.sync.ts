@@ -1,24 +1,39 @@
 import { actions, Frames, Sync } from "@engine";
-import { Friendship, Requesting, Sessioning } from "@concepts";
+import { Friendship, Requesting, Sessioning, UserAccount } from "@concepts";
 
 // --- Send Friend Request (Authenticated) ---
 
 /**
  * Handles a request to send a friend request from the authenticated user to a recipient.
+ * It first verifies that the recipient is a valid user before proceeding.
  */
+
 export const HandleSendFriendRequest: Sync = (
-  { request, sessionId, recipient, requester },
+  { request, sessionId, recipient, requester, recipientExists },
 ) => ({
   when: actions([
     Requesting.request,
     { path: "/Friendship/sendFriendRequest", sessionId, recipient },
     { request },
   ]),
-  // Authenticate the session and get the user ID, aliasing it as 'requester'.
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { sessionId }, {
+  // Authenticate the requester and verify the recipient exists.
+  where: async (frames: Frames) => {
+    // Step 1: Authenticate the session and get the user ID, aliasing it as 'requester'.
+    frames = await frames.query(Sessioning._getUser, { sessionId }, {
       user: requester,
-    }),
+    });
+
+    // Step 2: Verify that the recipient user ID corresponds to an actual user.
+    frames = await frames.query(
+      UserAccount._isUserById,
+      { user: recipient },
+      { result: recipientExists },
+    );
+
+    // Step 3: Only proceed if the recipient exists. If not, the request silently fails.
+    // An alternative implementation could respond with a specific "user not found" error.
+    return frames.filter(($) => $[recipientExists]);
+  },
   then: actions([Friendship.sendFriendRequest, { requester, recipient }]),
 });
 
@@ -216,5 +231,46 @@ export const HandleGetFriendsRequest: Sync = (
     Requesting.respond,
     // The final JSON response will be an object like: { friends: [{ friend: "..." }, ...] }
     { request, friends },
+  ]),
+});
+/**
+ * Handles a request to get all pending friend requests for a specific user.
+ * This is a public query; it does not require a session as it fetches data based on the provided user ID.
+ */
+export const HandleGetPendingFriendshipsRequest: Sync = (
+  { request, user, pendingFriendships, results },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Friendship/_getPendingFriendships", user },
+    { request },
+  ]),
+  where: async (frames) => {
+    // Keep the original frame to preserve the `request` binding, especially for the zero-match case.
+    const originalFrame = frames[0];
+
+    // The Friendship._getPendingFriendships query returns an array with a single object: `[{ pendingFriendships: [...] }]`.
+    // The output pattern `{ pendingFriendships }` extracts the inner array `[...]` and binds it to the `pendingFriendships` variable.
+    frames = await frames.query(
+      Friendship._getPendingFriendships,
+      { user }, // input to the query
+      { pendingFriendships }, // output variable binding
+    );
+
+    // If the query returns an empty array (e.g., if the user ID does not exist),
+    // we must respond explicitly with an empty result to avoid a request timeout.
+    if (frames.length === 0) {
+      const responseFrame = { ...originalFrame, [results]: [] };
+      return new Frames(responseFrame);
+    }
+
+    // The `collectAs` helper is used to format the final response.
+    // It will create a `results` variable containing an array with a single object: `[{ pendingFriendships: [...] }]`.
+    // This matches the response format convention used by other query synchronizations.
+    return frames.collectAs([pendingFriendships], results);
+  },
+  then: actions([
+    Requesting.respond,
+    { request, results },
   ]),
 });

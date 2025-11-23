@@ -150,4 +150,26 @@ export default class CommentConcept {
     await this.comments.deleteMany({ post });
     return {};
   }
+  /**
+   * _getCommentsForPostId (post: Post): ([{ comments: {content: String, author: User}[] }])
+   *
+   * **requires** The `post` exists.
+   * **effects** Returns a single-element array, where the first element wraps the list of
+   * simplified comment objects (`{ content, author }`) for the given `post`.
+   */
+  async _getCommentsForPostId(
+    { post }: { post: Post },
+  ): Promise<Array<{ comments: { content: string; author: User }[] }>> {
+    const comments = await this.comments
+      .find({ post })
+      .project<{ content: string; author: User }>({
+        _id: 0,
+        content: 1,
+        author: 1,
+      })
+      .sort({ createdAt: 1 })
+      .toArray();
+
+    return [{ comments }];
+  }
 }

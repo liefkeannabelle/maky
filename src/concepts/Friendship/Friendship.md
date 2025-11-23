@@ -46,6 +46,12 @@ _getFriends (user: User): (friend: User)
 * **requires** The user `user` exists.
 * **effects** Returns a set of all users `f` for whom a `Friendship` exists with `status` `ACCEPTED` between `user` and `f`.
 
+\_getPendingFriendships (user: User): (pendingFriendships: {requester: User}[])
+* **requires** The user `user` exists.
+* **effects** Returns a one-element array containing an object. This object has a single key `pendingFriendships` whose value is a set of all pending `Friendship` requests where the specified `user` is the `recipient`. Each entry in the set contains the `requester`.
+
+
+
 **notes**
 - Friendship will represent a mutual relationship between two users. 
 - A declined friend request does not prevent a user from sending another (i.e. blocking). Our app does not currently have any such functionality.

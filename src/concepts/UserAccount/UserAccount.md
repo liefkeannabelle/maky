@@ -54,6 +54,12 @@ _getUserByUsername (username: String): (user: User)
 *   **requires**: a User with the given `username` exists.
 *   **effects**: returns the corresponding User.
 
+\_isUserById (user: User): (result: Boolean)
+
+*   **requires**: true
+*   **effects**: returns `true` as `result` if a user with the given id exists, `false` otherwise.
+
+
 **notes**
 - The user account will store the core authentification details for a given user as they would appear on functionally any such app. The app-specific preferences are stored instead in UserProfile. 
 - The isKidAccount flag will serve to enforce limited social functionality for users marked as children.
