@@ -257,4 +257,34 @@ export default class UserProfileConcept {
 
     return results.map((p) => ({ user: p.user, displayName: p.displayName }));
   }
+  /**
+   * _getProfile (user: User): (profile: { displayName: String, bio: optional String, avatarUrl: optional String, genrePreferences: set of String, skillLevel: SkillLevel, targetSong: optional String })
+   *
+   * **requires** The `user` exists.
+   * **effects** Returns the full profile details for the given user if a profile exists, otherwise returns an empty array.
+   */
+  async _getProfile(
+    { user }: { user: User },
+  ): Promise<
+    Array<{
+      profile: {
+        displayName: string;
+        bio?: string;
+        avatarUrl?: string;
+        genrePreferences: string[];
+        skillLevel: SkillLevel;
+        targetSong?: Song;
+      };
+    }>
+  > {
+    const profileDoc = await this.profiles.findOne({ user });
+    if (!profileDoc) {
+      return [];
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { _id, user: _, ...profileData } = profileDoc;
+
+    return [{ profile: profileData }];
+  }
 }

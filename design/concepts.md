@@ -112,6 +112,11 @@ _searchByDisplayName (query: String): (user: User, displayName: String)
 * **requires** true
 * **effects** Returns a set of users and their display names that partially match the query string.
 
+_getProfile (user: User): (profile: { displayName: String, bio: optional String, avatarUrl: optional String, genrePreferences: set of String, skillLevel: SkillLevel, targetSong: optional String })
+
+* **requires** The `user` exists.
+* **effects** Returns the full profile details for the given user if a profile exists.
+
 
 **notes**
 - UserProfile stores more app-specific and user-specific data as compared to UserAccount.

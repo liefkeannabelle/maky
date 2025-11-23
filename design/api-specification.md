@@ -591,6 +591,46 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
+### POST /api/UserProfile/_getProfile
+
+**Description:** Retrieves all public profile information for a given user.
+
+**Requirements:**
+- The `user` must exist.
+
+**Effects:**
+- Returns an array containing a single profile object for the specified user. If the user or profile does not exist, an empty array is returned.
+
+**Request Body:**
+```json
+{
+  "user": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "profile": {
+      "displayName": "string",
+      "bio": "string",
+      "avatarUrl": "string",
+      "genrePreferences": ["string"],
+      "skillLevel": "string",
+      "targetSong": "string"
+    }
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
 # API Specification: Post Concept
 
 **Purpose:** To allow users to share their learning progress and musical activities, fostering community and motivation.

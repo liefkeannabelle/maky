@@ -412,3 +412,45 @@ export const HandleSearchByDisplayNameRequest: Sync = (
     { request, results }, // Respond with the collected results
   ]),
 });
+/**
+ * Handles a request to get the full profile for a specific user.
+ * This is a public query.
+ */
+export const HandleGetProfileRequest: Sync = (
+  { request, user, profile, results },
+) => ({
+  // Trigger when a request is made to the specific path with a `user` parameter.
+  when: actions([
+    Requesting.request,
+    { path: "/UserProfile/_getProfile", user },
+    { request },
+  ]),
+  where: async (frames) => {
+    // Preserve the original frame to keep the `request` binding.
+    const originalFrame = frames[0];
+
+    // The `_getProfile` query returns an array like `[{ profile: {...} }]` or `[]`.
+    // The `query` helper will create a new frame for each item in the array.
+    // The output binding `{ profile }` extracts the value of the `profile` key from the result object.
+    frames = await frames.query(
+      UserProfile._getProfile,
+      { user }, // Input to the query
+      { profile }, // Output variable `profile` will be bound to the profile object.
+    );
+
+    // If the query found no profile, frames will be empty. We must respond with an empty array.
+    if (frames.length === 0) {
+      const responseFrame = { ...originalFrame, [results]: [] };
+      return new Frames(responseFrame);
+    }
+
+    // If a profile was found, `collectAs` will wrap the single result into an array,
+    // creating a `results` variable that holds `[{ profile: {...} }]`.
+    return frames.collectAs([profile], results);
+  },
+  // Respond to the original request with the collected results array.
+  then: actions([
+    Requesting.respond,
+    { request, results },
+  ]),
+});
