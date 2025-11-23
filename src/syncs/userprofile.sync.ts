@@ -20,8 +20,7 @@ export const HandleCreateProfileRequest: Sync = (
     },
     { request },
   ]),
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
   then: actions([
     UserProfile.createProfile,
     { user, displayName, genrePreferences, skillLevel },
@@ -52,23 +51,32 @@ export const HandleUpdateDisplayNameRequest: Sync = (
     { path: "/UserProfile/updateDisplayName", sessionId, newDisplayName },
     { request },
   ]),
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
   then: actions([UserProfile.updateDisplayName, { user, newDisplayName }]),
 });
 
 /**
  * Responds to the update display name request.
  */
-export const RespondToUpdateDisplayName: Sync = ({ request, error }) => ({
+export const RespondToUpdateDisplayNameSuccess: Sync = ({ request }) => ({
   when: actions(
     [
       Requesting.request,
       { path: "/UserProfile/updateDisplayName" },
       { request },
     ],
-    // updateDisplayName returns {} on success, so we only need to pattern match on error.
-    // If no error, the success case will be an empty object.
+    [UserProfile.updateDisplayName, {}, { success: true }],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RespondToUpdateDisplayNameError: Sync = ({ request, error }) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/UserProfile/updateDisplayName" },
+      { request },
+    ],
     [UserProfile.updateDisplayName, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
@@ -87,15 +95,22 @@ export const HandleUpdateBioRequest: Sync = (
     { path: "/UserProfile/updateBio", sessionId, newBio },
     { request },
   ]),
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
   then: actions([UserProfile.updateBio, { user, newBio }]),
 });
 
 /**
  * Responds to the update bio request.
  */
-export const RespondToUpdateBio: Sync = ({ request, error }) => ({
+export const RespondToUpdateBioSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/UserProfile/updateBio" }, { request }],
+    [UserProfile.updateBio, {}, { success: true }],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RespondToUpdateBioError: Sync = ({ request, error }) => ({
   when: actions(
     [Requesting.request, { path: "/UserProfile/updateBio" }, { request }],
     [UserProfile.updateBio, {}, { error }],
@@ -116,15 +131,22 @@ export const HandleUpdateAvatarRequest: Sync = (
     { path: "/UserProfile/updateAvatar", sessionId, newAvatarUrl },
     { request },
   ]),
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
   then: actions([UserProfile.updateAvatar, { user, newAvatarUrl }]),
 });
 
 /**
  * Responds to the update avatar request.
  */
-export const RespondToUpdateAvatar: Sync = ({ request, error }) => ({
+export const RespondToUpdateAvatarSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/UserProfile/updateAvatar" }, { request }],
+    [UserProfile.updateAvatar, {}, { success: true }],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RespondToUpdateAvatarError: Sync = ({ request, error }) => ({
   when: actions(
     [Requesting.request, { path: "/UserProfile/updateAvatar" }, { request }],
     [UserProfile.updateAvatar, {}, { error }],
@@ -149,8 +171,7 @@ export const HandleSetGenrePreferencesRequest: Sync = (
     },
     { request },
   ]),
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
   then: actions([
     UserProfile.setGenrePreferences,
     { user, newGenrePreferences },
@@ -160,7 +181,21 @@ export const HandleSetGenrePreferencesRequest: Sync = (
 /**
  * Responds to the set genre preferences request.
  */
-export const RespondToSetGenrePreferences: Sync = ({ request, error }) => ({
+export const RespondToSetGenrePreferencesSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/UserProfile/setGenrePreferences" },
+      { request },
+    ],
+    [UserProfile.setGenrePreferences, {}, { success: true }],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RespondToSetGenrePreferencesError: Sync = (
+  { request, error },
+) => ({
   when: actions(
     [
       Requesting.request,
@@ -185,15 +220,26 @@ export const HandleChangeSkillLevelRequest: Sync = (
     { path: "/UserProfile/changeSkillLevel", sessionId, newSkillLevel },
     { request },
   ]),
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
   then: actions([UserProfile.changeSkillLevel, { user, newSkillLevel }]),
 });
 
 /**
  * Responds to the change skill level request.
  */
-export const RespondToChangeSkillLevel: Sync = ({ request, error }) => ({
+export const RespondToChangeSkillLevelSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/UserProfile/changeSkillLevel" },
+      { request },
+    ],
+    [UserProfile.changeSkillLevel, {}, { success: true }],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RespondToChangeSkillLevelError: Sync = ({ request, error }) => ({
   when: actions(
     [
       Requesting.request,
@@ -218,15 +264,22 @@ export const HandleSetTargetSongRequest: Sync = (
     { path: "/UserProfile/setTargetSong", sessionId, song },
     { request },
   ]),
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
   then: actions([UserProfile.setTargetSong, { user, song }]),
 });
 
 /**
  * Responds to the set target song request.
  */
-export const RespondToSetTargetSong: Sync = ({ request, error }) => ({
+export const RespondToSetTargetSongSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/UserProfile/setTargetSong" }, { request }],
+    [UserProfile.setTargetSong, {}, { success: true }],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RespondToSetTargetSongError: Sync = ({ request, error }) => ({
   when: actions(
     [Requesting.request, { path: "/UserProfile/setTargetSong" }, { request }],
     [UserProfile.setTargetSong, {}, { error }],
@@ -247,15 +300,28 @@ export const HandleRemoveTargetSongRequest: Sync = (
     { path: "/UserProfile/removeTargetSong", sessionId },
     { request },
   ]),
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
   then: actions([UserProfile.removeTargetSong, { user }]),
 });
 
 /**
  * Responds to the remove target song request.
  */
-export const RespondToRemoveTargetSong: Sync = ({ request, error }) => ({
+export const RespondToRemoveTargetSongSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/UserProfile/removeTargetSong" },
+      { request },
+    ],
+    [UserProfile.removeTargetSong, {}, { success: true }],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RespondToRemoveTargetSongError: Sync = (
+  { request, error },
+) => ({
   when: actions(
     [
       Requesting.request,
@@ -280,15 +346,22 @@ export const HandleDeleteProfileRequest: Sync = (
     { path: "/UserProfile/deleteProfile", sessionId },
     { request },
   ]),
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
   then: actions([UserProfile.deleteProfile, { user }]),
 });
 
 /**
  * Responds to the delete profile request.
  */
-export const RespondToDeleteProfile: Sync = ({ request, error }) => ({
+export const RespondToDeleteProfileSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/UserProfile/deleteProfile" }, { request }],
+    [UserProfile.deleteProfile, {}, { success: true }],
+  ),
+  then: actions([Requesting.respond, { request, success: true }]),
+});
+
+export const RespondToDeleteProfileError: Sync = ({ request, error }) => ({
   when: actions(
     [Requesting.request, { path: "/UserProfile/deleteProfile" }, { request }],
     [UserProfile.deleteProfile, {}, { error }],

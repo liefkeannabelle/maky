@@ -17,8 +17,7 @@ export const HandleFollowUserRequest: Sync = (
     { request },
   ]),
   // The 'where' clause authenticates the request by getting the user from the session.
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
   // If authentication is successful, it triggers the concept action.
   // The 'follower' parameter is mapped from the authenticated 'user' variable.
   then: actions([Following.followUser, { follower: user, followed }]),
@@ -53,8 +52,7 @@ export const HandleUnfollowUserRequest: Sync = (
     { path: "/Following/unfollowUser", sessionId, followed },
     { request },
   ]),
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user }),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
   then: actions([Following.unfollowUser, { follower: user, followed }]),
 });
 

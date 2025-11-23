@@ -1,5 +1,5 @@
 import { Collection, Db, type UpdateFilter } from "npm:mongodb";
-import { Empty, ID } from "@utils/types.ts";
+import { ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
 // Collection prefix for this concept
@@ -98,14 +98,14 @@ export default class UserProfileConcept {
    */
   async updateDisplayName(
     { user, newDisplayName }: { user: User; newDisplayName: string },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.profiles.updateOne({ user }, {
       $set: { displayName: newDisplayName },
     });
     if (result.matchedCount === 0) {
       return { error: "Profile not found for this user" };
     }
-    return {};
+    return { success: true };
   }
 
   /**
@@ -116,7 +116,7 @@ export default class UserProfileConcept {
    */
   async updateBio(
     { user, newBio }: { user: User; newBio?: string },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const updateOp: UpdateFilter<ProfileDoc> = newBio === undefined
       ? { $unset: { bio: "" } }
       : { $set: { bio: newBio } };
@@ -124,7 +124,7 @@ export default class UserProfileConcept {
     if (result.matchedCount === 0) {
       return { error: "Profile not found for this user" };
     }
-    return {};
+    return { success: true };
   }
 
   /**
@@ -135,7 +135,7 @@ export default class UserProfileConcept {
    */
   async updateAvatar(
     { user, newAvatarUrl }: { user: User; newAvatarUrl?: string },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const updateOp: UpdateFilter<ProfileDoc> = newAvatarUrl === undefined
       ? { $unset: { avatarUrl: "" } }
       : { $set: { avatarUrl: newAvatarUrl } };
@@ -143,7 +143,7 @@ export default class UserProfileConcept {
     if (result.matchedCount === 0) {
       return { error: "Profile not found for this user" };
     }
-    return {};
+    return { success: true };
   }
   /**
    * setGenrePreferences (user: User, newGenrePreferences: set of String)
@@ -156,14 +156,14 @@ export default class UserProfileConcept {
       user: User;
       newGenrePreferences: string[];
     },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.profiles.updateOne({ user }, {
       $set: { genrePreferences: newGenrePreferences },
     });
     if (result.matchedCount === 0) {
       return { error: "Profile not found for this user" };
     }
-    return {};
+    return { success: true };
   }
 
   /**
@@ -174,14 +174,14 @@ export default class UserProfileConcept {
    */
   async changeSkillLevel(
     { user, newSkillLevel }: { user: User; newSkillLevel: SkillLevel },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.profiles.updateOne({ user }, {
       $set: { skillLevel: newSkillLevel },
     });
     if (result.matchedCount === 0) {
       return { error: "Profile not found for this user" };
     }
-    return {};
+    return { success: true };
   }
 
   /**
@@ -192,14 +192,14 @@ export default class UserProfileConcept {
    */
   async setTargetSong(
     { user, song }: { user: User; song: Song },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.profiles.updateOne({ user }, {
       $set: { targetSong: song },
     });
     if (result.matchedCount === 0) {
       return { error: "Profile not found for this user" };
     }
-    return {};
+    return { success: true };
   }
 
   /**
@@ -210,14 +210,14 @@ export default class UserProfileConcept {
    */
   async removeTargetSong(
     { user }: { user: User },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.profiles.updateOne({ user }, {
       $unset: { targetSong: "" },
     });
     if (result.matchedCount === 0) {
       return { error: "Profile not found for this user" };
     }
-    return {};
+    return { success: true };
   }
 
   /**
@@ -228,12 +228,12 @@ export default class UserProfileConcept {
    */
   async deleteProfile(
     { user }: { user: User },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.profiles.deleteOne({ user });
     if (result.deletedCount === 0) {
       return { error: "Profile not found for this user" };
     }
-    return {};
+    return { success: true };
   }
   /**
    * _searchByDisplayName (query: String): (profiles: {user: User, displayName: String}[])

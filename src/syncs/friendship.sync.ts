@@ -16,7 +16,7 @@ export const HandleSendFriendRequest: Sync = (
   ]),
   // Authenticate the session and get the user ID, aliasing it as 'requester'.
   where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, {
+    frames.query(Sessioning._getUser, { sessionId }, {
       user: requester,
     }),
   then: actions([Friendship.sendFriendRequest, { requester, recipient }]),
@@ -56,7 +56,7 @@ export const HandleAcceptFriendRequest: Sync = (
   ]),
   // Authenticate the session and get the user ID, aliasing it as 'recipient'.
   where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, {
+    frames.query(Sessioning._getUser, { sessionId }, {
       user: recipient,
     }),
   then: actions([Friendship.acceptFriendRequest, { requester, recipient }]),
@@ -93,7 +93,7 @@ export const HandleDeclineFriendRequest: Sync = (
   ]),
   // Authenticate the session and get the user ID, aliasing it as 'recipient'.
   where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, {
+    frames.query(Sessioning._getUser, { sessionId }, {
       user: recipient,
     }),
   then: actions([Friendship.declineFriendRequest, { requester, recipient }]),
@@ -129,7 +129,7 @@ export const HandleRemoveFriendRequest: Sync = (
   ]),
   // The concept action takes `user1` and `user2`. We'll map the authenticated user to `user1`.
   where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user: user1 }),
+    frames.query(Sessioning._getUser, { sessionId }, { user: user1 }),
   then: actions([Friendship.removeFriend, { user1, user2: otherUser }]),
 });
 
@@ -158,7 +158,7 @@ export const HandleAreFriendsQuery: Sync = (
     { request },
   ]),
   where: (frames) =>
-    frames.query(Sessioning._getUser, { session: sessionId }, { user: user1 }),
+    frames.query(Sessioning._getUser, { sessionId }, { user: user1 }),
   then: actions([Friendship.areFriends, { user1, user2: otherUser }]),
 });
 
@@ -199,7 +199,7 @@ export const HandleGetFriendsRequest: Sync = (
   where: async (frames: Frames) => {
     // Step 1: Get the user from the session. If the session is invalid, `frames` will become empty,
     // and this sync will not proceed to the `then` clause.
-    frames = await frames.query(Sessioning._getUser, { session: sessionId }, {
+    frames = await frames.query(Sessioning._getUser, { sessionId }, {
       user,
     });
 
