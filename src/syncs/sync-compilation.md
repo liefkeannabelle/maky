@@ -12,9 +12,7 @@ Existing syncs:
 
 [@userprofile.sync.ts](userprofile.sync.ts)
 
-[@reaction.sync.ts](reaction.sync.ts)
-
-
+[@post.sync.ts](post.sync.ts)
 
 Concepts:
 

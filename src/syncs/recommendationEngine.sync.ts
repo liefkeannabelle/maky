@@ -4,7 +4,7 @@ import {
   RecommendationEngine,
   Requesting,
   Sessioning,
-  SongLibrary,
+  Song,
 } from "@concepts";
 import { ID } from "@utils/types.ts";
 
@@ -44,7 +44,7 @@ export const TriggerChordRecommendation: Sync = (
       const knownChordsList = knownChordsObjs.map((c: any) => c.chord);
 
       // Get All Songs
-      const allSongsObjs = await SongLibrary._getAllSongs({});
+      const allSongsObjs = await Song._getAllSongs({});
       const allSongsList = allSongsObjs.map((s: any) => ({
         _id: s.song._id,
         chords: s.song.chords,
