@@ -82,7 +82,7 @@ export const exclusions: Array<string> = [
   "/api/Reaction/changeReactionType",
   "/api/Reaction/removeReactionFromPost",
   "/api/Reaction/removeAllReactionsFromPost",
-  "/api/SongLibrary/addSong",
+  // "/api/SongLibrary/addSong",
   "/api/SongLibrary/removeSong",
   "/api/SongLibrary/addUser",
   "/api/SongLibrary/removeUser",

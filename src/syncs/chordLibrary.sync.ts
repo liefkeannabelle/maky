@@ -74,10 +74,11 @@ export const HandleChordAdditionRequest: Sync = (
   { request, sessionId, chord, user },
 ) => ({
   when: actions(
-    [Requesting.request, { path: "chords/add", sessionId, chord }, { request }],
+    [Requesting.request, { path: "/chords/add", sessionId, chord }, { request }]
   ),
-  where: async (frames) => {
-    return await frames.query(Sessioning._getUser, { sessionId }, { user });
+  where: (frames) => {
+    console.log("[Sync] HandleChordAdditionRequest: Checking session");
+    return frames.query(Sessioning._getUser, { sessionId }, { user });
   },
   then: actions(
     [ChordLibrary.addChordToInventory, { user, chord, mastery: "in-progress" }],
@@ -93,10 +94,11 @@ export const RespondToChordAddition: Sync = (
   { request, user, chord, response },
 ) => ({
   when: actions(
-    [Requesting.request, { path: "chords/add" }, { request }],
-    [ChordLibrary.addChordToInventory, { user, chord }, {}],
+    [Requesting.request, { path: "/chords/add" }, { request }],
+    [ChordLibrary.addChordToInventory, { user, chord }, {}]
   ),
   where: async (frames) => {
+    console.log("[Sync] RespondToChordAddition: Success");
     const newFrames = [];
     for (const frame of frames) {
       const currentUser = frame[user] as ID;
@@ -179,36 +181,16 @@ export const RespondToChordAddition: Sync = (
  * Sync: RespondToChordAdditionError
  *
  * Handles errors when adding a chord (e.g. invalid symbol, duplicate).
- * Note: The engine doesn't natively catch errors from actions in 'then' clauses of other syncs easily
- * to trigger another sync.
- * However, if ChordLibrary.addChordToInventory returns an error object, we can't easily match it
- * unless we have a separate sync that matches on the error return if we changed the action signature.
- *
- * Given the current architecture, if `addChordToInventory` fails (throws or returns error),
- * the `RespondToChordAddition` sync won't fire because the action didn't complete successfully
- * (or the event wasn't emitted).
- *
- * For this implementation, we'll assume success for the happy path.
- * Handling specific logic errors (like duplicates) might require the concept to emit an event even on failure
- * or a different flow.
- *
- * If `addChordToInventory` returns `{ error: ... }`, it is technically a successful execution of the function
- * returning a value. If the concept emits an event only on success, we miss it.
- *
- * Let's assume for now we only handle the success case as requested for the main flow.
- * If the user adds a duplicate, `addChordToInventory` in the concept returns `{ error: ... }`.
- * If the concept does NOT emit an event on error, we need a way to respond.
- *
- * WORKAROUND: We can have a sync that matches on the REQUEST only, and checks if the chord exists.
- * But that duplicates logic.
- *
- * Ideally, we'd have `ChordLibrary.addChordToInventory` emit an event even on failure, or we check beforehand.
- *
- * Let's add a check in `HandleChordAdditionRequest`'s `where` clause?
- * No, `where` is for filtering.
- *
- * We will stick to the happy path for now.
  */
+export const RespondToChordAdditionError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/chords/add" }, { request }],
+    [ChordLibrary.addChordToInventory, {}, { error }]
+  ),
+  then: actions(
+    [Requesting.respond, { request, error }]
+  )
+});
 
 /**
  * Sync: GetChordInventory
@@ -218,11 +200,11 @@ export const GetChordInventory: Sync = (
   { request, sessionId, user, inventory },
 ) => ({
   when: actions(
-    [Requesting.request, { path: "chords/inventory", sessionId }, { request }],
+    [Requesting.request, { path: "/chords/inventory", sessionId }, { request }]
   ),
   where: async (frames) => {
     frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
-
+    
     const newFrames = [];
     for (const frame of frames) {
       const currentUser = frame[user] as ID;
