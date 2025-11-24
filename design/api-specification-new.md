@@ -749,9 +749,10 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 - The `postId` exists. The user associated with `sessionId` is the `author` of the `Post`.
+- Requests must still include `newItems` and `newPostType`; supply the literal string `"UNDEFINED"` for any field that should remain unchanged.
 
 **Effects:**
-- Updates the `content` of the `Post` identified by `postId` to `newContent`. Optionally replaces `items` with `newItems` and updates `postType` to `newPostType`. Sets `editedAt` to the current DateTime.
+- Updates the `content` of the `Post` identified by `postId` to `newContent`. Replaces `items` with `newItems` unless the literal string `"UNDEFINED"` is provided, and updates `postType` to `newPostType` unless it is `"UNDEFINED"`. Sets `editedAt` to the current DateTime.
 
 **Request Body:**
 ```json
@@ -759,8 +760,8 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "sessionId": "string",
   "postId": "string",
   "newContent": "string",
-  "newItems": ["string"], // optional
-  "newPostType": "string" // optional, "PROGRESS" | "GENERAL"
+  "newItems": ["string"], // always include; send "UNDEFINED" to leave items unchanged
+  "newPostType": "string" // "PROGRESS" | "GENERAL"; send "UNDEFINED" to leave postType unchanged
 }
 ```
 
@@ -1986,9 +1987,10 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 - No Song with the given `name` already exists.
+- Requests must always include `genre`; supply the literal string `"UNDEFINED"` when the song should have no genre.
 
 **Effects:**
-- Creates a new Song; sets the `title`, `artist`, `chords`, and optional `genre`; returns the new song.
+- Creates a new Song; sets the `title`, `artist`, `chords`, and stores `genre` unless it is `"UNDEFINED"`; returns the new song.
 
 **Request Body:**
 ```json
@@ -1997,7 +1999,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "title": "string",
   "artist": "string",
   "chords": "string[]",
-  "genre": "string" // optional
+  "genre": "string" // always include; send "UNDEFINED" to leave genre unspecified
 }
 ```
 

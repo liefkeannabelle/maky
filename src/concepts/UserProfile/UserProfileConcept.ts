@@ -109,13 +109,13 @@ export default class UserProfileConcept {
   }
 
   /**
-   * updateBio (user: User, newBio: optional String)
+   * updateBio (user: User, newBio: String or undefined)
    *
-   * **requires** The `user` exists and has an associated `Profile`.
-   * **effects** Updates the `bio` in the `user`'s `Profile` to `newBio`.
+   * **requires** The `user` exists and has an associated `Profile`. Callers must always provide `newBio`; pass `undefined` to remove the bio.
+   * **effects** Updates the `bio` in the `user`'s `Profile` to `newBio`, clearing it when `newBio` is `undefined`.
    */
   async updateBio(
-    { user, newBio }: { user: User; newBio?: string },
+    { user, newBio }: { user: User; newBio: string | undefined },
   ): Promise<{ success: true } | { error: string }> {
     const updateOp: UpdateFilter<ProfileDoc> = newBio === undefined
       ? { $unset: { bio: "" } }
@@ -128,13 +128,13 @@ export default class UserProfileConcept {
   }
 
   /**
-   * updateAvatar (user: User, newAvatarUrl: optional String)
+   * updateAvatar (user: User, newAvatarUrl: String or undefined)
    *
-   * **requires** The `user` exists and has an associated `Profile`.
-   * **effects** Updates the `avatarUrl` in the `user`'s `Profile` to `newAvatarUrl`.
+   * **requires** The `user` exists and has an associated `Profile`. Callers must always provide `newAvatarUrl`; pass `undefined` to remove the avatar.
+   * **effects** Updates the `avatarUrl` in the `user`'s `Profile` to `newAvatarUrl`, clearing it when `newAvatarUrl` is `undefined`.
    */
   async updateAvatar(
-    { user, newAvatarUrl }: { user: User; newAvatarUrl?: string },
+    { user, newAvatarUrl }: { user: User; newAvatarUrl: string | undefined },
   ): Promise<{ success: true } | { error: string }> {
     const updateOp: UpdateFilter<ProfileDoc> = newAvatarUrl === undefined
       ? { $unset: { avatarUrl: "" } }

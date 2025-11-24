@@ -299,19 +299,19 @@ This document provides the API specification for the various concepts that make 
 ---
 ### POST /api/UserProfile/updateBio
 
-**Description:** Updates the optional bio in a user's profile.
+**Description:** Updates (or clears) the bio in a user's profile.
 
 **Requirements:**
 - The `user` exists and has an associated `Profile`.
 
 **Effects:**
-- Updates the `bio` in the `user`'s `Profile` to `newBio`.
+- Updates the `bio` in the `user`'s `Profile` to `newBio`, removing the field when `newBio` is `undefined`.
 
 **Request Body:**
 ```json
 {
   "user": "string",
-  "newBio": "string" // optional
+  "newBio": "string" // always include; send "UNDEFINED" to clear the bio
 }
 ```
 
@@ -329,19 +329,19 @@ This document provides the API specification for the various concepts that make 
 ---
 ### POST /api/UserProfile/updateAvatar
 
-**Description:** Updates the optional avatar URL in a user's profile.
+**Description:** Updates (or clears) the avatar URL in a user's profile.
 
 **Requirements:**
 - The `user` exists and has an associated `Profile`.
 
 **Effects:**
-- Updates the `avatarUrl` in the `user`'s `Profile` to `newAvatarUrl`.
+- Updates the `avatarUrl` in the `user`'s `Profile` to `newAvatarUrl`, removing the field when `newAvatarUrl` is `undefined`.
 
 **Request Body:**
 ```json
 {
   "user": "string",
-  "newAvatarUrl": "string" // optional
+  "newAvatarUrl": "string" // always include; send "UNDEFINED" to clear the avatar
 }
 ```
 

@@ -1,6 +1,10 @@
 import { actions, Frames, Sync } from "@engine";
 import { Requesting, Sessioning, UserProfile } from "@concepts";
 
+const UNDEFINED_SENTINEL = "UNDEFINED";
+const normalizeOptionalString = (value: unknown): string | undefined =>
+  typeof value === "string" && value !== UNDEFINED_SENTINEL ? value : undefined;
+
 // --- Create Profile (Authenticated) ---
 
 /**
@@ -89,15 +93,19 @@ export const RespondToUpdateDisplayNameError: Sync = ({ request, error }) => ({
  */
 export const HandleUpdateBioRequest: Sync = (
   { request, sessionId, newBio, user },
-) => ({
-  when: actions([
-    Requesting.request,
-    { path: "/UserProfile/updateBio", sessionId, newBio },
-    { request },
-  ]),
-  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
-  then: actions([UserProfile.updateBio, { user, newBio }]),
-});
+) => {
+  const normalizedNewBio = normalizeOptionalString(newBio);
+  return {
+    when: actions([
+      Requesting.request,
+      { path: "/UserProfile/updateBio", sessionId, newBio },
+      { request },
+    ]),
+    where: (frames) =>
+      frames.query(Sessioning._getUser, { sessionId }, { user }),
+    then: actions([UserProfile.updateBio, { user, newBio: normalizedNewBio }]),
+  };
+};
 
 /**
  * Responds to the update bio request.
@@ -125,15 +133,22 @@ export const RespondToUpdateBioError: Sync = ({ request, error }) => ({
  */
 export const HandleUpdateAvatarRequest: Sync = (
   { request, sessionId, newAvatarUrl, user },
-) => ({
-  when: actions([
-    Requesting.request,
-    { path: "/UserProfile/updateAvatar", sessionId, newAvatarUrl },
-    { request },
-  ]),
-  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
-  then: actions([UserProfile.updateAvatar, { user, newAvatarUrl }]),
-});
+) => {
+  const normalizedAvatar = normalizeOptionalString(newAvatarUrl);
+  return {
+    when: actions([
+      Requesting.request,
+      { path: "/UserProfile/updateAvatar", sessionId, newAvatarUrl },
+      { request },
+    ]),
+    where: (frames) =>
+      frames.query(Sessioning._getUser, { sessionId }, { user }),
+    then: actions([UserProfile.updateAvatar, {
+      user,
+      newAvatarUrl: normalizedAvatar,
+    }]),
+  };
+};
 
 /**
  * Responds to the update avatar request.

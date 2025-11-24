@@ -12,6 +12,9 @@ type Item = ID;
 // PostType enum from spec
 type PostType = "PROGRESS" | "GENERAL";
 
+const UNDEFINED_SENTINEL = "UNDEFINED" as const;
+type MaybeProvided<T> = T | typeof UNDEFINED_SENTINEL;
+
 /**
  * a set of Posts with
  *  a postId String (becomes _id)
@@ -99,18 +102,18 @@ export default class PostConcept {
   }
 
   /**
-   * editPost (postId: String, editor: User, newContent: String, newItems: optional List<Item>, newPostType: optional PostType)
+   * editPost (postId: String, editor: User, newContent: String, newItems: List<Item> or "UNDEFINED", newPostType: PostType or "UNDEFINED")
    *
-   * **requires** The `postId` exists. The `editor` (User) is the `author` of the `Post`.
-   * **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Optionally replaces `items` with `newItems` and updates `postType` to `newPostType`. Sets `editedAt` to the current DateTime.
+   * **requires** The `postId` exists. The `editor` (User) is the `author` of the `Post`. Callers must always provide `newItems` and `newPostType`; pass the literal string "UNDEFINED" to leave either value unchanged.
+   * **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Replaces `items` with `newItems` unless it is "UNDEFINED", and updates `postType` to `newPostType` unless it is "UNDEFINED". Sets `editedAt` to the current DateTime.
    */
   async editPost(
     { postId, editor, newContent, newItems, newPostType }: {
       postId: ID;
       editor: User;
       newContent: string;
-      newItems?: Item[];
-      newPostType?: PostType;
+      newItems: MaybeProvided<Item[]>;
+      newPostType: MaybeProvided<PostType>;
     },
   ): Promise<Empty | { error: string }> {
     const post = await this.posts.findOne({ _id: postId });
@@ -122,8 +125,14 @@ export default class PostConcept {
       return { error: "Permission denied: user is not the author of the post" };
     }
 
+    const resolvedPostType = newPostType === UNDEFINED_SENTINEL
+      ? undefined
+      : newPostType;
+
     if (
-      newPostType && newPostType !== "PROGRESS" && newPostType !== "GENERAL"
+      resolvedPostType !== undefined &&
+      resolvedPostType !== "PROGRESS" &&
+      resolvedPostType !== "GENERAL"
     ) {
       return {
         error: "Invalid postType specified. Must be 'PROGRESS' or 'GENERAL'.",
@@ -135,15 +144,19 @@ export default class PostConcept {
       editedAt: new Date(),
     };
 
-    if (newPostType !== undefined) {
-      updates.postType = newPostType;
+    if (resolvedPostType !== undefined) {
+      updates.postType = resolvedPostType;
     }
 
     const updateQuery: UpdateFilter<PostDoc> = { $set: updates };
 
-    // The `newItems` array is optional. When provided, it replaces the stored items.
-    if (newItems !== undefined) {
-      (updateQuery.$set as Partial<PostDoc>).items = newItems;
+    const resolvedItems = newItems === UNDEFINED_SENTINEL
+      ? undefined
+      : newItems;
+
+    // The `newItems` array is provided on every call; "UNDEFINED" indicates no change.
+    if (resolvedItems !== undefined) {
+      (updateQuery.$set as Partial<PostDoc>).items = resolvedItems;
     }
 
     await this.posts.updateOne({ _id: postId }, updateQuery);

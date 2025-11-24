@@ -12,4 +12,4 @@
 
 
 
-#  make a post getter, getPosts
+#

@@ -22,9 +22,9 @@ deletePost (postId: String, deleter: User)
 *   **requires** The `postId` exists. The `deleter` (User) is the `author` of the `Post` or an authorized administrator.
 *   **effects** Removes the `Post` identified by `postId` from the state. 
 
-editPost (postId: String, editor: User, newContent: String, newItems: optional List<Item>, newPostType: optional PostType)
-*   **requires** The `postId` exists. The `editor` (User) is the `author` of the `Post`.
-*   **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Optionally replaces `items` with `newItems` and updates `postType` to `newPostType`. Sets `editedAt` to the current DateTime.
+editPost (postId: String, editor: User, newContent: String, newItems: List<Item> or "UNDEFINED", newPostType: PostType or "UNDEFINED")
+*   **requires** The `postId` exists. The `editor` (User) is the `author` of the `Post`. Callers must always provide both `newItems` and `newPostType`; when no change is desired, pass the literal string `"UNDEFINED"` for that argument.
+*   **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Replaces `items` with `newItems` unless it is `"UNDEFINED"`, and updates `postType` to `newPostType` unless it is `"UNDEFINED"`. Sets `editedAt` to the current DateTime.
 
 **notes**
 - the items component allows users to associate posts with certain songs or chords that are relevant to the update

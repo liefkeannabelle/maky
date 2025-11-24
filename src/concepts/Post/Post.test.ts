@@ -129,11 +129,30 @@ describe("PostConcept", () => {
       assertExists(post.editedAt);
     });
 
+    it("should leave optional fields unchanged when given UNDEFINED", async () => {
+      const result = await postConcept.editPost({
+        postId,
+        editor: userA,
+        newContent: "Content only",
+        newItems: "UNDEFINED",
+        newPostType: "UNDEFINED",
+      });
+
+      assert(!("error" in result));
+      const post = await postConcept.posts.findOne({ _id: postId });
+      assertExists(post);
+      assertEquals(post.content, "Content only");
+      assertEquals(post.items, []);
+      assertEquals(post.postType, "GENERAL");
+    });
+
     it("should return a permission error if the editor is not the author", async () => {
       const result = await postConcept.editPost({
         postId: postId,
         editor: userB, // userB is not the author
         newContent: "This should fail.",
+        newItems: "UNDEFINED",
+        newPostType: "UNDEFINED",
       });
 
       assert("error" in result, "editPost should fail for a different user");
@@ -149,6 +168,8 @@ describe("PostConcept", () => {
         postId: "nonexistent-post" as ID,
         editor: userA,
         newContent: "This will fail.",
+        newItems: "UNDEFINED",
+        newPostType: "UNDEFINED",
       });
 
       assert("error" in result, "editPost should fail for a non-existent post");
@@ -160,6 +181,7 @@ describe("PostConcept", () => {
         postId: postId,
         editor: userA,
         newContent: "Testing invalid type edit",
+        newItems: "UNDEFINED",
         // deno-lint-ignore no-explicit-any
         newPostType: "ANOTHER_INVALID_TYPE" as any,
       });

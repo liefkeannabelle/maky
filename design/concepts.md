@@ -91,13 +91,13 @@ updateDisplayName (user: User, newDisplayName: String)
 *   **requires** The `user` exists and has an associated `Profile`.
 *   **effects** Updates the `displayName` in the `user`'s `Profile` to `newDisplayName`.
 
-updateBio (user: User, newBio: optional String)
-*   **requires** The `user` exists and has an associated `Profile`.
-*   **effects** Updates the `bio` in the `user`'s `Profile` to `newBio`.
+updateBio (user: User, newBio: String or undefined)
+*   **requires** The `user` exists and has an associated `Profile`. Callers must always provide the `newBio` argument; pass `undefined` when the bio should be cleared.
+*   **effects** Updates the `bio` in the `user`'s `Profile` to `newBio` (removing the field when it is `undefined`).
 
-updateAvatar (user: User, newAvatarUrl: optional String)
-*   **requires** The `user` exists and has an associated `Profile`.
-*   **effects** Updates the `avatarUrl` in the `user`'s `Profile` to `newAvatarUrl`.
+updateAvatar (user: User, newAvatarUrl: String or undefined)
+*   **requires** The `user` exists and has an associated `Profile`. Callers must always provide the `newAvatarUrl` argument; pass `undefined` when the avatar should be cleared.
+*   **effects** Updates the `avatarUrl` in the `user`'s `Profile` to `newAvatarUrl` (removing the field when it is `undefined`).
 
 setGenrePreferences (user: User, newGenrePreferences: set of String)
 *   **requires** The `user` exists and has an associated `Profile`.
@@ -567,9 +567,9 @@ recommendNextChordsForTargetSong (knownChords: set of Chord, targetSong: Song): 
 >>> a MasteryLevel
 
 **actions**
-addSong (title: String, artist: String, chords: String[], genre: optional Genre): (song: Song)
-*   **requires** No Song with the given `name` already exists.
-*   **effects** Creates a new Song; sets the `name`, `chords`, and optional `genre` of `s`; returns the new song.
+addSong (title: String, artist: String, chords: String[], genre: Genre or undefined): (song: Song)
+*   **requires** No Song with the given `name` already exists. Callers always pass the `genre` argument; omit a value (or pass `undefined`) when the song should remain unclassified.
+*   **effects** Creates a new Song; sets the `name`, `chords`, and stores `genre` when provided; otherwise the field remains `undefined`; returns the new song.
 
 removeSong (song: Song)
 *   **requires** The Song `song` exists.

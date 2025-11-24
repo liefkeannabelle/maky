@@ -171,13 +171,19 @@ Deno.test(
     assertExists(profileInDb?.targetSong);
 
     // Remove bio
-    const bioRemove = await userProfile.updateBio({ user: userC });
+    const bioRemove = await userProfile.updateBio({
+      user: userC,
+      newBio: undefined,
+    });
     assert(!("error" in bioRemove), "Removing bio should succeed");
     profileInDb = await userProfile.profiles.findOne({ user: userC });
     assertEquals(profileInDb?.bio, undefined);
 
     // Remove avatar
-    const avatarRemove = await userProfile.updateAvatar({ user: userC });
+    const avatarRemove = await userProfile.updateAvatar({
+      user: userC,
+      newAvatarUrl: undefined,
+    });
     assert(!("error" in avatarRemove), "Removing avatar should succeed");
     profileInDb = await userProfile.profiles.findOne({ user: userC });
     assertEquals(profileInDb?.avatarUrl, undefined);
