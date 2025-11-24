@@ -680,10 +680,10 @@ After a user logs in, all authenticated API requests should include a `sessionId
 **Authentication:** Requires a valid `sessionId`. The author is automatically extracted from the session.
 
 **Requirements:**
-- The user associated with `sessionId` exists. If `item` is provided, the `item` must exist.
+- The user associated with `sessionId` exists. Every `item` in `items` must exist.
 
 **Effects:**
-- Creates a new `Post` with a unique `postId`; sets `author` to the authenticated user, `content`, `postType`, `item` (if provided), and `createdAt` to the current DateTime; returns the `postId`.
+- Creates a new `Post` with a unique `postId`; sets `author` to the authenticated user, `content`, `postType`, `items`, and `createdAt` to the current DateTime; returns the `postId`.
 
 **Request Body:**
 ```json
@@ -691,7 +691,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "sessionId": "string",
   "content": "string",
   "postType": "string", // "PROGRESS" | "GENERAL"
-  "item": "string" // optional
+  "items": ["string"]
 }
 ```
 
@@ -751,7 +751,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The `postId` exists. The user associated with `sessionId` is the `author` of the `Post`.
 
 **Effects:**
-- Updates the `content` of the `Post` identified by `postId` to `newContent`. Optionally updates `item` to `newItem` and `postType` to `newPostType`. Sets `editedAt` to the current DateTime.
+- Updates the `content` of the `Post` identified by `postId` to `newContent`. Optionally replaces `items` with `newItems` and updates `postType` to `newPostType`. Sets `editedAt` to the current DateTime.
 
 **Request Body:**
 ```json
@@ -759,7 +759,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "sessionId": "string",
   "postId": "string",
   "newContent": "string",
-  "newItem": "string", // optional
+  "newItems": ["string"], // optional
   "newPostType": "string" // optional, "PROGRESS" | "GENERAL"
 }
 ```
@@ -801,7 +801,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
       "_id": "string",
       "author": "string",
       "content": "string",
-      "item": "string",
+      "items": ["string"],
       "postType": "string",
       "createdAt": "string",
       "editedAt": "string"
@@ -842,7 +842,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
       "_id": "string",
       "author": "string",
       "content": "string",
-      "item": "string",
+      "items": ["string"],
       "postType": "string",
       "createdAt": "string",
       "editedAt": "string"

@@ -22,15 +22,15 @@ export const CascadePostDeletion: Sync = ({ postId }) => ({
 // --- Create Post (Authenticated) ---
 
 /**
- * Handles an incoming request to create a new post.
+ * Handles an incoming request to create a new post, including its associated items.
  * It authenticates the user via their session before triggering the `createPost` action.
  */
 export const HandleCreatePostRequest: Sync = (
-  { request, sessionId, content, postType, item, user },
+  { request, sessionId, content, postType, items, user },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/Post/createPost", sessionId, content, postType, item },
+    { path: "/Post/createPost", sessionId, content, postType, items },
     { request },
   ]),
   // The `where` clause authenticates the request by getting the user from the session.
@@ -39,7 +39,7 @@ export const HandleCreatePostRequest: Sync = (
   then: actions([
     // The `user` from the session is used as the `author` of the post.
     Post.createPost,
-    { author: user, content, postType, item },
+    { author: user, content, postType, items },
   ]),
 });
 
@@ -47,13 +47,20 @@ export const HandleCreatePostRequest: Sync = (
  * Responds to the original request after a `createPost` attempt.
  * This single synchronization handles both success (returns a `postId`) and failure (returns an `error`).
  */
-export const RespondToCreatePost: Sync = ({ request, postId, error }) => ({
+export const RespondToCreatePostSuccess: Sync = ({ request, postId }) => ({
   when: actions(
     [Requesting.request, { path: "/Post/createPost" }, { request }],
-    // This pattern matches the output of `Post.createPost`, binding either `postId` on success or `error` on failure.
-    [Post.createPost, {}, { postId, error }],
+    [Post.createPost, {}, { postId }],
   ),
-  then: actions([Requesting.respond, { request, postId, error }]),
+  then: actions([Requesting.respond, { request, postId }]),
+});
+
+export const RespondToCreatePostError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Post/createPost" }, { request }],
+    [Post.createPost, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 // --- Delete Post (Authenticated) ---
@@ -91,7 +98,7 @@ export const RespondToDeletePost: Sync = ({ request, success, error }) => ({
  * Handles a request to edit an existing post, authenticating the user via session.
  */
 export const HandleEditPostRequest: Sync = (
-  { request, sessionId, postId, newContent, newItem, newPostType, user },
+  { request, sessionId, postId, newContent, newItems, newPostType, user },
 ) => ({
   when: actions([
     Requesting.request,
@@ -100,7 +107,7 @@ export const HandleEditPostRequest: Sync = (
       sessionId,
       postId,
       newContent,
-      newItem,
+      newItems,
       newPostType,
     },
     { request },
@@ -109,7 +116,7 @@ export const HandleEditPostRequest: Sync = (
   // The concept's `editPost` action is responsible for checking if the `user` (editor) is authorized.
   then: actions([
     Post.editPost,
-    { editor: user, postId, newContent, newItem, newPostType },
+    { editor: user, postId, newContent, newItems, newPostType },
   ]),
 });
 

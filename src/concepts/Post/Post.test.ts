@@ -46,6 +46,7 @@ describe("PostConcept", () => {
         author: userA,
         content: "This is a general post.",
         postType: "GENERAL",
+        items: [],
       });
 
       assert(!("error" in result), "createPost should not return an error");
@@ -57,7 +58,7 @@ describe("PostConcept", () => {
       assertEquals(post.author, userA);
       assertEquals(post.content, "This is a general post.");
       assertEquals(post.postType, "GENERAL");
-      assertEquals(post.item, undefined);
+      assertEquals(post.items, []);
     });
 
     it("should create a PROGRESS post with an item successfully", async () => {
@@ -65,7 +66,7 @@ describe("PostConcept", () => {
         author: userB,
         content: "Made progress on this item!",
         postType: "PROGRESS",
-        item: itemA,
+        items: [itemA],
       });
 
       assert(!("error" in result), "createPost should not return an error");
@@ -75,7 +76,7 @@ describe("PostConcept", () => {
       const post = await postConcept.posts.findOne({ _id: postId });
       assertExists(post);
       assertEquals(post.author, userB);
-      assertEquals(post.item, itemA);
+      assertEquals(post.items, [itemA]);
       assertEquals(post.postType, "PROGRESS");
     });
 
@@ -85,6 +86,7 @@ describe("PostConcept", () => {
         content: "Invalid post type test.",
         // deno-lint-ignore no-explicit-any
         postType: "INVALID_TYPE" as any,
+        items: [],
       });
 
       assert("error" in result, "createPost should return an error");
@@ -104,6 +106,7 @@ describe("PostConcept", () => {
         author: userA,
         content: "Original content for editing",
         postType: "GENERAL",
+        items: [],
       });
       postId = (createResult as { postId: ID }).postId;
     });
@@ -113,7 +116,7 @@ describe("PostConcept", () => {
         postId: postId,
         editor: userA,
         newContent: "Updated content!",
-        newItem: itemB,
+        newItems: [itemB],
         newPostType: "PROGRESS",
       });
 
@@ -121,7 +124,7 @@ describe("PostConcept", () => {
       const post = await postConcept.posts.findOne({ _id: postId });
       assertExists(post);
       assertEquals(post.content, "Updated content!");
-      assertEquals(post.item, itemB);
+      assertEquals(post.items, [itemB]);
       assertEquals(post.postType, "PROGRESS");
       assertExists(post.editedAt);
     });
@@ -178,6 +181,7 @@ describe("PostConcept", () => {
         author: userA,
         content: "This post will be deleted.",
         postType: "GENERAL",
+        items: [],
       });
       postIdForDeletion = (createResult as { postId: ID }).postId;
     });
@@ -227,6 +231,7 @@ describe("PostConcept", () => {
         author: userA,
         content: "First post",
         postType: "GENERAL",
+        items: [],
       });
       const post1Id = (post1 as { postId: ID }).postId;
 
@@ -237,7 +242,7 @@ describe("PostConcept", () => {
         author: userA,
         content: "Second post",
         postType: "PROGRESS",
-        item: itemA,
+        items: [itemA],
       });
       const post2Id = (post2 as { postId: ID }).postId;
 
@@ -247,6 +252,7 @@ describe("PostConcept", () => {
         author: userA,
         content: "Third post",
         postType: "GENERAL",
+        items: [],
       });
       const post3Id = (post3 as { postId: ID }).postId;
 
@@ -255,6 +261,7 @@ describe("PostConcept", () => {
         author: userB,
         content: "User B post",
         postType: "GENERAL",
+        items: [],
       });
 
       const results = await postConcept._getPostsForUser({ user: userA });
@@ -262,7 +269,11 @@ describe("PostConcept", () => {
       assertEquals(results.length, 3, "Should return 3 posts for userA");
       // Should be ordered newest first
       assertEquals(results[0].post._id, post3Id, "First post should be newest");
-      assertEquals(results[1].post._id, post2Id, "Second post should be middle");
+      assertEquals(
+        results[1].post._id,
+        post2Id,
+        "Second post should be middle",
+      );
       assertEquals(results[2].post._id, post1Id, "Third post should be oldest");
       assertEquals(results[0].post.content, "Third post");
       assertEquals(results[1].post.content, "Second post");
@@ -280,12 +291,14 @@ describe("PostConcept", () => {
         author: userA,
         content: "User A post",
         postType: "GENERAL",
+        items: [],
       });
 
       await postConcept.createPost({
         author: userB,
         content: "User B post",
         postType: "GENERAL",
+        items: [],
       });
 
       const results = await postConcept._getPostsForUser({ user: userA });
@@ -303,6 +316,7 @@ describe("PostConcept", () => {
         author: userA,
         content: "User A post 1",
         postType: "GENERAL",
+        items: [],
       });
       const postA1Id = (postA1 as { postId: ID }).postId;
 
@@ -312,7 +326,7 @@ describe("PostConcept", () => {
         author: userA,
         content: "User A post 2",
         postType: "PROGRESS",
-        item: itemA,
+        items: [itemA],
       });
       const postA2Id = (postA2 as { postId: ID }).postId;
 
@@ -323,6 +337,7 @@ describe("PostConcept", () => {
         author: userB,
         content: "User B post 1",
         postType: "GENERAL",
+        items: [],
       });
       const postB1Id = (postB1 as { postId: ID }).postId;
 
@@ -332,6 +347,7 @@ describe("PostConcept", () => {
         author: userC,
         content: "User C post",
         postType: "GENERAL",
+        items: [],
       });
 
       const results = await postConcept._getPostsForUsers({
@@ -368,12 +384,14 @@ describe("PostConcept", () => {
         author: userA,
         content: "User A post",
         postType: "GENERAL",
+        items: [],
       });
 
       await postConcept.createPost({
         author: userB,
         content: "User B post",
         postType: "GENERAL",
+        items: [],
       });
 
       const results = await postConcept._getPostsForUsers({ users: [userA] });

@@ -17,7 +17,7 @@ type PostType = "PROGRESS" | "GENERAL";
  *  a postId String (becomes _id)
  *  an author User
  *  a content String
- *  an optional item Item
+ *  items Item[]
  *  a postType of PROGRESS or GENERAL
  *  a createdAt DateTime
  *  an optional editedAt DateTime
@@ -26,7 +26,7 @@ interface PostDoc {
   _id: ID;
   author: User;
   content: string;
-  item?: Item;
+  items: Item[];
   postType: PostType;
   createdAt: Date;
   editedAt?: Date;
@@ -44,17 +44,17 @@ export default class PostConcept {
   }
 
   /**
-   * createPost (author: User, content: String, postType: PostType, item: optional Item): (postId: String)
+   * createPost (author: User, content: String, postType: PostType, items: List<Item>): (postId: String)
    *
-   * **requires** The `author` (User) exists. If `item` is provided, the `item` must exist.
-   * **effects** Creates a new `Post` with a unique `postId`; sets `author`, `content`, `postType`, `item` (if provided), and `createdAt` to the current DateTime; returns the `postId`.
+   * **requires** The `author` (User) exists. Every `item` in `items` must exist.
+   * **effects** Creates a new `Post` with a unique `postId`; sets `author`, `content`, `postType`, `items`, and `createdAt` to the current DateTime; returns the `postId`.
    */
   async createPost(
-    { author, content, postType, item }: {
+    { author, content, postType, items }: {
       author: User;
       content: string;
       postType: PostType;
-      item?: Item;
+      items: Item[];
     },
   ): Promise<{ postId: ID } | { error: string }> {
     if (postType !== "PROGRESS" && postType !== "GENERAL") {
@@ -67,13 +67,10 @@ export default class PostConcept {
       _id: freshID(),
       author,
       content,
+      items,
       postType,
       createdAt: new Date(),
     };
-
-    if (item) {
-      post.item = item;
-    }
 
     await this.posts.insertOne(post);
     return { postId: post._id };
@@ -102,17 +99,17 @@ export default class PostConcept {
   }
 
   /**
-   * editPost (postId: String, editor: User, newContent: String, newItem: optional Item, newPostType: optional PostType)
+   * editPost (postId: String, editor: User, newContent: String, newItems: optional List<Item>, newPostType: optional PostType)
    *
    * **requires** The `postId` exists. The `editor` (User) is the `author` of the `Post`.
-   * **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Optionally updates `item` to `newItem` and `postType` to `newPostType`. Sets `editedAt` to the current DateTime.
+   * **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Optionally replaces `items` with `newItems` and updates `postType` to `newPostType`. Sets `editedAt` to the current DateTime.
    */
   async editPost(
-    { postId, editor, newContent, newItem, newPostType }: {
+    { postId, editor, newContent, newItems, newPostType }: {
       postId: ID;
       editor: User;
       newContent: string;
-      newItem?: Item;
+      newItems?: Item[];
       newPostType?: PostType;
     },
   ): Promise<Empty | { error: string }> {
@@ -144,11 +141,9 @@ export default class PostConcept {
 
     const updateQuery: UpdateFilter<PostDoc> = { $set: updates };
 
-    // The `newItem` is optional. If provided, it sets/updates the item.
-    // If we wanted to support removing an item, the type might be `newItem?: Item | null`.
-    // With the current signature, we only update if it's provided.
-    if (newItem !== undefined) {
-      (updateQuery.$set as Partial<PostDoc>).item = newItem;
+    // The `newItems` array is optional. When provided, it replaces the stored items.
+    if (newItems !== undefined) {
+      (updateQuery.$set as Partial<PostDoc>).items = newItems;
     }
 
     await this.posts.updateOne({ _id: postId }, updateQuery);
