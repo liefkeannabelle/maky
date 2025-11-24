@@ -6,6 +6,7 @@ import {
   Sessioning,
   Song,
   SongLibrary,
+  Chord,
 } from "@concepts";
 import { ID } from "@utils/types.ts";
 
@@ -322,4 +323,121 @@ export const RespondToAddChordToInventoryError: Sync = (
   then: actions(
     [Requesting.respond, { request, error }],
   ),
+});
+
+// --- ChordLibrary Actions ---
+
+export const HandleUpdateChordMastery: Sync = ({ request, sessionId, chord, newMastery, user }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/updateChordMastery", sessionId, chord, newMastery }, { request }]
+  ),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
+  then: actions(
+    [ChordLibrary.updateChordMastery, { user, chord, newMastery }]
+  )
+});
+
+export const RespondToUpdateChordMastery: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/updateChordMastery" }, { request }],
+    [ChordLibrary.updateChordMastery, {}, { error }]
+  ),
+  then: actions(
+    [Requesting.respond, { request, error }]
+  )
+});
+
+export const RespondToUpdateChordMasterySuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/updateChordMastery" }, { request }],
+    [ChordLibrary.updateChordMastery, {}, {}]
+  ),
+  then: actions(
+    [Requesting.respond, { request, success: true }]
+  )
+});
+
+export const HandleRemoveChordFromInventory: Sync = ({ request, sessionId, chord, user }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/removeChordFromInventory", sessionId, chord }, { request }]
+  ),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
+  then: actions(
+    [ChordLibrary.removeChordFromInventory, { user, chord }]
+  )
+});
+
+export const RespondToRemoveChordFromInventory: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/removeChordFromInventory" }, { request }],
+    [ChordLibrary.removeChordFromInventory, {}, { error }]
+  ),
+  then: actions(
+    [Requesting.respond, { request, error }]
+  )
+});
+
+export const RespondToRemoveChordFromInventorySuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/removeChordFromInventory" }, { request }],
+    [ChordLibrary.removeChordFromInventory, {}, {}]
+  ),
+  then: actions(
+    [Requesting.respond, { request, success: true }]
+  )
+});
+
+export const HandleGetChordMastery: Sync = ({ request, sessionId, chord, user, mastery }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/_getChordMastery", sessionId, chord }, { request }]
+  ),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
+    const newFrames = [];
+    for (const frame of frames) {
+      const currentUser = frame[user] as ID;
+      const result = await ChordLibrary._getChordMastery({ user: currentUser, chord: frame[chord] as string });
+      newFrames.push({ ...frame, [mastery]: result });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    [Requesting.respond, { request, mastery }]
+  )
+});
+
+// --- Chord Queries ---
+
+export const HandleGetAllChords: Sync = ({ request, chords }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Chord/_getAllChords" }, { request }]
+  ),
+  where: async (frames) => {
+    const newFrames = [];
+    for (const frame of frames) {
+      const result = await Chord._getAllChords();
+      newFrames.push({ ...frame, [chords]: result.chords });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    [Requesting.respond, { request, chords }]
+  )
+});
+
+export const HandleGetChordByName: Sync = ({ request, name, chord }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Chord/_getChordByName", name }, { request }]
+  ),
+  where: async (frames) => {
+    const newFrames = [];
+    for (const frame of frames) {
+      const result = await Chord._getChordByName({ name: frame[name] as string });
+      newFrames.push({ ...frame, [chord]: result.chord });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    [Requesting.respond, { request, chord }]
+  )
 });

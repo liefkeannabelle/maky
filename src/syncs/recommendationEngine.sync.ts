@@ -112,3 +112,66 @@ export const SendChordRecommendationResponse: Sync = (
     [Requesting.respond, { request, payload }],
   ),
 });
+
+export const HandleRequestChordRecommendation: Sync = ({ request, knownChords, recommendedChord }) => ({
+  when: actions(
+    [Requesting.request, { path: "/RecommendationEngine/requestChordRecommendation", knownChords }, { request }]
+  ),
+  where: async (frames) => {
+    // Fetch all songs once
+    const allSongsObjs = await Song._getAllSongs({});
+    const allSongsList = allSongsObjs.map((s) => ({
+        _id: s.song._id,
+        chords: s.song.chords,
+        difficulty: s.song.difficulty,
+    }));
+
+    const newFrames = [];
+    for (const frame of frames) {
+      const kChords = frame[knownChords] as string[];
+      const result = await RecommendationEngine.requestChordRecommendation({
+        knownChords: kChords,
+        allSongs: allSongsList
+      });
+      // result is Array<{ recommendedChord: string }>
+      const rec = result.length > 0 ? result[0].recommendedChord : null;
+      newFrames.push({ ...frame, [recommendedChord]: rec });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    [Requesting.respond, { request, recommendedChord }]
+  )
+});
+
+export const HandleRequestSongUnlockRecommendation: Sync = ({ request, knownChords, potentialChord, unlockedSongs }) => ({
+  when: actions(
+    [Requesting.request, { path: "/RecommendationEngine/requestSongUnlockRecommendation", knownChords, potentialChord }, { request }]
+  ),
+  where: async (frames) => {
+    const allSongsObjs = await Song._getAllSongs({});
+    const allSongsList = allSongsObjs.map((s) => ({
+        _id: s.song._id,
+        chords: s.song.chords,
+        difficulty: s.song.difficulty,
+    }));
+
+    const newFrames = [];
+    for (const frame of frames) {
+      const kChords = frame[knownChords] as string[];
+      const pChord = frame[potentialChord] as string;
+      const result = await RecommendationEngine.requestSongUnlockRecommendation({
+        knownChords: kChords,
+        potentialChord: pChord,
+        allSongs: allSongsList
+      });
+      // result is Array<{ unlockedSongs: ID[] }>
+      const unlocked = result.length > 0 ? result[0].unlockedSongs : [];
+      newFrames.push({ ...frame, [unlockedSongs]: unlocked });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    [Requesting.respond, { request, unlockedSongs }]
+  )
+});
