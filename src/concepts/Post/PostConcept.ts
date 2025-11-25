@@ -1,5 +1,5 @@
 import { Collection, Db, UpdateFilter } from "npm:mongodb";
-import { Empty, ID } from "@utils/types.ts";
+import { ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
 // Collection prefix for this concept
@@ -83,11 +83,11 @@ export default class PostConcept {
    * deletePost (postId: String, deleter: User)
    *
    * **requires** The `postId` exists. The `deleter` (User) is the `author` of the `Post`.
-   * **effects** Removes the `Post` identified by `postId` from the state.
+   * **effects** Removes the `Post` identified by `postId` from the state and returns `success: true`.
    */
   async deletePost(
     { postId, deleter }: { postId: ID; deleter: User },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const post = await this.posts.findOne({ _id: postId });
     if (!post) {
       return { error: "Post not found" };
@@ -98,14 +98,14 @@ export default class PostConcept {
     }
 
     await this.posts.deleteOne({ _id: postId });
-    return {};
+    return { success: true };
   }
 
   /**
    * editPost (postId: String, editor: User, newContent: String, newItems: List<Item> or "UNDEFINED", newPostType: PostType or "UNDEFINED")
    *
    * **requires** The `postId` exists. The `editor` (User) is the `author` of the `Post`. Callers must always provide `newItems` and `newPostType`; pass the literal string "UNDEFINED" to leave either value unchanged.
-   * **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Replaces `items` with `newItems` unless it is "UNDEFINED", and updates `postType` to `newPostType` unless it is "UNDEFINED". Sets `editedAt` to the current DateTime.
+   * **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Replaces `items` with `newItems` unless it is "UNDEFINED", and updates `postType` to `newPostType` unless it is "UNDEFINED". Sets `editedAt` to the current DateTime and returns `success: true`.
    */
   async editPost(
     { postId, editor, newContent, newItems, newPostType }: {
@@ -115,7 +115,7 @@ export default class PostConcept {
       newItems: MaybeProvided<Item[]>;
       newPostType: MaybeProvided<PostType>;
     },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const post = await this.posts.findOne({ _id: postId });
     if (!post) {
       return { error: "Post not found" };
@@ -161,7 +161,7 @@ export default class PostConcept {
 
     await this.posts.updateOne({ _id: postId }, updateQuery);
 
-    return {};
+    return { success: true };
   }
 
   /**

@@ -70,14 +70,14 @@ export const HandleUnfollowUserRequest: Sync = (
 
 /**
  * Responds successfully to the original /Following/unfollowUser request.
- * This handles the success case where the action returns an empty object.
+ * This handles the success case where the action returns `{ success: true }`.
  */
 export const RespondToUnfollowUserSuccess: Sync = ({ request }) => ({
   when: actions(
     [Requesting.request, { path: "/Following/unfollowUser" }, { request }],
-    [Following.unfollowUser, {}, { error: undefined }],
+    [Following.unfollowUser, {}, { success: true }],
   ),
-  then: actions([Requesting.respond, { request }]),
+  then: actions([Requesting.respond, { request, success: true }]),
 });
 
 /**

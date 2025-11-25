@@ -121,6 +121,8 @@ Deno.test(
       recipient: userB,
     });
     assert(!("error" in result), "Accepting a valid request should succeed.");
+    assert("success" in result, "Accept should return success flag.");
+    assertEquals(result.success, true);
 
     const friendshipInDb = await friendshipConcept.friendships.findOne({
       requester: userA,
@@ -170,6 +172,8 @@ Deno.test(
       recipient: userC,
     });
     assert(!("error" in result), "Declining a valid request should succeed.");
+    assert("success" in result, "Decline should return success flag.");
+    assertEquals(result.success, true);
 
     const friendshipInDb = await friendshipConcept.friendships.findOne({
       requester: userA,
@@ -204,6 +208,8 @@ Deno.test(
       user2: userA,
     });
     assert(!("error" in result), "Removing a friend should succeed.");
+    assert("success" in result, "Remove friend should return success flag.");
+    assertEquals(result.success, true);
 
     const friendshipInDb = await friendshipConcept.friendships.findOne({
       $or: [{ requester: userA, recipient: userB }, {

@@ -158,11 +158,11 @@ createPost (author: User, content: String, postType: PostType, item: optional It
 
 deletePost (postId: String, deleter: User)
 *   **requires** The `postId` exists. The `deleter` (User) is the `author` of the `Post` or an authorized administrator.
-*   **effects** Removes the `Post` identified by `postId` from the state. 
+*   **effects** Removes the `Post` identified by `postId` from the state and returns `success: true`.
 
 editPost (postId: String, editor: User, newContent: String, newItem: optional Item, newPostType: optional PostType)
 *   **requires** The `postId` exists. The `editor` (User) is the `author` of the `Post`.
-*   **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Optionally updates `item` to `newItem` and `postType` to `newPostType`. Sets `editedAt` to the current DateTime.
+*   **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Optionally updates `item` to `newItem` and `postType` to `newPostType`. Sets `editedAt` to the current DateTime and returns `success: true`.
 
 **queries** \
 _getPostsForUser (user: User): (post: Post)
@@ -284,17 +284,17 @@ sendFriendRequest (requester: User, recipient: User): (friendship: Friendship)
 acceptFriendRequest (requester: User, recipient: User)
 
 *   **requires** A `Friendship` exists where the `requester` is the requester, the `recipient` is the recipient, and the `status` is `PENDING`.
-*   **effects** Updates the `status` of the existing `Friendship` to `ACCEPTED`.
+*   **effects** Updates the `status` of the existing `Friendship` to `ACCEPTED` and returns `success: true`.
 
 declineFriendRequest (requester: User, recipient: User)
 
 *   **requires** A `Friendship` exists where the `requester` is the requester, the `recipient` is the recipient, and the `status` is `PENDING`.
-*   **effects** Updates the `status` of the existing `Friendship` to `DECLINED`.
+*   **effects** Updates the `status` of the existing `Friendship` to `DECLINED` and returns `success: true`.
 
 removeFriend (user1: User, user2: User)
 
 *   **requires** A `Friendship` exists between `user1` and `user2` (where one is the requester and the other is the recipient).
-*   **effects** Removes the `Friendship` object associated with these two users from the state.
+*   **effects** Removes the `Friendship` object associated with these two users from the state and returns `success: true`.
 
 removeAllFriendshipsForUser (user: User)
 
@@ -337,7 +337,7 @@ followUser (follower: User, followed: User): (follow: Follow)
 unfollowUser (follower: User, followed: User)
 
 *   **requires** A `Follow` object exists where `follower` is the follower and `followed` is the followed user.
-*   **effects** Removes the matching `Follow` object from the state.
+*   **effects** Removes the matching `Follow` object from the state and returns `success: true`.
 
 removeUserAsFollower (user: User)
 

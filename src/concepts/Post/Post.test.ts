@@ -121,6 +121,8 @@ describe("PostConcept", () => {
       });
 
       assert(!("error" in result), "editPost should succeed for the author");
+      assert("success" in result, "editPost should return success flag.");
+      assertEquals((result as { success: true }).success, true);
       const post = await postConcept.posts.findOne({ _id: postId });
       assertExists(post);
       assertEquals(post.content, "Updated content!");
@@ -139,6 +141,8 @@ describe("PostConcept", () => {
       });
 
       assert(!("error" in result));
+      assert("success" in result, "editPost should return success flag.");
+      assertEquals((result as { success: true }).success, true);
       const post = await postConcept.posts.findOne({ _id: postId });
       assertExists(post);
       assertEquals(post.content, "Content only");
@@ -229,6 +233,8 @@ describe("PostConcept", () => {
         deleter: userA,
       });
       assert(!("error" in result), "deletePost should succeed for the author");
+      assert("success" in result, "deletePost should return success flag.");
+      assertEquals((result as { success: true }).success, true);
       const post = await postConcept.posts.findOne({ _id: postIdForDeletion });
       assertEquals(post, null);
     });

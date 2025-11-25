@@ -725,7 +725,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The `postId` exists. The user associated with `sessionId` is the `author` of the `Post` or an authorized administrator.
 
 **Effects:**
-- Removes the `Post` identified by `postId` from the state.
+- Removes the `Post` identified by `postId` from the state; returns `success: true` on completion.
 
 **Request Body:**
 ```json
@@ -737,7 +737,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -758,7 +760,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - Requests must still include `newItems` and `newPostType`; supply the literal string `"UNDEFINED"` for any field that should remain unchanged.
 
 **Effects:**
-- Updates the `content` of the `Post` identified by `postId` to `newContent`. Replaces `items` with `newItems` unless the literal string `"UNDEFINED"` is provided, and updates `postType` to `newPostType` unless it is `"UNDEFINED"`. Sets `editedAt` to the current DateTime.
+- Updates the `content` of the `Post` identified by `postId` to `newContent`. Replaces `items` with `newItems` unless the literal string `"UNDEFINED"` is provided, and updates `postType` to `newPostType` unless it is `"UNDEFINED"`. Sets `editedAt` to the current DateTime; returns `success: true` on completion.
 
 **Request Body:**
 ```json
@@ -773,7 +775,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -1284,7 +1288,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - A `Friendship` exists where the `requester` is specified and the user associated with `sessionId` is the recipient, and the `status` is `PENDING`.
 
 **Effects:**
-- Updates the `status` of the existing `Friendship` to `ACCEPTED`.
+- Updates the `status` of the existing `Friendship` to `ACCEPTED`; returns `success: true` on completion.
 
 **Request Body:**
 ```json
@@ -1296,7 +1300,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -1316,7 +1322,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - A `Friendship` exists where the `requester` is specified and the user associated with `sessionId` is the recipient, and the `status` is `PENDING`.
 
 **Effects:**
-- Updates the `status` of the existing `Friendship` to `DECLINED`.
+- Updates the `status` of the existing `Friendship` to `DECLINED`; returns `success: true` on completion.
 
 **Request Body:**
 ```json
@@ -1328,7 +1334,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -1348,7 +1356,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - A `Friendship` exists between the user associated with `sessionId` and `otherUser` (where one is the requester and the other is the recipient).
 
 **Effects:**
-- Removes the `Friendship` object associated with these two users from the state.
+- Removes the `Friendship` object associated with these two users from the state; returns `success: true` on completion.
 
 **Request Body:**
 ```json
@@ -1360,7 +1368,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -1441,7 +1451,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 ---
-### POST /api/Friendship/\_getPendingFriendships
+### POST /api/Friendship/_getPendingFriendships
 
 **Description:** Retrieves a list of all incoming friend requests that are pending for a specific user.
 
@@ -2179,7 +2189,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
-### POST /api/SongLibrary/\_getSongsInProgress
+### POST /api/SongLibrary/_getSongsInProgress
 
 **Description:** Retrieves all songs a user is currently learning with their mastery levels.
 
@@ -2539,7 +2549,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
-### POST /api/ChordLibrary/\_getKnownChords
+### POST /api/ChordLibrary/_getKnownChords
 
 **Description:** Retrieves all known chords for a user.
 
@@ -2582,7 +2592,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
-### POST /api/ChordLibrary/\_getChordMastery
+### POST /api/ChordLibrary/_getChordMastery
 
 **Description:** Retrieves the mastery level for a specific chord for a user.
 
@@ -2756,7 +2766,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
-### POST /api/Chord/\_getChordByName
+### POST /api/Chord/_getChordByName
 
 **Description:** Look up a chord by its name (e.g., "C", "Am7").
 
@@ -2800,7 +2810,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
-### POST /api/Chord/\_getAllChords
+### POST /api/Chord/_getAllChords
 
 **Description:** Retrieves all defined chords.
 
@@ -2944,7 +2954,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
-### POST /api/Song/\_getPlayableSongs
+### POST /api/Song/_getPlayableSongs
 
 **Description:** Finds songs that can be played given a specific set of known chords.
 
@@ -2990,7 +3000,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
-### POST /api/Song/\_filterSongsByGenre
+### POST /api/Song/_filterSongsByGenre
 
 **Description:** Retrieves all songs matching a specific genre.
 
@@ -3030,7 +3040,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
-### POST /api/Song/\_searchByTitleOrArtist
+### POST /api/Song/_searchByTitleOrArtist
 
 **Description:** Searches for songs by title or artist name (partial match).
 
@@ -3286,7 +3296,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
-### POST /api/RecommendationEngine/\_getRecommendation
+### POST /api/RecommendationEngine/_getRecommendation
 
 **Description:** Retrieves a previously calculated recommendation by ID.
 
