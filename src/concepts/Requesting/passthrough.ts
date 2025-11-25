@@ -116,6 +116,17 @@ export const exclusions: Array<string> = [
   "/api/UserProfile/setTargetSong",
   "/api/UserProfile/removeTargetSong",
   "/api/UserProfile/deleteProfile",
+  "/api/Comment/_getCommentsForPostId",
+  "/api/Following/removeUserFollowing",
+  "/api/Following/removeUserAsFollower",
+  "/api/Friendship/removeAllFriendshipsForUser",
+  "/api/Friendship/_getFriends",
+  "/api/Friendship/_getPendingFriendships",
+  "/api/Reaction/_getReactionsForPostId",
+  "/api/UserAccount/register",
+  "/api/UserAccount/_isUserById",
+  "/api/UserProfile/_searchByDisplayName",
+  "/api/UserProfile/_getProfile",
 ];
 
 /** */

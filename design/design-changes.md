@@ -74,3 +74,7 @@
   - Implementation: Triggers when `Post.removeAllPostsForUser` succeeds, queries all posts for that user using `Post._getPostsForUser`, then deletes all comments and reactions for each post
   - This sync complements `CascadePostDeletion` which handles single post deletions, ensuring consistent cleanup behavior for both individual and bulk post deletions
   - Follows the same pattern as `CascadePostDeletion` but handles bulk deletion scenarios (e.g., during account deletion)
+
+- Modified `addCommentToPost` to only accept if the requester is friends with the poster
+
+- Modified `createPost` to attach multiple Items (a.k.a. songs and chords) in their posts.
