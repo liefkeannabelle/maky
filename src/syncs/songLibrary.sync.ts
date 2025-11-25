@@ -81,6 +81,66 @@ export const HandleGetSongsInProgress: Sync = (
 
 // --- SongLibrary Actions ---
 
+export const HandleAddUser: Sync = ({ request, sessionId, user }) => ({
+  when: actions(
+    [Requesting.request, { path: "/SongLibrary/addUser", sessionId }, { request }]
+  ),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
+  then: actions(
+    [SongLibrary.addUser, { user }]
+  )
+});
+
+export const RespondToAddUserSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/SongLibrary/addUser" }, { request }],
+    [SongLibrary.addUser, {}, {}]
+  ),
+  then: actions(
+    [Requesting.respond, { request, success: true }]
+  )
+});
+
+export const RespondToAddUserError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/SongLibrary/addUser" }, { request }],
+    [SongLibrary.addUser, {}, { error }]
+  ),
+  then: actions(
+    [Requesting.respond, { request, error }]
+  )
+});
+
+export const HandleRemoveUser: Sync = ({ request, sessionId, user }) => ({
+  when: actions(
+    [Requesting.request, { path: "/SongLibrary/removeUser", sessionId }, { request }]
+  ),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
+  then: actions(
+    [SongLibrary.removeUser, { user }]
+  )
+});
+
+export const RespondToRemoveUserSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/SongLibrary/removeUser" }, { request }],
+    [SongLibrary.removeUser, {}, {}]
+  ),
+  then: actions(
+    [Requesting.respond, { request, success: true }]
+  )
+});
+
+export const RespondToRemoveUserError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/SongLibrary/removeUser" }, { request }],
+    [SongLibrary.removeUser, {}, { error }]
+  ),
+  then: actions(
+    [Requesting.respond, { request, error }]
+  )
+});
+
 export const HandleStartLearningSong: Sync = ({ request, sessionId, song, mastery, user }) => ({
   when: actions(
     [Requesting.request, { path: "/SongLibrary/startLearningSong", sessionId, song, mastery }, { request }]

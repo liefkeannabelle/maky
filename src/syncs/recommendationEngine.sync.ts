@@ -5,6 +5,7 @@ import {
   Requesting,
   Sessioning,
   Song,
+  UserProfile,
 } from "@concepts";
 import { ID } from "@utils/types.ts";
 
@@ -173,5 +174,151 @@ export const HandleRequestSongUnlockRecommendation: Sync = ({ request, knownChor
   },
   then: actions(
     [Requesting.respond, { request, unlockedSongs }]
+  )
+});
+
+export const HandleRequestPersonalizedSongRecommendation: Sync = ({ request, sessionId, user, recommendedSongs }) => ({
+  when: actions(
+    [Requesting.request, { path: "/RecommendationEngine/requestPersonalizedSongRecommendation", sessionId }, { request }]
+  ),
+  where: async (frames) => {
+    console.log("DEBUG: HandleRequestPersonalizedSongRecommendation started");
+    try {
+      frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
+      console.log("DEBUG: User resolved");
+
+      const allSongsObjs = await Song._getAllSongs({});
+      console.log(`DEBUG: Fetched ${allSongsObjs.length} songs`);
+      
+      const allSongsList = allSongsObjs.map((s) => ({
+          _id: s.song._id,
+          chords: s.song.chords,
+          difficulty: s.song.difficulty,
+      }));
+
+      const newFrames = [];
+      for (const frame of frames) {
+        const currentUser = frame[user] as ID;
+        console.log(`DEBUG: Processing for user ${currentUser}`);
+        
+        // Get Known Chords
+        const knownChordsObjs = await ChordLibrary._getKnownChords({ user: currentUser });
+        const knownChordsList = knownChordsObjs.map((c) => c.chord);
+        console.log(`DEBUG: Known chords: ${knownChordsList.length}`);
+
+        // Get User Profile for Genre Preferences
+        const profileObjs = await UserProfile._getProfile({ user: currentUser });
+        const genrePreferences = profileObjs.length > 0 ? profileObjs[0].profile.genrePreferences : [];
+        console.log(`DEBUG: Genre prefs: ${genrePreferences}`);
+
+        const result = await RecommendationEngine.requestPersonalizedSongRecommendation({
+          knownChords: knownChordsList,
+          allSongs: allSongsList,
+          genrePreferences
+        });
+        console.log("DEBUG: Recommendation calculated");
+        
+        const recs = result.length > 0 ? result[0].recommendedSongs : [];
+        newFrames.push({ ...frame, [recommendedSongs]: recs });
+      }
+      return new Frames(...newFrames);
+    } catch (e) {
+      console.error("DEBUG: Error in HandleRequestPersonalizedSongRecommendation", e);
+      throw e;
+    }
+  },
+  then: actions(
+    [Requesting.respond, { request, recommendedSongs }]
+  )
+});
+
+export const HandleRecommendNextChordsForTargetSong: Sync = ({ request, sessionId, targetSong, user, recommendedPath }) => ({
+  when: actions(
+    [Requesting.request, { path: "/RecommendationEngine/recommendNextChordsForTargetSong", sessionId, targetSong }, { request }]
+  ),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
+
+    const allSongsObjs = await Song._getAllSongs({});
+    
+    const newFrames = [];
+    for (const frame of frames) {
+      const currentUser = frame[user] as ID;
+      const targetSongId = frame[targetSong] as ID;
+
+      // Get Known Chords
+      const knownChordsObjs = await ChordLibrary._getKnownChords({ user: currentUser });
+      const knownChordsList = knownChordsObjs.map((c) => c.chord);
+
+      // Find Target Song
+      const targetSongObj = allSongsObjs.find(s => s.song._id === targetSongId);
+      
+      if (!targetSongObj) {
+          newFrames.push({ ...frame, [recommendedPath]: [] }); // Or error
+          continue;
+      }
+
+      const targetSongInput = {
+          _id: targetSongObj.song._id,
+          chords: targetSongObj.song.chords,
+          difficulty: targetSongObj.song.difficulty
+      };
+
+      const result = await RecommendationEngine.recommendNextChordsForTargetSong({
+        knownChords: knownChordsList,
+        targetSong: targetSongInput
+      });
+      
+      const path = result.length > 0 ? result[0].recommendedPath : [];
+      newFrames.push({ ...frame, [recommendedPath]: path });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    [Requesting.respond, { request, recommendedPath }]
+  )
+});
+
+export const HandleCalculateRecommendation: Sync = ({ request, sessionId, user, knownChords, allSongs, recommendationId }) => ({
+  when: actions(
+    [Requesting.request, { path: "/RecommendationEngine/calculateRecommendation", sessionId }, { request }]
+  ),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
+
+    const newFrames = [];
+    for (const frame of frames) {
+      const currentUser = frame[user] as ID;
+
+      const knownChordsObjs = await ChordLibrary._getKnownChords({ user: currentUser });
+      const knownChordsList = knownChordsObjs.map((c) => c.chord);
+
+      const allSongsObjs = await Song._getAllSongs({});
+      const allSongsList = allSongsObjs.map((s) => ({
+        _id: s.song._id,
+        chords: s.song.chords,
+        difficulty: s.song.difficulty,
+      }));
+
+      newFrames.push({
+        ...frame,
+        [knownChords]: knownChordsList,
+        [allSongs]: allSongsList,
+      });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    [RecommendationEngine.calculateRecommendation, { user, knownChords, allSongs }, { recommendationId }]
+  )
+});
+
+export const RespondToCalculateRecommendation: Sync = ({ request, recommendationId }) => ({
+  when: actions(
+    [Requesting.request, { path: "/RecommendationEngine/calculateRecommendation" }, { request }],
+    [RecommendationEngine.calculateRecommendation, {}, { recommendationId }]
+  ),
+  then: actions(
+    [Requesting.respond, { request, recommendationId }]
   )
 });

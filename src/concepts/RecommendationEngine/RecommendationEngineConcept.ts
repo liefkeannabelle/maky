@@ -46,6 +46,7 @@ export default class RecommendationEngineConcept {
     // 1. Identify all potential chords (chords in songs that we don't know yet)
     const candidateChords = new Set<string>();
     for (const song of allSongs) {
+      if (!song.chords) continue;
       for (const chord of song.chords) {
         if (!knownSet.has(chord)) {
           candidateChords.add(chord);
@@ -69,6 +70,7 @@ export default class RecommendationEngineConcept {
       let difficultyCount = 0;
 
       for (const song of allSongs) {
+        if (!song.chords) continue;
         // Check if song is playable with testKnown
         const isPlayableNow = song.chords.every(c => testKnown.has(c));
         
@@ -168,6 +170,7 @@ export default class RecommendationEngineConcept {
     const knownSet = new Set(knownChords);
     const candidateChords = new Set<string>();
     for (const song of allSongs) {
+      if (!song.chords) continue;
       for (const chord of song.chords) {
         if (!knownSet.has(chord)) candidateChords.add(chord);
       }
@@ -179,6 +182,7 @@ export default class RecommendationEngineConcept {
     for (const candidate of candidateChords) {
       let score = 0;
       for (const song of allSongs) {
+        if (!song.chords) continue;
         const needsCandidate = song.chords.includes(candidate);
         const remainderKnown = song.chords.every(c => c === candidate || knownSet.has(c));
         // If the song needs this candidate AND all other chords are known, it's an unlock.
@@ -198,6 +202,70 @@ export default class RecommendationEngineConcept {
   }
 
   /**
+   * requestPersonalizedSongRecommendation
+   * 
+   * **requires** `knownChords` is not empty.
+   * 
+   * **effects** Filters `allSongs` to find songs playable with `knownChords`.
+   * Optionally ranks by `genrePreferences`.
+   */
+  async requestPersonalizedSongRecommendation(
+    { knownChords, allSongs, genrePreferences }: 
+    { knownChords: string[]; allSongs: SongInput[]; genrePreferences?: string[] }
+  ): Promise<Array<{ recommendedSongs: ID[] }>> {
+    const knownSet = new Set(knownChords);
+    const playableSongs: SongInput[] = [];
+
+    for (const song of allSongs) {
+      if (!song.chords) continue;
+      const isPlayable = song.chords.every(c => knownSet.has(c));
+      if (isPlayable) {
+        playableSongs.push(song);
+      }
+    }
+
+    // Simple ranking: Genre match first, then difficulty (if available), then random/default
+    // For now, just filter/sort.
+    
+    const sortedSongs = playableSongs;
+
+    if (genrePreferences && genrePreferences.length > 0) {
+        // TODO: Add genre to SongInput if we want to filter by it here.
+        // For now, we assume the caller might have pre-filtered or we just return playable.
+        // Since SongInput doesn't have genre in the interface above, we can't filter by it strictly
+        // unless we update SongInput.
+        // But let's just return all playable for now.
+    }
+
+    // Sort by difficulty if available
+    sortedSongs.sort((a, b) => (a.difficulty || 0) - (b.difficulty || 0));
+
+    return [{ recommendedSongs: sortedSongs.map(s => s._id) }];
+  }
+
+  /**
+   * recommendNextChordsForTargetSong
+   * 
+   * **requires** `targetSong` exists.
+   * 
+   * **effects** Identifies missing chords and returns a learning path.
+   */
+  async recommendNextChordsForTargetSong(
+    { knownChords, targetSong }: 
+    { knownChords: string[]; targetSong: SongInput }
+  ): Promise<Array<{ recommendedPath: string[] }>> {
+    const knownSet = new Set(knownChords);
+    const missingChords = targetSong.chords.filter(c => !knownSet.has(c));
+    
+    // Remove duplicates
+    const uniqueMissing = Array.from(new Set(missingChords));
+
+    // Simple path: just return the missing chords. 
+    // A smarter engine would order them by "usefulness" in other songs.
+    return [{ recommendedPath: uniqueMissing }];
+  }
+
+  /**
    * requestSongUnlockRecommendation (Stateless Query)
    * 
    * **requires** `potentialChord` is not in `knownChords`.
@@ -213,6 +281,7 @@ export default class RecommendationEngineConcept {
     const unlocked: ID[] = [];
 
     for (const song of allSongs) {
+      if (!song.chords) continue;
       const isPlayableWithNew = song.chords.every(c => c === potentialChord || knownSet.has(c));
       const wasPlayableBefore = song.chords.every(c => knownSet.has(c));
 

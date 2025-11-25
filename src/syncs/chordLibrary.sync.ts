@@ -194,6 +194,66 @@ export const RespondToChordAdditionError: Sync = ({ request, error }) => ({
   )
 });
 
+export const HandleAddUser: Sync = ({ request, sessionId, user }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/addUser", sessionId }, { request }]
+  ),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
+  then: actions(
+    [ChordLibrary.addUser, { user }]
+  )
+});
+
+export const RespondToAddUserSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/addUser" }, { request }],
+    [ChordLibrary.addUser, {}, {}]
+  ),
+  then: actions(
+    [Requesting.respond, { request, success: true }]
+  )
+});
+
+export const RespondToAddUserError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/addUser" }, { request }],
+    [ChordLibrary.addUser, {}, { error }]
+  ),
+  then: actions(
+    [Requesting.respond, { request, error }]
+  )
+});
+
+export const HandleRemoveUser: Sync = ({ request, sessionId, user }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/removeUser", sessionId }, { request }]
+  ),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
+  then: actions(
+    [ChordLibrary.removeUser, { user }]
+  )
+});
+
+export const RespondToRemoveUserSuccess: Sync = ({ request }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/removeUser" }, { request }],
+    [ChordLibrary.removeUser, {}, {}]
+  ),
+  then: actions(
+    [Requesting.respond, { request, success: true }]
+  )
+});
+
+export const RespondToRemoveUserError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/ChordLibrary/removeUser" }, { request }],
+    [ChordLibrary.removeUser, {}, { error }]
+  ),
+  then: actions(
+    [Requesting.respond, { request, error }]
+  )
+});
+
 /**
  * Sync: GetChordInventory
  * HTTP: GET /chords/inventory?sessionId=<id>
