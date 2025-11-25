@@ -36,11 +36,12 @@ As we worked through implementing the core learning functionality and basic soci
 ## Issues
 Having reached the alpha checkpoint, we are very satisifed with the degree of functionality ChordConnect has. We have a handful of specific improvements or additions that we will add for the beta checkpoint and/or final submission:
 
-## Plans & Decisions
-With all of the design assignments done, our focus falls on implementation. With the alpha checkpoint this coming Tuesday, we have scheduled an alpha midpoint meeting to check in on Saturday. Between now and then, we have set tasks to tackle. In this meeting, we will take a pulse on our progress and determine the necessary steps to meet the alpha deadline.
-
 - In our song data base, the genre identifier is being read as null as reflect in our Mongo DB and on the frontend. To be able to incorprate the user's genre preferences to the song recommendations, we will need to get these values to fill correctly. 
 - Currently, the chord recommendations are loading very slow because there are 5000 songs in the dataset that it iterates through the get the best chord to learn. We are looking for ways to optimize this to move more quickly.
 - The song seed script is parsing in songs that don't have valid titles or artists. To fix this, we will update script to filter that out.
 - With our current, "unlocking songs" approach, no chords are recommended if the user only knows a few chords. There are a few different approaches we are considering (i.e. other recommendations, hard coding first recs) and will need to decide which is best to implement.
 - Ideally, we would be able to generate a script or work on script that generates clean chord visuals for front-end.
+
+## Plans & Decisions
+The key decisions that must be made are in regard to the issues outlined above. In doing so, we will determine the more zoomed in functionality of ChordConnect. We have talked over a few options on how to address each issue and will meet to decide what best to do moving forward. In regards to plans, we have updated our [development plan](/design/alpha-dev-plan.md) to reflect the current state of our project and our next steps moving forward.
+
