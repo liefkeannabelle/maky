@@ -147,6 +147,7 @@ export const RespondToUpdateBioError: Sync = ({ request, error }) => ({
 export const HandleUpdateAvatarRequest: Sync = (
   { request, sessionId, newAvatarUrl, user },
 ) => {
+  // Treat the literal UNDEFINED sentinel the same as an omitted value.
   const normalizedAvatar = normalizeOptionalString(newAvatarUrl);
   return {
     when: actions([

@@ -1,5 +1,5 @@
 import { Collection, Db } from "npm:mongodb";
-import { Empty, ID } from "@utils/types.ts";
+import { ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
 // Collection prefix to avoid name clashes
@@ -78,7 +78,7 @@ export default class ReactionConcept {
    */
   async changeReactionType(
     { user, post, newType }: { user: User; post: Post; newType: ReactionType },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.reactions.updateOne(
       { user, post },
       { $set: { type: newType } },
@@ -88,7 +88,7 @@ export default class ReactionConcept {
       return { error: "Reaction not found for this user and post." };
     }
 
-    return {};
+    return { success: true };
   }
 
   /**
@@ -99,14 +99,14 @@ export default class ReactionConcept {
    */
   async removeReactionFromPost(
     { user, post }: { user: User; post: Post },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.reactions.deleteOne({ user, post });
 
     if (result.deletedCount === 0) {
       return { error: "Reaction not found for this user and post." };
     }
 
-    return {};
+    return { success: true };
   }
 
   /**
@@ -117,9 +117,9 @@ export default class ReactionConcept {
    */
   async removeAllReactionsFromPost(
     { post }: { post: Post },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true }> {
     await this.reactions.deleteMany({ post });
-    return {};
+    return { success: true };
   }
 
   /**

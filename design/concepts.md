@@ -39,10 +39,10 @@ updateCredentials (user: User, newUsername: String, newEmail: String): (success:
 *   **effects** Updates the `username` to `newUsername` and `email` to `newEmail` for the given `user`; returns `true` as `success`.
 
 
-setKidAccountStatus (user: User, status: Boolean)
+setKidAccountStatus (user: User, status: Boolean): (success: Boolean)
 
 *   **requires** The `user` exists.
-*   **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`.
+*   **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
 
 deleteAccount (user: User, password: String): (success: Boolean)
 
@@ -87,37 +87,37 @@ createProfile (user: User, displayName: String, genrePreferences: set of String,
 *   **requires** The `user` exists and does not already have a `Profile`.
 *   **effects** Creates a new `Profile` for the `user` with the given `displayName`, `genrePreferences`, and `skillLevel`; returns the new `profile`.
 
-updateDisplayName (user: User, newDisplayName: String)
+updateDisplayName (user: User, newDisplayName: String): (success: Boolean)
 *   **requires** The `user` exists and has an associated `Profile`.
-*   **effects** Updates the `displayName` in the `user`'s `Profile` to `newDisplayName`.
+*   **effects** Updates the `displayName` in the `user`'s `Profile` to `newDisplayName`; returns `true` as `success`.
 
-updateBio (user: User, newBio: String or undefined)
+updateBio (user: User, newBio: String or undefined): (success: Boolean)
 *   **requires** The `user` exists and has an associated `Profile`. Callers must always provide the `newBio` argument; pass `undefined` when the bio should be cleared.
-*   **effects** Updates the `bio` in the `user`'s `Profile` to `newBio` (removing the field when it is `undefined`).
+*   **effects** Updates the `bio` in the `user`'s `Profile` to `newBio` (removing the field when it is `undefined`); returns `true` as `success`.
 
-updateAvatar (user: User, newAvatarUrl: String or undefined)
-*   **requires** The `user` exists and has an associated `Profile`. Callers must always provide the `newAvatarUrl` argument; pass `undefined` when the avatar should be cleared.
-*   **effects** Updates the `avatarUrl` in the `user`'s `Profile` to `newAvatarUrl` (removing the field when it is `undefined`).
+updateAvatar (user: User, newAvatarUrl: String or undefined): (success: Boolean)
+*   **requires** The `user` exists and has an associated `Profile`. Callers must always provide the `newAvatarUrl` argument; pass `undefined` (or the literal string `"UNDEFINED"` when `undefined` cannot be expressed) when the avatar should be cleared.
+*   **effects** Updates the `avatarUrl` in the `user`'s `Profile` to `newAvatarUrl` (removing the field when it is `undefined` or `"UNDEFINED"`); returns `true` as `success`.
 
-setGenrePreferences (user: User, newGenrePreferences: set of String)
+setGenrePreferences (user: User, newGenrePreferences: set of String): (success: Boolean)
 *   **requires** The `user` exists and has an associated `Profile`.
-*   **effects** Replaces the `genrePreferences` in the `user`'s `Profile` with `newGenrePreferences`.
+*   **effects** Replaces the `genrePreferences` in the `user`'s `Profile` with `newGenrePreferences`; returns `true` as `success`.
 
-changeSkillLevel (user: User, newSkillLevel: SkillLevel)
+changeSkillLevel (user: User, newSkillLevel: SkillLevel): (success: Boolean)
 *   **requires** The `user` exists and has an associated `Profile`.
-*   **effects** Updates the `skillLevel` in the `user`'s `Profile` to `newSkillLevel`.
+*   **effects** Updates the `skillLevel` in the `user`'s `Profile` to `newSkillLevel`; returns `true` as `success`.
 
-setTargetSong (user: User, song: Song)
+setTargetSong (user: User, song: Song): (success: Boolean)
 * **requires** The `user` exists and has an associated `Profile`. The `song` exists.
-* **effects** Updates the `targetSong` in the `user`'s `Profile` to the provided `song`.
+* **effects** Updates the `targetSong` in the `user`'s `Profile` to the provided `song`; returns `true` as `success`.
 
-removeTargetSong (user: User)
+removeTargetSong (user: User): (success: Boolean)
 * **requires** The `user` exists and has an associated `Profile`.
-* **effects** Removes the `targetSong` from the `user`'s `Profile` 
+* **effects** Removes the `targetSong` from the `user`'s `Profile`; returns `true` as `success`.
 
-deleteProfile (user: User)
+deleteProfile (user: User): (success: Boolean)
 *   **requires** The user exists and has an associated `Profile`.
-*   **effects** Removes the `Profile` associated with the user from the state. 
+*   **effects** Removes the `Profile` associated with the user from the state; returns `true` as `success`. 
 
 **queries**
 

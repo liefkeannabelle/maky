@@ -38,10 +38,10 @@ updateCredentials (user: User, newUsername: String, newEmail: String): (success:
 *   **effects** Updates the `username` to `newUsername` and `email` to `newEmail` for the given `user`; returns `true` as `success`.
 
 
-setKidAccountStatus (user: User, status: Boolean)
+setKidAccountStatus (user: User, status: Boolean): (success: Boolean)
 
 *   **requires** The `user` exists.
-*   **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`.
+*   **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
 
 deleteAccount (user: User, password: String): (success: Boolean)
 

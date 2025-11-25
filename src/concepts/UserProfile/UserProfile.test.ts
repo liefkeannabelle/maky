@@ -78,7 +78,8 @@ Deno.test(
       user: userB,
       newDisplayName: "Bobby",
     });
-    assert(!("error" in nameUpdate), "updateDisplayName should succeed");
+    assert("success" in nameUpdate, "updateDisplayName should succeed");
+    assertEquals(nameUpdate.success, true);
     let profileInDb = await userProfile.profiles.findOne({ user: userB });
     assertEquals(profileInDb?.displayName, "Bobby");
 
@@ -87,7 +88,8 @@ Deno.test(
       user: userB,
       newBio: "Just a test bio",
     });
-    assert(!("error" in bioUpdate), "updateBio should succeed");
+    assert("success" in bioUpdate, "updateBio should succeed");
+    assertEquals(bioUpdate.success, true);
     profileInDb = await userProfile.profiles.findOne({ user: userB });
     assertEquals(profileInDb?.bio, "Just a test bio");
 
@@ -96,7 +98,8 @@ Deno.test(
       user: userB,
       newAvatarUrl: "http://example.com/avatar.png",
     });
-    assert(!("error" in avatarUpdate), "updateAvatar should succeed");
+    assert("success" in avatarUpdate, "updateAvatar should succeed");
+    assertEquals(avatarUpdate.success, true);
     profileInDb = await userProfile.profiles.findOne({ user: userB });
     assertEquals(profileInDb?.avatarUrl, "http://example.com/avatar.png");
 
@@ -105,7 +108,8 @@ Deno.test(
       user: userB,
       newGenrePreferences: ["Classical", "Blues"],
     });
-    assert(!("error" in genreUpdate), "setGenrePreferences should succeed");
+    assert("success" in genreUpdate, "setGenrePreferences should succeed");
+    assertEquals(genreUpdate.success, true);
     profileInDb = await userProfile.profiles.findOne({ user: userB });
     assertEquals(profileInDb?.genrePreferences, ["Classical", "Blues"]);
 
@@ -114,7 +118,8 @@ Deno.test(
       user: userB,
       newSkillLevel: "ADVANCED",
     });
-    assert(!("error" in skillUpdate), "changeSkillLevel should succeed");
+    assert("success" in skillUpdate, "changeSkillLevel should succeed");
+    assertEquals(skillUpdate.success, true);
     profileInDb = await userProfile.profiles.findOne({ user: userB });
     assertEquals(profileInDb?.skillLevel, "ADVANCED");
 
@@ -123,7 +128,8 @@ Deno.test(
       user: userB,
       song: songId,
     });
-    assert(!("error" in setSongUpdate), "setTargetSong should succeed");
+    assert("success" in setSongUpdate, "setTargetSong should succeed");
+    assertEquals(setSongUpdate.success, true);
     profileInDb = await userProfile.profiles.findOne({ user: userB });
     assertEquals(profileInDb?.targetSong, songId);
 
@@ -158,24 +164,63 @@ Deno.test(
     });
 
     // Set optional fields first
-    await userProfile.updateBio({ user: userC, newBio: "Bio to be removed" });
-    await userProfile.updateAvatar({
+    const bioSet = await userProfile.updateBio({
+      user: userC,
+      newBio: "Bio to be removed",
+    });
+    assert("success" in bioSet, "Setting bio should succeed");
+    assertEquals(bioSet.success, true);
+    let profileInDb = await userProfile.profiles.findOne({ user: userC });
+    assertEquals(profileInDb?.bio, "Bio to be removed");
+
+    const avatarSet = await userProfile.updateAvatar({
       user: userC,
       newAvatarUrl: "url_to_remove",
     });
-    await userProfile.setTargetSong({ user: userC, song: songId });
+    assert("success" in avatarSet, "Setting avatar should succeed");
+    assertEquals(avatarSet.success, true);
+    profileInDb = await userProfile.profiles.findOne({ user: userC });
+    assertEquals(profileInDb?.avatarUrl, "url_to_remove");
 
-    let profileInDb = await userProfile.profiles.findOne({ user: userC });
-    assertExists(profileInDb?.bio);
-    assertExists(profileInDb?.avatarUrl);
-    assertExists(profileInDb?.targetSong);
+    const songSet = await userProfile.setTargetSong({
+      user: userC,
+      song: songId,
+    });
+    assert("success" in songSet, "Setting target song should succeed");
+    assertEquals(songSet.success, true);
+    profileInDb = await userProfile.profiles.findOne({ user: userC });
+    assertEquals(profileInDb?.targetSong, songId);
+
+    // Remove avatar via literal sentinel first
+    const avatarRemoveSentinel = await userProfile.updateAvatar({
+      user: userC,
+      newAvatarUrl: "UNDEFINED",
+    });
+    assert(
+      "success" in avatarRemoveSentinel,
+      "Removing avatar with sentinel should succeed",
+    );
+    assertEquals(avatarRemoveSentinel.success, true);
+    profileInDb = await userProfile.profiles.findOne({ user: userC });
+    assertEquals(profileInDb?.avatarUrl, undefined);
+
+    // Re-set avatar so we can test removing it via explicit undefined as well
+    const avatarReset = await userProfile.updateAvatar({
+      user: userC,
+      newAvatarUrl: "url_to_remove_again",
+    });
+    assert("success" in avatarReset, "Re-setting avatar should succeed");
+    assertEquals(avatarReset.success, true);
+    profileInDb = await userProfile.profiles.findOne({ user: userC });
+    assertEquals(profileInDb?.avatarUrl, "url_to_remove_again");
 
     // Remove bio
     const bioRemove = await userProfile.updateBio({
       user: userC,
       newBio: undefined,
     });
-    assert(!("error" in bioRemove), "Removing bio should succeed");
+    assert("success" in bioRemove, "Removing bio should succeed");
+    assertEquals(bioRemove.success, true);
     profileInDb = await userProfile.profiles.findOne({ user: userC });
     assertEquals(profileInDb?.bio, undefined);
 
@@ -184,13 +229,15 @@ Deno.test(
       user: userC,
       newAvatarUrl: undefined,
     });
-    assert(!("error" in avatarRemove), "Removing avatar should succeed");
+    assert("success" in avatarRemove, "Removing avatar should succeed");
+    assertEquals(avatarRemove.success, true);
     profileInDb = await userProfile.profiles.findOne({ user: userC });
     assertEquals(profileInDb?.avatarUrl, undefined);
 
     // Remove target song
     const songRemove = await userProfile.removeTargetSong({ user: userC });
-    assert(!("error" in songRemove), "Removing target song should succeed");
+    assert("success" in songRemove, "Removing target song should succeed");
+    assertEquals(songRemove.success, true);
     profileInDb = await userProfile.profiles.findOne({ user: userC });
     assertEquals(profileInDb?.targetSong, undefined);
 
@@ -216,7 +263,8 @@ Deno.test(
 
     // Successful deletion
     const deleteResult = await userProfile.deleteProfile({ user: userD });
-    assert(!("error" in deleteResult), "Profile deletion should succeed");
+    assert("success" in deleteResult, "Profile deletion should succeed");
+    assertEquals(deleteResult.success, true);
 
     const profileInDb = await userProfile.profiles.findOne({ user: userD });
     assertEquals(profileInDb, null, "Profile should be deleted from database");

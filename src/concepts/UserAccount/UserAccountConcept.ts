@@ -1,5 +1,5 @@
 import { Collection, Db } from "npm:mongodb";
-import { Empty, ID } from "@utils/types.ts";
+import { ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
 // A simple helper function to hash passwords using the Web Crypto API.
@@ -196,14 +196,14 @@ export default class UserAccountConcept {
   }
 
   /**
-   * setKidAccountStatus (user: User, status: Boolean)
+   * setKidAccountStatus (user: User, status: Boolean): (success: Boolean)
    *
    * **requires** The `user` exists.
-   * **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`.
+   * **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
    */
   async setKidAccountStatus(
     { user: userId, status }: { user: User; status: boolean },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.users.updateOne(
       { _id: userId },
       { $set: { isKidAccount: status } },
@@ -213,7 +213,7 @@ export default class UserAccountConcept {
       return { error: "User not found" };
     }
 
-    return {};
+    return { success: true };
   }
 
   /**

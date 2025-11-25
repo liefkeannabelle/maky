@@ -81,7 +81,7 @@ Deno.test(
       newType: ReactionType.LOVE,
     });
 
-    assert(!("error" in changeResult), "changeReactionType should succeed");
+    assertEquals(changeResult, { success: true });
 
     // Verify the change in the database
     const updatedReactionInDb = await reactionConcept.reactions.findOne({
@@ -132,7 +132,7 @@ Deno.test(
       post: postA,
     });
 
-    assert(!("error" in removeResult), "removeReactionFromPost should succeed");
+    assertEquals(removeResult, { success: true });
 
     // Verify the reaction is no longer in the database
     const reactionInDb = await reactionConcept.reactions.findOne({
@@ -206,10 +206,7 @@ Deno.test(
       post: postA,
     });
 
-    assert(
-      !("error" in removeAllResult),
-      "removeAllReactionsFromPost should succeed",
-    );
+    assertEquals(removeAllResult, { success: true });
 
     // Verify all reactions for postA are removed
     const reactionsForPostAAfter = await reactionConcept.reactions.find({
@@ -236,10 +233,7 @@ Deno.test(
       post: postA, // Already deleted all reactions
     });
 
-    assert(
-      !("error" in emptyPostResult),
-      "removeAllReactionsFromPost should succeed even if no reactions exist",
-    );
+    assertEquals(emptyPostResult, { success: true });
 
     await client.close();
   },

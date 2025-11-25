@@ -58,19 +58,18 @@ export const HandleChangeReactionTypeRequest: Sync = (
 });
 
 /**
- * Responds to a successful change reaction type request.
- * The concept action returns an empty object on success, so we respond with a generic success message.
+ * Responds to a successful change reaction type request by passing along the success flag.
  */
-export const RespondToChangeReactionTypeSuccess: Sync = ({ request }) => ({
+export const RespondToChangeReactionTypeSuccess: Sync = ({ request, success }) => ({
   when: actions(
     [
       Requesting.request,
       { path: "/Reaction/changeReactionType" },
       { request },
     ],
-    [Reaction.changeReactionType, {}, {}], // Matches on the empty success object
+    [Reaction.changeReactionType, {}, { success }],
   ),
-  then: actions([Requesting.respond, { request, success: true }]),
+  then: actions([Requesting.respond, { request, success }]),
 });
 
 /**
@@ -108,16 +107,16 @@ export const HandleRemoveReactionRequest: Sync = (
 /**
  * Responds to a successful remove reaction request.
  */
-export const RespondToRemoveReactionSuccess: Sync = ({ request }) => ({
+export const RespondToRemoveReactionSuccess: Sync = ({ request, success }) => ({
   when: actions(
     [
       Requesting.request,
       { path: "/Reaction/removeReactionFromPost" },
       { request },
     ],
-    [Reaction.removeReactionFromPost, {}, {}], // Matches on the empty success object
+    [Reaction.removeReactionFromPost, {}, { success }],
   ),
-  then: actions([Requesting.respond, { request, success: true }]),
+  then: actions([Requesting.respond, { request, success }]),
 });
 
 /**

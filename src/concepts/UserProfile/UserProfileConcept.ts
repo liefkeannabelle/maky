@@ -2,6 +2,8 @@ import { Collection, Db, type UpdateFilter } from "npm:mongodb";
 import { ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
+const OPTIONAL_CLEAR_SENTINEL = "UNDEFINED" as const;
+
 // Collection prefix for this concept
 const PREFIX = "UserProfile" + ".";
 
@@ -130,13 +132,15 @@ export default class UserProfileConcept {
   /**
    * updateAvatar (user: User, newAvatarUrl: String or undefined)
    *
-   * **requires** The `user` exists and has an associated `Profile`. Callers must always provide `newAvatarUrl`; pass `undefined` to remove the avatar.
+   * **requires** The `user` exists and has an associated `Profile`. Callers must always provide `newAvatarUrl`; pass `undefined` (or the literal string "UNDEFINED" when `undefined` cannot be expressed) to remove the avatar.
    * **effects** Updates the `avatarUrl` in the `user`'s `Profile` to `newAvatarUrl`, clearing it when `newAvatarUrl` is `undefined`.
    */
   async updateAvatar(
     { user, newAvatarUrl }: { user: User; newAvatarUrl: string | undefined },
   ): Promise<{ success: true } | { error: string }> {
-    const updateOp: UpdateFilter<ProfileDoc> = newAvatarUrl === undefined
+    const shouldClear = newAvatarUrl === undefined ||
+      newAvatarUrl === OPTIONAL_CLEAR_SENTINEL;
+    const updateOp: UpdateFilter<ProfileDoc> = shouldClear
       ? { $unset: { avatarUrl: "" } }
       : { $set: { avatarUrl: newAvatarUrl } };
     const result = await this.profiles.updateOne({ user }, updateOp);
