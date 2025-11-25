@@ -1,8 +1,5 @@
 import { actions, Sync } from "@engine";
 import { Following, Requesting, Sessioning } from "@concepts";
-
-// --- Follow User (Authenticated) ---
-
 /**
  * Handles a request for one user to follow another.
  * It authenticates the requester via their session before triggering the followUser action.
@@ -24,18 +21,33 @@ export const HandleFollowUserRequest: Sync = (
 });
 
 /**
- * Responds to the original /Following/followUser request after the action completes.
- * This synchronization handles both success (returning the new `follow` object) and failure (returning an `error`).
+ * Responds successfully to the original /Following/followUser request.
+ * This handles the success case, returning the new `follow` object.
  */
-export const RespondToFollowUser: Sync = ({ request, follow, error }) => ({
+export const RespondToFollowUserSuccess: Sync = ({ request, follow }) => ({
   when: actions(
     // Matches the original request in the same flow.
     [Requesting.request, { path: "/Following/followUser" }, { request }],
-    // Matches the result of the followUser action, binding `follow` on success or `error` on failure.
-    [Following.followUser, {}, { follow, error }],
+    // Matches the successful result of the followUser action, binding `follow`.
+    [Following.followUser, {}, { follow }],
   ),
-  // Responds to the client with the outcome.
-  then: actions([Requesting.respond, { request, follow, error }]),
+  // Responds to the client with the new follow object.
+  then: actions([Requesting.respond, { request, follow }]),
+});
+
+/**
+ * Responds with an error to the original /Following/followUser request.
+ * This handles the failure case, returning an `error` object.
+ */
+export const RespondToFollowUserError: Sync = ({ request, error }) => ({
+  when: actions(
+    // Matches the original request in the same flow.
+    [Requesting.request, { path: "/Following/followUser" }, { request }],
+    // Matches the failed result of the followUser action, binding `error`.
+    [Following.followUser, {}, { error }],
+  ),
+  // Responds to the client with the error.
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 // --- Unfollow User (Authenticated) ---
@@ -57,16 +69,27 @@ export const HandleUnfollowUserRequest: Sync = (
 });
 
 /**
- * Responds to the original /Following/unfollowUser request after the action completes.
- * This handles both success (empty object) and failure (error object).
+ * Responds successfully to the original /Following/unfollowUser request.
+ * This handles the success case where the action returns an empty object.
  */
-export const RespondToUnfollowUser: Sync = ({ request, error }) => ({
+export const RespondToUnfollowUserSuccess: Sync = ({ request }) => ({
   when: actions(
     [Requesting.request, { path: "/Following/unfollowUser" }, { request }],
-    // The unfollowUser action returns an empty object `{}` on success, so we only need
-    // to explicitly pattern match on the `error` case. If `error` is not present,
-    // the response will correctly be an empty object.
+    [Following.unfollowUser, {}, { error: undefined }],
+  ),
+  then: actions([Requesting.respond, { request }]),
+});
+
+/**
+ * Responds with an error to the original /Following/unfollowUser request.
+ * This handles the failure case where the action returns an error object.
+ */
+export const RespondToUnfollowUserError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Following/unfollowUser" }, { request }],
+    // This pattern specifically matches when the output contains an 'error' key.
     [Following.unfollowUser, {}, { error }],
   ),
+  // Respond to the client with the specific error.
   then: actions([Requesting.respond, { request, error }]),
 });

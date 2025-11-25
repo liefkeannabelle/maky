@@ -82,14 +82,27 @@ export const HandleDeletePostRequest: Sync = (
 });
 
 /**
- * Responds to the original request after a `deletePost` attempt.
+ * Responds to a successful delete post attempt.
  */
-export const RespondToDeletePost: Sync = ({ request, success, error }) => ({
+export const RespondToDeletePostSuccess: Sync = ({ request, success }) => ({
   when: actions(
     [Requesting.request, { path: "/Post/deletePost" }, { request }],
-    [Post.deletePost, {}, { success, error }],
+    // Match on the success case, which returns a `success` object.
+    [Post.deletePost, {}, { success }],
   ),
-  then: actions([Requesting.respond, { request, success, error }]),
+  then: actions([Requesting.respond, { request, success }]),
+});
+
+/**
+ * Responds to a failed delete post attempt.
+ */
+export const RespondToDeletePostError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Post/deletePost" }, { request }],
+    // Match on the failure case, which returns an `error` object.
+    [Post.deletePost, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 // --- Edit Post (Authenticated) ---
@@ -121,14 +134,25 @@ export const HandleEditPostRequest: Sync = (
 });
 
 /**
- * Responds to the original request after an `editPost` attempt.
+ * Responds to a successful edit post attempt.
  */
-export const RespondToEditPost: Sync = ({ request, success, error }) => ({
+export const RespondToEditPostSuccess: Sync = ({ request, success }) => ({
   when: actions(
     [Requesting.request, { path: "/Post/editPost" }, { request }],
-    [Post.editPost, {}, { success, error }],
+    [Post.editPost, {}, { success }],
   ),
-  then: actions([Requesting.respond, { request, success, error }]),
+  then: actions([Requesting.respond, { request, success }]),
+});
+
+/**
+ * Responds to a failed edit post attempt.
+ */
+export const RespondToEditPostError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Post/editPost" }, { request }],
+    [Post.editPost, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 // --- Get Posts For User (Public Query) ---

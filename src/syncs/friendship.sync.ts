@@ -38,11 +38,10 @@ export const HandleSendFriendRequest: Sync = (
 });
 
 /**
- * Responds to the original request after a send friend request attempt.
- * This handles both success (returns a `friendship` object) and failure (returns an `error`).
+ * Responds to a successful send friend request attempt.
  */
-export const RespondToSendFriendRequest: Sync = (
-  { request, friendship, error },
+export const RespondToSendFriendRequestSuccess: Sync = (
+  { request, friendship },
 ) => ({
   when: actions(
     [
@@ -50,10 +49,26 @@ export const RespondToSendFriendRequest: Sync = (
       { path: "/Friendship/sendFriendRequest" },
       { request },
     ],
-    // Pattern match on the output of the sendFriendRequest action.
-    [Friendship.sendFriendRequest, {}, { friendship, error }],
+    // Match on the success case, which returns a `friendship` object.
+    [Friendship.sendFriendRequest, {}, { friendship }],
   ),
-  then: actions([Requesting.respond, { request, friendship, error }]),
+  then: actions([Requesting.respond, { request, friendship }]),
+});
+
+/**
+ * Responds to a failed send friend request attempt.
+ */
+export const RespondToSendFriendRequestError: Sync = ({ request, error }) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/Friendship/sendFriendRequest" },
+      { request },
+    ],
+    // Match on the failure case, which returns an `error` object.
+    [Friendship.sendFriendRequest, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 // --- Accept Friend Request (Authenticated) ---
@@ -78,10 +93,30 @@ export const HandleAcceptFriendRequest: Sync = (
 });
 
 /**
- * Responds to the accept friend request attempt.
- * The concept action returns an empty object on success, so we only need to pass through the error on failure.
+ * Responds to a successful accept friend request attempt.
  */
-export const RespondToAcceptFriendRequest: Sync = ({ request, error }) => ({
+export const RespondToAcceptFriendRequestSuccess: Sync = (
+  { request, success },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/Friendship/acceptFriendRequest" },
+      { request },
+    ],
+    // Match on the success output of the action. Assumes { success: true } is returned
+    // by the concept action to allow for distinct pattern matching.
+    [Friendship.acceptFriendRequest, {}, { success }],
+  ),
+  then: actions([Requesting.respond, { request, success }]),
+});
+
+/**
+ * Responds to a failed accept friend request attempt.
+ */
+export const RespondToAcceptFriendRequestError: Sync = (
+  { request, error },
+) => ({
   when: actions(
     [
       Requesting.request,
@@ -115,9 +150,28 @@ export const HandleDeclineFriendRequest: Sync = (
 });
 
 /**
- * Responds to the decline friend request attempt.
+ * Responds to a successful decline friend request attempt.
  */
-export const RespondToDeclineFriendRequest: Sync = ({ request, error }) => ({
+export const RespondToDeclineFriendRequestSuccess: Sync = (
+  { request, success },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/Friendship/declineFriendRequest" },
+      { request },
+    ],
+    [Friendship.declineFriendRequest, {}, { success }],
+  ),
+  then: actions([Requesting.respond, { request, success }]),
+});
+
+/**
+ * Responds to a failed decline friend request attempt.
+ */
+export const RespondToDeclineFriendRequestError: Sync = (
+  { request, error },
+) => ({
   when: actions(
     [
       Requesting.request,
@@ -147,11 +201,21 @@ export const HandleRemoveFriendRequest: Sync = (
     frames.query(Sessioning._getUser, { sessionId }, { user: user1 }),
   then: actions([Friendship.removeFriend, { user1, user2: otherUser }]),
 });
+/**
+ * Responds to a successful remove friend attempt.
+ */
+export const RespondToRemoveFriendSuccess: Sync = ({ request, success }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Friendship/removeFriend" }, { request }],
+    [Friendship.removeFriend, {}, { success }],
+  ),
+  then: actions([Requesting.respond, { request, success }]),
+});
 
 /**
- * Responds to the remove friend attempt.
+ * Responds to a failed remove friend attempt.
  */
-export const RespondToRemoveFriend: Sync = ({ request, error }) => ({
+export const RespondToRemoveFriendError: Sync = ({ request, error }) => ({
   when: actions(
     [Requesting.request, { path: "/Friendship/removeFriend" }, { request }],
     [Friendship.removeFriend, {}, { error }],
@@ -178,19 +242,31 @@ export const HandleAreFriendsQuery: Sync = (
 });
 
 /**
- * Responds to the areFriends query with the boolean result.
- * Note: Queries return an array of results. In this case, it will be a single-element array.
- * The sync engine will create one frame, and we extract the `isFriend` property to respond.
+ * Responds to a successful areFriends query with the boolean result.
  */
-export const RespondToAreFriendsQuery: Sync = (
-  { request, isFriend, error },
+export const RespondToAreFriendsQuerySuccess: Sync = (
+  { request, isFriend },
 ) => ({
   when: actions(
     [Requesting.request, { path: "/Friendship/areFriends" }, { request }],
     // The query returns `[{ isFriend: boolean }]`. The pattern matching extracts `isFriend`.
-    [Friendship.areFriends, {}, { isFriend, error }],
+    [Friendship.areFriends, {}, { isFriend }],
   ),
-  then: actions([Requesting.respond, { request, isFriend, error }]),
+  then: actions([Requesting.respond, { request, isFriend }]),
+});
+
+/**
+ * Responds to a failed areFriends query.
+ */
+export const RespondToAreFriendsQueryError: Sync = (
+  { request, error },
+) => ({
+  when: actions(
+    [Requesting.request, { path: "/Friendship/areFriends" }, { request }],
+    // Match on the failure case, which returns an `error`.
+    [Friendship.areFriends, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
 });
 /**
  * Handles an authenticated request to retrieve the current user's friend list.
@@ -200,6 +276,7 @@ export const RespondToAreFriendsQuery: Sync = (
  * 3. The user ID is then used to query the target concept (`Friendship._getFriends`).
  * 4. The results are collected and returned in the response.
  */
+
 export const HandleGetFriendsRequest: Sync = (
   { request, sessionId, user, friend, friends },
 ) => ({

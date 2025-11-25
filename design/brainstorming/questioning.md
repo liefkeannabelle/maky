@@ -689,7 +689,7 @@ This document provides the API specification for the various concepts that make 
 - The `comment` exists and its `author` matches the provided `author`.
 
 **Effects:**
-- Updates the `content` of the `comment` to `newContent` and sets `lastEditedAt` to the current timestamp.
+- Updates the `content` of the `comment` to `newContent`, sets `lastEditedAt` to the current timestamp, and returns `success: true`.
 
 **Request Body:**
 ```json
@@ -702,7 +702,9 @@ This document provides the API specification for the various concepts that make 
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**

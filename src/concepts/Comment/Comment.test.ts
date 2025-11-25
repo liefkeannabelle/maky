@@ -113,6 +113,11 @@ Deno.test(
       !("error" in successResult),
       "Deletion by the author should succeed.",
     );
+    assertEquals(
+      successResult.success,
+      true,
+      "Delete response should include success: true",
+    );
     commentInDb = await commentConcept.comments.findOne({ _id: commentId });
     assertEquals(
       commentInDb,
@@ -149,6 +154,11 @@ Deno.test(
       newContent,
     });
     assert(!("error" in successResult), "Editing by author should succeed.");
+    assertEquals(
+      successResult.success,
+      true,
+      "Success response should contain success: true.",
+    );
 
     let commentInDb = await commentConcept.comments.findOne({ _id: commentId });
     assertExists(commentInDb);
@@ -321,6 +331,11 @@ Deno.test(
       !("error" in removeAllResult),
       "removeAllCommentsFromPost should succeed",
     );
+    assertEquals(
+      removeAllResult.success,
+      true,
+      "removeAllCommentsFromPost should return success: true",
+    );
 
     // Verify all comments for post1 are removed
     const { comments: post1CommentsAfter } = await commentConcept
@@ -348,6 +363,11 @@ Deno.test(
     assert(
       !("error" in emptyPostResult),
       "removeAllCommentsFromPost should succeed even if no comments exist",
+    );
+    assertEquals(
+      emptyPostResult.success,
+      true,
+      "removeAllCommentsFromPost should return success: true even when no comments",
     );
 
     await client.close();

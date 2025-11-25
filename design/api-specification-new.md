@@ -215,7 +215,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -359,7 +361,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -391,7 +395,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -944,7 +950,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The `comment` exists and its `author` matches the user associated with `sessionId`.
 
 **Effects:**
-- Updates the `content` of the `comment` to `newContent` and sets `lastEditedAt` to the current timestamp.
+- Updates the `content` of the `comment` to `newContent`, sets `lastEditedAt` to the current timestamp, and returns `success: true`.
 
 **Request Body:**
 ```json
@@ -977,7 +983,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The `post` exists.
 
 **Effects:**
-- Removes all `Comment`s associated with the specified `post` from the state and from the `comments` set of `post`.
+- Removes all `Comment`s associated with the specified `post` from the state and from the `comments` set of `post`; returns `success: true`.
 
 **Request Body:**
 ```json
@@ -988,7 +994,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -1899,7 +1907,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Purpose:** Manage a user's personal progress in learning songs.
 
-***
+---
 
 ## API Endpoints
 
@@ -1911,11 +1919,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The user associated with `sessionId` does not already exist in the SongLibrary.
+*   The user associated with `sessionId` does not already exist in the SongLibrary.
 
 **Effects:**
 
-* Adds the authenticated user to the SongLibrary with an empty progress list.
+*   Adds the authenticated user to the SongLibrary with an empty progress list.
 
 **Request Body:**
 
@@ -1941,7 +1949,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/SongLibrary/removeUser
 
@@ -1951,11 +1959,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The user associated with `sessionId` exists in the SongLibrary.
+*   The user associated with `sessionId` exists in the SongLibrary.
 
 **Effects:**
 
-* Removes the user and all their associated `SongProgress` entries from the state.
+*   Removes the user and all their associated `SongProgress` entries from the state.
 
 **Request Body:**
 
@@ -1979,7 +1987,78 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
+### POST /api/SongLibrary/addSong
+
+**Description:** Adds a new song to the global song library.
+
+**Authentication:** Requires a valid `sessionId`. Typically restricted to administrators.
+
+**Requirements:**
+- No Song with the given `name` already exists.
+- Requests must always include `genre`; supply the literal string `"UNDEFINED"` when the song should have no genre.
+
+**Effects:**
+- Creates a new Song; sets the `title`, `artist`, `chords`, and stores `genre` unless it is `"UNDEFINED"`; returns the new song.
+
+**Request Body:**
+```json
+{
+  "sessionId": "string",
+  "title": "string",
+  "artist": "string",
+  "chords": "string[]",
+  "genre": "string" // always include; send "UNDEFINED" to leave genre unspecified
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "song": "string"
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+### POST /api/SongLibrary/removeSong
+
+**Description:** Removes a song from the global song library.
+
+**Authentication:** Requires a valid `sessionId`. Typically restricted to administrators.
+
+**Requirements:**
+- The Song `song` exists.
+
+**Effects:**
+- Removes the `song` from the set of Songs. Also removes all `SongProgress` entries across all users that reference this `song`.
+
+**Request Body:**
+```json
+{
+  "sessionId": "string",
+  "song": "string"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+
 
 ### POST /api/SongLibrary/startLearningSong
 
@@ -1989,11 +2068,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The `song` exists. The user associated with `sessionId` exists and is not already tracking this `song`.
+*   The `song` exists. The user associated with `sessionId` exists and is not already tracking this `song`.
 
 **Effects:**
 
-* Creates a new `SongProgress` entry for the authenticated user, associating them with the specified `song` and `mastery` level.
+*   Creates a new `SongProgress` entry for the authenticated user, associating them with the specified `song` and `mastery` level.
 
 **Request Body:**
 
@@ -2019,7 +2098,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/SongLibrary/updateSongMastery
 
@@ -2029,11 +2108,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The user associated with `sessionId` is already tracking the specified `song`.
+*   The user associated with `sessionId` is already tracking the specified `song`.
 
 **Effects:**
 
-* Updates the `mastery` level for the specific song entry.
+*   Updates the `mastery` level for the specific song entry.
 
 **Request Body:**
 
@@ -2059,7 +2138,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/SongLibrary/stopLearningSong
 
@@ -2069,11 +2148,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The user associated with `sessionId` is currently tracking the specified `song`.
+*   The user associated with `sessionId` is currently tracking the specified `song`.
 
 **Effects:**
 
-* Deletes the `SongProgress` entry for the authenticated user and `song`.
+*   Deletes the `SongProgress` entry for the authenticated user and `song`.
 
 **Request Body:**
 
@@ -2098,7 +2177,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/SongLibrary/\_getSongsInProgress
 
@@ -2108,11 +2187,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The user associated with `sessionId` exists.
+*   The user associated with `sessionId` exists.
 
 **Effects:**
 
-* Returns an array of objects containing the full song details and the user's current mastery level.
+*   Returns an array of objects containing the full song details and the user's current mastery level.
 
 **Request Body:**
 
@@ -2146,60 +2225,120 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
-
-### POST /api/SongLibrary/\_getPlayableSongs
+---
+---
+### POST /api/SongLibrary/_getPlayableSongs
 
 **Description:** Gets all songs that a user can play with their current chord knowledge.
 
-**Authentication:** Requires a valid `sessionId`. The user's known chords are automatically retrieved from the session (via ChordLibrary).
+**Authentication:** Requires a valid `sessionId`. The user's known chords are automatically retrieved from the session.
 
 **Requirements:**
-
-* The user associated with `sessionId` exists.
+- The user associated with `sessionId` exists.
 
 **Effects:**
-
-* Returns the set of all `Songs` whose `chords` are a subset of the user's known chords. If `genres` are provided, the result is further filtered to only include songs whose genre is in the `genres` set.
+- Returns the set of all `Songs` whose `chords` are a subset of the user's `knownChords`. If `genres` are provided, the result is further filtered to only include songs whose genre is in the `genres` set.
 
 **Request Body:**
-
 ```json
 {
   "sessionId": "string",
-  "genres": ["string"] // optional
+  "genres": "string[]" // optional
 }
 ```
 
 **Success Response Body (Query):**
-
 ```json
 [
   {
-    "song": {
-      "_id": "string",
-      "title": "string",
-      "artist": "string"
-    }
+    "songs": "string[]"
   }
 ]
 ```
 
 **Error Response Body:**
-
 ```json
 {
   "error": "string"
 }
 ```
+---
+### POST /api/SongLibrary/_getSongsInProgress
 
-***
+**Description:** Gets all songs a user is currently learning with their mastery levels.
+
+**Authentication:** Requires a valid `sessionId`. The user is automatically extracted from the session.
+
+**Requirements:**
+- The user associated with `sessionId` exists.
+
+**Effects:**
+- Returns the set of all `SongProgress` entries for the authenticated user, each containing a song and its mastery level.
+
+**Request Body:**
+```json
+{
+  "sessionId": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "song": "string",
+    "mastery": "string"
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+### POST /api/SongLibrary/_filterSongsByGenre
+
+**Description:** Gets all songs in a specific genre.
+
+**Requirements:**
+- No authentication required for this public query.
+
+**Effects:**
+- Returns the set of all `Songs` that are associated with the specified `genre`.
+
+**Request Body:**
+```json
+{
+  "genre": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "songs": "string[]"
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+
 
 # API Specification: ChordLibrary Concept
 
 **Purpose:** Maintain an inventory of chords known by each user and their proficiency.
 
-***
+---
 
 ## API Endpoints
 
@@ -2211,11 +2350,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The user associated with `sessionId` does not already exist in the ChordLibrary.
+*   The user associated with `sessionId` does not already exist in the ChordLibrary.
 
 **Effects:**
 
-* Adds the authenticated user to the concept, creating an empty inventory.
+*   Adds the authenticated user to the concept, creating an empty inventory.
 
 **Request Body:**
 
@@ -2241,7 +2380,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/ChordLibrary/addChordToInventory
 
@@ -2251,11 +2390,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The user associated with `sessionId` exists. The chord symbol is valid. The user does not already have this chord in their inventory.
+*   The user associated with `sessionId` exists. The chord symbol is valid. The user does not already have this chord in their inventory.
 
 **Effects:**
 
-* Normalizes the chord symbol and creates a new `KnownChord` entry.
+*   Normalizes the chord symbol and creates a new `KnownChord` entry.
 
 **Request Body:**
 
@@ -2281,7 +2420,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/ChordLibrary/updateChordMastery
 
@@ -2291,11 +2430,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The user associated with `sessionId` has the specified `chord` in their inventory.
+*   The user associated with `sessionId` has the specified `chord` in their inventory.
 
 **Effects:**
 
-* Updates the `mastery` of the existing entry to `newMastery`.
+*   Updates the `mastery` of the existing entry to `newMastery`.
 
 **Request Body:**
 
@@ -2321,7 +2460,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/ChordLibrary/removeChordFromInventory
 
@@ -2331,11 +2470,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The user associated with `sessionId` has the specified `chord` in their inventory.
+*   The user associated with `sessionId` has the specified `chord` in their inventory.
 
 **Effects:**
 
-* Deletes the `KnownChord` entry.
+*   Deletes the `KnownChord` entry.
 
 **Request Body:**
 
@@ -2360,7 +2499,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/ChordLibrary/removeUser
 
@@ -2370,11 +2509,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The user associated with `sessionId` exists.
+*   The user associated with `sessionId` exists.
 
 **Effects:**
 
-* Removes the user and all their known chords from the state.
+*   Removes the user and all their known chords from the state.
 
 **Request Body:**
 
@@ -2398,21 +2537,21 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/ChordLibrary/\_getKnownChords
 
-**Description:** Retrieves all known chords for a user with their mastery levels.
+**Description:** Retrieves all known chords for a user.
 
 **Authentication:** Requires a valid `sessionId`. The user is automatically extracted from the session.
 
 **Requirements:**
 
-* The user associated with `sessionId` exists.
+*   The user associated with `sessionId` exists.
 
 **Effects:**
 
-* Returns the set of all `KnownChord` entries for the authenticated user, each containing a chord and its mastery level.
+*   Returns the set of all chords known by the user and their mastery levels.
 
 **Request Body:**
 
@@ -2441,7 +2580,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/ChordLibrary/\_getChordMastery
 
@@ -2451,11 +2590,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The user associated with `sessionId` exists and knows the chord.
+*   The user associated with `sessionId` exists and knows the chord.
 
 **Effects:**
 
-* Returns the mastery level for the requested chord.
+*   Returns the mastery level for the requested chord.
 
 **Request Body:**
 
@@ -2484,13 +2623,51 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
+---
+### POST /api/ChordLibrary/_getKnownChords
+
+**Description:** Retrieves all known chords for a user with their mastery levels.
+
+**Authentication:** Requires a valid `sessionId`. The user is automatically extracted from the session.
+
+**Requirements:**
+- The user associated with `sessionId` exists.
+
+**Effects:**
+- Returns the set of all `KnownChord` entries for the authenticated user, each containing a chord and its mastery level.
+
+**Request Body:**
+```json
+{
+  "sessionId": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "chord": "string",
+    "mastery": "string"
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+
 
 # API Specification: Chord Concept
 
 **Purpose:** Define fundamental musical chords (Admin management).
 
-***
+---
 
 ## API Endpoints
 
@@ -2502,11 +2679,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* No Chord with the given `name` already exists.
+*   No Chord with the given `name` already exists.
 
 **Effects:**
 
-* Creates a new Chord entity with the specified notes.
+*   Creates a new Chord entity with the specified notes.
 
 **Request Body:**
 
@@ -2538,7 +2715,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/Chord/deleteChord
 
@@ -2548,11 +2725,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The Chord `chord` exists.
+*   The Chord `chord` exists.
 
 **Effects:**
 
-* Removes the Chord from the state.
+*   Removes the Chord from the state.
 
 **Request Body:**
 
@@ -2577,7 +2754,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/Chord/\_getChordByName
 
@@ -2585,11 +2762,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* None.
+*   None.
 
 **Effects:**
 
-* Returns the chord object if found.
+*   Returns the chord object if found.
 
 **Request Body:**
 
@@ -2621,7 +2798,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/Chord/\_getAllChords
 
@@ -2629,11 +2806,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* None.
+*   None.
 
 **Effects:**
 
-* Returns a list of all chords sorted by name.
+*   Returns a list of all chords sorted by name.
 
 **Request Body:**
 
@@ -2665,13 +2842,13 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 # API Specification: Song Concept
 
 **Purpose:** Manage the global catalog of songs.
 
-***
+---
 
 ## API Endpoints
 
@@ -2683,11 +2860,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* No Song with the exact same `title` and `artist` exists.
+*   No Song with the exact same `title` and `artist` exists.
 
 **Effects:**
 
-* Creates a new Song with the provided metadata.
+*   Creates a new Song with the provided metadata.
 
 **Request Body:**
 
@@ -2726,7 +2903,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/Song/deleteSong
 
@@ -2736,11 +2913,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The Song `song` exists.
+*   The Song `song` exists.
 
 **Effects:**
 
-* Removes the song from the state.
+*   Removes the song from the state.
 
 **Request Body:**
 
@@ -2765,19 +2942,19 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/Song/\_getPlayableSongs
 
-**Description:** Finds songs that can be played given a specific set of known chords. This is the raw query version used if you want to explicitly check a set of chords, rather than the authenticated user's profile.
+**Description:** Finds songs that can be played given a specific set of known chords.
 
 **Requirements:**
 
-* None.
+*   None.
 
 **Effects:**
 
-* Returns songs where every chord in the song is present in the `knownChords` list. Optionally filters by genre.
+*   Returns songs where every chord in the song is present in the `knownChords` list. Optionally filters by genre.
 
 **Request Body:**
 
@@ -2811,7 +2988,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/Song/\_filterSongsByGenre
 
@@ -2819,11 +2996,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* None.
+*   None.
 
 **Effects:**
 
-* Returns songs where the `genre` field or `tags` array contains the specified string.
+*   Returns songs where the `genre` field or `tags` array contains the specified string.
 
 **Request Body:**
 
@@ -2851,7 +3028,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/Song/\_searchByTitleOrArtist
 
@@ -2859,11 +3036,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* None.
+*   None.
 
 **Effects:**
 
-* Returns up to 20 songs matching the query string.
+*   Returns up to 20 songs matching the query string.
 
 **Request Body:**
 
@@ -2891,51 +3068,13 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
-
-### POST /api/Song/\_getAllSongs
-
-**Description:** Retrieves all songs in the catalog.
-
-**Requirements:**
-
-* None.
-
-**Effects:**
-
-* Returns all songs.
-
-**Request Body:**
-
-```json
-{}
-```
-
-**Success Response Body (Query):**
-
-```json
-[
-  {
-    "song": "Object"
-  }
-]
-```
-
-**Error Response Body:**
-
-```json
-{
-  "error": "string"
-}
-```
-
-***
+---
 
 # API Specification: RecommendationEngine Concept
 
 **Purpose:** Calculate optimal learning paths and chord suggestions.
 
-***
+---
 
 ## API Endpoints
 
@@ -2947,17 +3086,25 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* User must exist. `knownChords` and `allSongs` are automatically retrieved by the synchronization from the respective libraries.
+*   User must exist. `knownChords` and `allSongs` must be provided.
 
 **Effects:**
 
-* Analyzes the library songs against the user's known chords. Creates a persisted `Recommendation` containing the best chord and the list of songs it unlocks.
+*   Analyzes the provided song list against known chords. Creates a persisted `Recommendation` containing the best chord and the list of songs it unlocks.
 
 **Request Body:**
 
 ```json
 {
-  "sessionId": "string"
+  "sessionId": "string",
+  "knownChords": ["string"],
+  "allSongs": [
+    {
+      "_id": "string",
+      "chords": ["string"],
+      "difficulty": "number"
+    }
+  ]
 }
 ```
 
@@ -2977,19 +3124,19 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/RecommendationEngine/requestChordRecommendation
 
-**Description:** A stateless version of the recommendation logic. Suggests the next chord to learn based on raw inputs.
+**Description:** A stateless version of the recommendation logic. Suggests the next chord to learn.
 
 **Requirements:**
 
-* `knownChords` is a proper subset of chords in `allSongs`.
+*   `knownChords` is a proper subset of chords in `allSongs`.
 
 **Effects:**
 
-* Returns a single chord string that maximizes song unlock potential.
+*   Returns a single chord string that maximizes song unlock potential.
 
 **Request Body:**
 
@@ -3021,8 +3168,8 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
-
+---
+---
 ### POST /api/RecommendationEngine/requestPersonalizedSongRecommendation
 
 **Description:** Gets personalized song recommendations based on the user's known chords and genre preferences.
@@ -3030,15 +3177,12 @@ After a user logs in, all authenticated API requests should include a `sessionId
 **Authentication:** Requires a valid `sessionId`. The user's known chords and genre preferences are automatically retrieved from the session.
 
 **Requirements:**
-
-* The set of `knownChords` for the user associated with `sessionId` is not empty.
+- The set of `knownChords` for the user associated with `sessionId` is not empty.
 
 **Effects:**
-
-* Filters the set of `allSongs` to find all songs that are playable with the user's current `knownChords`. Further filters and ranks this result based on the user's `genrePreferences`. Returns a ranked list of playable songs tailored to the user's tastes as `recommendedSongs`.
+- Filters the set of `allSongs` to find all songs that are playable with the user's current `knownChords`. Further filters and ranks this result based on the user's `genrePreferences`. Returns a ranked list of playable songs tailored to the user's tastes as `recommendedSongs`.
 
 **Request Body:**
-
 ```json
 {
   "sessionId": "string"
@@ -3046,7 +3190,6 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ```
 
 **Success Response Body (Action):**
-
 ```json
 {
   "recommendedSongs": "string[]"
@@ -3054,15 +3197,14 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ```
 
 **Error Response Body:**
-
 ```json
 {
   "error": "string"
 }
 ```
+---
 
-***
-
+---
 ### POST /api/RecommendationEngine/recommendNextChordsForTargetSong
 
 **Description:** Provides a learning path of chords to learn in order to play a target song.
@@ -3070,15 +3212,12 @@ After a user logs in, all authenticated API requests should include a `sessionId
 **Authentication:** Requires a valid `sessionId`. The user's known chords are automatically retrieved from the session.
 
 **Requirements:**
-
-* The `targetSong` exists. The set of chords required by `targetSong` is not a subset of the user's `knownChords`.
+- The `targetSong` exists. The set of chords required by `targetSong` is not a subset of the user's `knownChords`.
 
 **Effects:**
-
-* Identifies the set of `missingChords` required to play the `targetSong` that are not present in the user's `knownChords` set. Returns an ordered learning path as `recommendedPath`.
+- Identifies the set of `missingChords` required to play the `targetSong` that are not present in the user's `knownChords` set. It then orders these `missingChords` into a sequence based on pedagogical principles (e.g., prioritizing foundational chords, chords with simpler fingerings, or chords that unlock the most other songs). Returns this ordered learning path as `recommendedPath`.
 
 **Request Body:**
-
 ```json
 {
   "sessionId": "string",
@@ -3087,7 +3226,6 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ```
 
 **Success Response Body (Action):**
-
 ```json
 {
   "recommendedPath": "string[]"
@@ -3095,26 +3233,25 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ```
 
 **Error Response Body:**
-
 ```json
 {
   "error": "string"
 }
 ```
+---
 
-***
 
 ### POST /api/RecommendationEngine/requestSongUnlockRecommendation
 
-**Description:** Identifies specifically which songs would become playable if a specific chord were learned. This is a stateless query.
+**Description:** Identifies specifically which songs would become playable if a specific chord were learned.
 
 **Requirements:**
 
-* `potentialChord` is not in `knownChords`.
+*   `potentialChord` is not in `knownChords`.
 
 **Effects:**
 
-* Returns a list of song IDs that require `potentialChord` (plus any subset of `knownChords`) but were not previously playable.
+*   Returns a list of song IDs that require `potentialChord` (plus any subset of `knownChords`) but were not previously playable.
 
 **Request Body:**
 
@@ -3147,7 +3284,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-***
+---
 
 ### POST /api/RecommendationEngine/\_getRecommendation
 
@@ -3155,11 +3292,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Requirements:**
 
-* The `recommendationId` exists.
+*   The `recommendationId` exists.
 
 **Effects:**
 
-* Returns the full recommendation object including score, timestamp, and unlocked songs list.
+*   Returns the full recommendation object including score, timestamp, and unlocked songs list.
 
 **Request Body:**
 

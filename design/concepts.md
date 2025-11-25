@@ -206,11 +206,11 @@ deleteComment (comment: Comment, author: User)
 
 editComment (comment: Comment, author: User, newContent: String)
 *   **requires** The `comment` exists and its `author` matches the provided `author`.
-*   **effects** Updates the `content` of the `comment` to `newContent` and sets `lastEditedAt` to the current timestamp.
+*   **effects** Updates the `content` of the `comment` to `newContent`, sets `lastEditedAt` to the current timestamp, and returns `success: true`.
 
 removeAllCommentsFromPost (post: Post)
 *   **requires** The `post` exists.
-*   **effects** Removes all `Comment`s associated with the given `post` from the state and from the `comments` set of `post`.
+  *   **effects** Removes all `Comment`s associated with the given `post` from the state and from the `comments` set of `post`; returns `success: true` on completion.
 
 **notes**
 - lastEditedAt will be used to track if/when a comment was edited

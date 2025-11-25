@@ -183,17 +183,32 @@ export const HandleChangePasswordRequest: Sync = (
 });
 
 /**
- * Responds to the original request after a change password attempt (success or failure).
+ * Responds to a successful password change attempt.
  */
-export const RespondToChangePassword: Sync = (
-  { request, success, error },
+export const RespondToChangePasswordSuccess: Sync = (
+  { request, success },
 ) => ({
   when: actions(
     [Requesting.request, { path: "/UserAccount/changePassword" }, { request }],
-    [UserAccount.changePassword, {}, { success, error }],
+    [UserAccount.changePassword, {}, { success }],
   ),
   then: actions(
-    [Requesting.respond, { request, success, error }],
+    [Requesting.respond, { request, success }],
+  ),
+});
+
+/**
+ * Responds to a failed password change attempt.
+ */
+export const RespondToChangePasswordError: Sync = (
+  { request, error },
+) => ({
+  when: actions(
+    [Requesting.request, { path: "/UserAccount/changePassword" }, { request }],
+    [UserAccount.changePassword, {}, { error }],
+  ),
+  then: actions(
+    [Requesting.respond, { request, error }],
   ),
 });
 
@@ -225,10 +240,10 @@ export const HandleUpdateCredentialsRequest: Sync = (
 });
 
 /**
- * Responds to the update credentials request after completion.
+ * Responds to a successful update credentials attempt.
  */
-export const RespondToUpdateCredentials: Sync = (
-  { request, success, error },
+export const RespondToUpdateCredentialsSuccess: Sync = (
+  { request, success },
 ) => ({
   when: actions(
     [
@@ -236,10 +251,29 @@ export const RespondToUpdateCredentials: Sync = (
       { path: "/UserAccount/updateCredentials" },
       { request },
     ],
-    [UserAccount.updateCredentials, {}, { success, error }],
+    [UserAccount.updateCredentials, {}, { success }],
   ),
   then: actions(
-    [Requesting.respond, { request, success, error }],
+    [Requesting.respond, { request, success }],
+  ),
+});
+
+/**
+ * Responds to a failed update credentials attempt.
+ */
+export const RespondToUpdateCredentialsError: Sync = (
+  { request, error },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/UserAccount/updateCredentials" },
+      { request },
+    ],
+    [UserAccount.updateCredentials, {}, { error }],
+  ),
+  then: actions(
+    [Requesting.respond, { request, error }],
   ),
 });
 
@@ -266,20 +300,35 @@ export const HandleSetKidStatusRequest: Sync = (
 });
 
 /**
- * Responds to the set 'isKidAccount' status request after completion.
- * This single synchronization handles both success and error responses.
+ * Responds to a successful 'isKidAccount' status update.
  */
-export const RespondToSetKidStatus: Sync = ({ request, success, error }) => ({
+export const RespondToSetKidStatusSuccess: Sync = (
+  { request, success },
+) => ({
   when: actions(
     [
       Requesting.request,
       { path: "/UserAccount/setKidAccountStatus" },
       { request },
     ],
-    // Assumes the action returns {success: true} on success and {error} on failure.
-    [UserAccount.setKidAccountStatus, {}, { success, error }],
+    [UserAccount.setKidAccountStatus, {}, { success }],
   ),
-  then: actions([Requesting.respond, { request, success, error }]),
+  then: actions([Requesting.respond, { request, success }]),
+});
+
+/**
+ * Responds to a failed 'isKidAccount' status update.
+ */
+export const RespondToSetKidStatusError: Sync = ({ request, error }) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/UserAccount/setKidAccountStatus" },
+      { request },
+    ],
+    [UserAccount.setKidAccountStatus, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 // --- Delete Account (Authenticated) ---
@@ -305,15 +354,30 @@ export const HandleDeleteAccountRequest: Sync = (
 });
 
 /**
- * Responds to the delete account request after completion.
+ * Responds to a successful account deletion attempt.
  */
-export const RespondToDeleteAccount: Sync = ({ request, success, error }) => ({
+export const RespondToDeleteAccountSuccess: Sync = (
+  { request, success },
+) => ({
   when: actions(
     [Requesting.request, { path: "/UserAccount/deleteAccount" }, { request }],
-    [UserAccount.deleteAccount, {}, { success, error }],
+    [UserAccount.deleteAccount, {}, { success }],
   ),
   then: actions(
-    [Requesting.respond, { request, success, error }],
+    [Requesting.respond, { request, success }],
+  ),
+});
+
+/**
+ * Responds to a failed account deletion attempt.
+ */
+export const RespondToDeleteAccountError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/UserAccount/deleteAccount" }, { request }],
+    [UserAccount.deleteAccount, {}, { error }],
+  ),
+  then: actions(
+    [Requesting.respond, { request, error }],
   ),
 });
 

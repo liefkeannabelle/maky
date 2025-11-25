@@ -1,5 +1,5 @@
 import { Collection, Db } from "npm:mongodb";
-import { Empty, ID } from "@utils/types.ts";
+import { ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
 // Collection prefix for this concept
@@ -72,14 +72,14 @@ export default class CommentConcept {
    */
   async deleteComment(
     { comment, author }: { comment: Comment; author: User },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.comments.deleteOne({ _id: comment, author });
 
     if (result.deletedCount === 0) {
       return { error: "Comment not found or user is not the author" };
     }
 
-    return {};
+    return { success: true };
   }
 
   /**
@@ -94,7 +94,7 @@ export default class CommentConcept {
       author: User;
       newContent: string;
     },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     if (!newContent.trim()) {
       return { error: "Comment content cannot be empty" };
     }
@@ -108,7 +108,7 @@ export default class CommentConcept {
       return { error: "Comment not found or user is not the author" };
     }
 
-    return {};
+    return { success: true };
   }
 
   /**
@@ -146,9 +146,9 @@ export default class CommentConcept {
    */
   async removeAllCommentsFromPost(
     { post }: { post: Post },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     await this.comments.deleteMany({ post });
-    return {};
+    return { success: true };
   }
   /**
    * _getCommentsForPostId (post: Post): ([{ comments: {content: String, author: User}[] }])

@@ -1,26 +1,26 @@
 [@sync-background](../../design/tools/sync-background.md)
 
-[@api-specification](../../design/api-specification.md)
+[@api-specification-new](../../design/api-specification-new.md)
+
 
 Our Design: 
 
 [@syncs](../../design/syncs.md)
 
-Existing syncs:
 
-[@useracc.sync.ts](useracc.sync.ts)
+Some Concepts:
 
-[@userprofile.sync.ts](userprofile.sync.ts)
+[@FollowingConcept.ts](../concepts/Following/FollowingConcept.ts)
 
-[@post.sync.ts](post.sync.ts)
+[@UserProfileConcept.ts](../concepts/UserProfile/UserProfileConcept.ts)
 
-Concepts:
 
 [@PostConcept.ts](../concepts/Post/PostConcept.ts)
 
 [@SessioningConcept.ts](../concepts/Sessioning/SessioningConcept.ts)
 
 [@RequestingConcept.ts](../concepts/Requesting/RequestingConcept.ts)
+
 
 
 

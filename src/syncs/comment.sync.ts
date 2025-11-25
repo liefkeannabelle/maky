@@ -16,7 +16,7 @@ export const HandleAddCommentRequest: Sync = (
     { request },
   ]),
   where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
-  then: actions([Comment.addCommentToPost, { user, post, content }]),
+  then: actions([Comment.addCommentToPost, { author: user, post, content }]),
 });
 
 /**
@@ -56,7 +56,7 @@ export const HandleDeleteCommentRequest: Sync = (
     { request },
   ]),
   where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
-  then: actions([Comment.deleteComment, { user, comment }]),
+  then: actions([Comment.deleteComment, { author: user, comment }]),
 });
 
 /**
@@ -97,7 +97,7 @@ export const HandleEditCommentRequest: Sync = (
     { request },
   ]),
   where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
-  then: actions([Comment.editComment, { user, comment, newContent }]),
+  then: actions([Comment.editComment, { author: user, comment, newContent }]),
 });
 
 /**
@@ -106,7 +106,6 @@ export const HandleEditCommentRequest: Sync = (
 export const RespondToEditCommentSuccess: Sync = ({ request }) => ({
   when: actions(
     [Requesting.request, { path: "/Comment/editComment" }, { request }],
-    // Assuming the concept action returns { success: true } on completion.
     [Comment.editComment, {}, { success: true }],
   ),
   then: actions([Requesting.respond, { request, success: true }]),

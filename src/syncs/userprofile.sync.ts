@@ -32,14 +32,27 @@ export const HandleCreateProfileRequest: Sync = (
 });
 
 /**
- * Responds to the create profile request after completion.
+ * Responds to a successful create profile request.
  */
-export const RespondToCreateProfile: Sync = ({ request, profile, error }) => ({
+export const RespondToCreateProfileSuccess: Sync = (
+  { request, profile },
+) => ({
   when: actions(
     [Requesting.request, { path: "/UserProfile/createProfile" }, { request }],
-    [UserProfile.createProfile, {}, { profile, error }],
+    [UserProfile.createProfile, {}, { profile }],
   ),
-  then: actions([Requesting.respond, { request, profile, error }]),
+  then: actions([Requesting.respond, { request, profile }]),
+});
+
+/**
+ * Responds to a failed create profile request.
+ */
+export const RespondToCreateProfileError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/UserProfile/createProfile" }, { request }],
+    [UserProfile.createProfile, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
 });
 
 // --- Update Display Name (Authenticated) ---
