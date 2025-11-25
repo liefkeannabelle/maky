@@ -1,8 +1,11 @@
 import { actions, Sync } from "@engine";
 import {
   ChordLibrary,
+  Comment,
   Following,
   Friendship,
+  Post,
+  Reaction,
   Requesting,
   Sessioning,
   SongLibrary,
@@ -398,6 +401,10 @@ export const OnDeleteAccount: Sync = ({ user }) => ({
     [Friendship.removeAllFriendshipsForUser, { user }],
     [Following.removeUserFollowing, { user }], // Removes user's outbound follows
     [Following.removeUserAsFollower, { user }], // Removes user's inbound follows
+    [Post.removeAllPostsForUser, { user }], // Removes all posts by the user
+    [Comment.removeAllCommentsForUser, { user }], // Removes all comments by the user
+    [Reaction.removeAllReactionsForUser, { user }], // Removes all reactions by the user
+    [Sessioning.removeAllSessionsForUser, { user }], // Removes all sessions for the user
     // [JamGroup.removeUserFromAllGroups, { user }], // Uncomment when JamGroup concept is implemented
   ),
 });

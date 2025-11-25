@@ -52,6 +52,20 @@ Reaction.removeAllReactionsFromPost (postId)
 - Meant to find all comments and reactions related to the deleted post
 ---
 
+**sync** CascadeAllPostsDeletionForUser \
+**when**
+Post.removeAllPostsForUser (user) returns (success: true, postIds: List<Post>) \
+**where**
+for postId in postIds: post = postId \
+**then** \
+for post in posts: Comment.removeAllCommentsFromPost (post) \
+for post in posts: Reaction.removeAllReactionsFromPost (post)
+
+**note**
+- Cascades deletion of comments and reactions when all posts for a user are deleted (e.g., during account deletion)
+- Uses the `postIds` array returned by `removeAllPostsForUser` (which contains post IDs before deletion) to iterate over each post and remove associated comments and reactions
+---
+
 **sync** TriggerChordRecommendation \
 **when**
 Requesting.getChordRecommendation (sessionId) \

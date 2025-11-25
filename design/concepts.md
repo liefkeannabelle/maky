@@ -164,6 +164,10 @@ editPost (postId: String, editor: User, newContent: String, newItem: optional It
 *   **requires** The `postId` exists. The `editor` (User) is the `author` of the `Post`.
 *   **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Optionally updates `item` to `newItem` and `postType` to `newPostType`. Sets `editedAt` to the current DateTime and returns `success: true`.
 
+removeAllPostsForUser (user: User): (success: Boolean, postIds: List<Post>)
+*   **requires** The `user` exists.
+*   **effects** Removes all `Post`s authored by the given `user` from the state; returns `success: true` and `postIds` array containing the IDs of all deleted posts.
+
 **queries** \
 _getPostsForUser (user: User): (post: Post)
 *   **requires** The `user` exists.
@@ -212,6 +216,10 @@ removeAllCommentsFromPost (post: Post)
 *   **requires** The `post` exists.
   *   **effects** Removes all `Comment`s associated with the given `post` from the state and from the `comments` set of `post`; returns `success: true` on completion.
 
+removeAllCommentsForUser (user: User)
+*   **requires** The `user` exists.
+*   **effects** Removes all `Comment`s authored by the given `user` from the state; returns `success: true`.
+
 **notes**
 - lastEditedAt will be used to track if/when a comment was edited
 ---
@@ -251,6 +259,10 @@ removeAllReactionsFromPost (post: Post)
 
 *   **requires** The `post` exists.
 *   **effects** Removes all `Reaction`s associated with the given `post` from the state and from the `reactions` set of `post`.
+
+removeAllReactionsForUser (user: User)
+*   **requires** The `user` exists.
+*   **effects** Removes all `Reaction`s created by the given `user` from the state; returns `success: true`.
 
 **queries**
 _getReactionsForPostId (post: Post): (type: ReactionType, count: number)
@@ -662,6 +674,10 @@ startSession (user: User): (sessionId: String)
 endSession (sessionId: String)
 *   **requires** The `sessionId` exists.
 *   **effects** Removes the `Session` identified by `sessionId` from the state.
+
+removeAllSessionsForUser (user: User)
+*   **requires** The `user` exists.
+*   **effects** Removes all `Session`s associated with the given `user` from the state; returns `success: true`.
 
 _getUser (sessionId: String): (user: User)
 *   **requires** The `sessionId` exists.

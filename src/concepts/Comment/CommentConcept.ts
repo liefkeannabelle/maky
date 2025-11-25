@@ -150,6 +150,19 @@ export default class CommentConcept {
     await this.comments.deleteMany({ post });
     return { success: true };
   }
+
+  /**
+   * removeAllCommentsForUser (user: User)
+   *
+   * **requires** The `user` exists.
+   * **effects** Removes all `Comment`s authored by the given `user` from the state; returns `success: true`.
+   */
+  async removeAllCommentsForUser(
+    { user }: { user: User },
+  ): Promise<{ success: true } | { error: string }> {
+    await this.comments.deleteMany({ author: user });
+    return { success: true };
+  }
   /**
    * _getCommentsForPostId (post: Post): ([{ comments: {content: String, author: User}[] }])
    *

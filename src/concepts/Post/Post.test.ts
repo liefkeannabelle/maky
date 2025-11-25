@@ -428,4 +428,60 @@ describe("PostConcept", () => {
       assertEquals(results[0].post.author, userA);
     });
   });
+
+  describe("removeAllPostsForUser", () => {
+    it("should remove all posts for a user", async () => {
+      // Create multiple posts for userA
+      const post1 = await postConcept.createPost({
+        author: userA,
+        content: "Post 1",
+        postType: "GENERAL",
+        items: [],
+      });
+      const post1Id = (post1 as { postId: ID }).postId;
+
+      const post2 = await postConcept.createPost({
+        author: userA,
+        content: "Post 2",
+        postType: "PROGRESS",
+        items: [itemA],
+      });
+      const post2Id = (post2 as { postId: ID }).postId;
+
+      // Create a post for userB (should not be deleted)
+      const post3 = await postConcept.createPost({
+        author: userB,
+        content: "User B post",
+        postType: "GENERAL",
+        items: [],
+      });
+      const post3Id = (post3 as { postId: ID }).postId;
+
+      // Verify setup
+      const userAPostsBefore = await postConcept._getPostsForUser({ user: userA });
+      assertEquals(userAPostsBefore.length, 2, "UserA should have 2 posts");
+
+      // Remove all posts for userA
+      const result = await postConcept.removeAllPostsForUser({ user: userA });
+      assert(!("error" in result), "removeAllPostsForUser should succeed");
+      assertEquals((result as { success: true; postIds: ID[] }).success, true);
+      assertEquals((result as { success: true; postIds: ID[] }).postIds.length, 2, "Should return 2 post IDs");
+
+      // Verify all posts for userA are removed
+      const userAPostsAfter = await postConcept._getPostsForUser({ user: userA });
+      assertEquals(userAPostsAfter.length, 0, "UserA should have no posts");
+
+      // Verify userB's post is still intact
+      const userBPosts = await postConcept._getPostsForUser({ user: userB });
+      assertEquals(userBPosts.length, 1, "UserB should still have 1 post");
+      assertEquals(userBPosts[0].post._id, post3Id);
+    });
+
+    it("should succeed even if user has no posts", async () => {
+      const result = await postConcept.removeAllPostsForUser({ user: userA });
+      assert(!("error" in result), "removeAllPostsForUser should succeed even with no posts");
+      assertEquals((result as { success: true; postIds: ID[] }).success, true);
+      assertEquals((result as { success: true; postIds: ID[] }).postIds.length, 0, "Should return empty postIds array");
+    });
+  });
 });

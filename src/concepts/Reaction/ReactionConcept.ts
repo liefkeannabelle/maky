@@ -123,6 +123,19 @@ export default class ReactionConcept {
   }
 
   /**
+   * removeAllReactionsForUser (user: User)
+   *
+   * @requires The `user` exists.
+   * @effects Removes all `Reaction`s created by the given `user` from the state; returns `success: true`.
+   */
+  async removeAllReactionsForUser(
+    { user }: { user: User },
+  ): Promise<{ success: true } | { error: string }> {
+    await this.reactions.deleteMany({ user });
+    return { success: true };
+  }
+
+  /**
    * _getReactionsForPostId (post: Post): (type: ReactionType, count: number)
    *
    * @requires The `post` exists.

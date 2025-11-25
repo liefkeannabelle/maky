@@ -868,6 +868,46 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "error": "string"
 }
 ```
+```
+
+---
+
+### POST /api/Post/removeAllPostsForUser
+
+**Description:** Removes all posts authored by a specific user. This is typically used for cascade deletion when a user account is deleted.
+
+**Authentication:** This endpoint is typically called internally by synchronizations and may not require user authentication. However, if exposed directly, it should require appropriate authorization (e.g., the user themselves or an administrator).
+
+**Requirements:**
+- The `user` exists.
+
+**Effects:**
+- Removes all `Post`s authored by the specified `user` from the state; returns `success: true` and `postIds` array containing the IDs of all deleted posts.
+
+**Request Body:**
+```json
+{
+  "user": "string"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "success": true,
+  "postIds": ["string"]
+}
+```
+
+**Note:** The `postIds` array contains the IDs of all posts that were deleted. This is used internally by the `CascadeAllPostsDeletionForUser` synchronization to cascade deletion of comments and reactions for each deleted post.
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
 ---
 # API Specification: Comment Concept
 
@@ -1009,6 +1049,42 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "error": "string"
 }
 ```
+
+---
+
+### POST /api/Comment/removeAllCommentsForUser
+
+**Description:** Removes all comments authored by a specific user. This is typically used for cascade deletion when a user account is deleted.
+
+**Authentication:** This endpoint is typically called internally by synchronizations and may not require user authentication. However, if exposed directly, it should require appropriate authorization (e.g., the user themselves or an administrator).
+
+**Requirements:**
+- The `user` exists.
+
+**Effects:**
+- Removes all `Comment`s authored by the specified `user` from the state; returns `success: true`.
+
+**Request Body:**
+```json
+{
+  "user": "string"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "success": true
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
 ---
 
 ### POST /api/Comment/_getCommentsForPostId
@@ -1188,7 +1264,46 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "error": "string"
 }
 ```
+
 ---
+
+### POST /api/Reaction/removeAllReactionsForUser
+
+**Description:** Removes all reactions created by a specific user. This is typically used for cascade deletion when a user account is deleted.
+
+**Authentication:** This endpoint is typically called internally by synchronizations and may not require user authentication. However, if exposed directly, it should require appropriate authorization (e.g., the user themselves or an administrator).
+
+**Requirements:**
+- The `user` exists.
+
+**Effects:**
+- Removes all `Reaction`s created by the specified `user` from the state; returns `success: true`.
+
+**Request Body:**
+```json
+{
+  "user": "string"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "success": true
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/Reaction/_getReactionsForPostId
+
 **Description:** Retrieves a summary of reaction counts, grouped by type, for a specific post.
 
 **Requirements:**
@@ -3435,7 +3550,44 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "error": "string"
 }
 ```
+
 ---
+
+### POST /api/Sessioning/removeAllSessionsForUser
+
+**Description:** Removes all sessions associated with a specific user. This is typically used for cascade deletion when a user account is deleted.
+
+**Authentication:** This endpoint is typically called internally by synchronizations and may not require user authentication. However, if exposed directly, it should require appropriate authorization (e.g., the user themselves or an administrator).
+
+**Requirements:**
+- The `user` exists.
+
+**Effects:**
+- Removes all `Session`s associated with the specified `user` from the state; returns `success: true`.
+
+**Request Body:**
+```json
+{
+  "user": "string"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "success": true
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
 ### POST /api/Sessioning/endSession
 
 **Description:** Ends a user session (logout).

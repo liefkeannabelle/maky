@@ -244,6 +244,97 @@ Deno.test(
     await client.close();
   },
 );
+
+Deno.test(
+  "ReactionConcept - removeAllReactionsForUser",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const reactionConcept = new ReactionConcept(db);
+    await reactionConcept.reactions.deleteMany({});
+
+    // Setup: Add multiple reactions by userA to different posts
+    await reactionConcept.addReactionToPost({
+      user: userA,
+      post: postA,
+      type: ReactionType.LIKE,
+    });
+    await reactionConcept.addReactionToPost({
+      user: userA,
+      post: postB,
+      type: ReactionType.LOVE,
+    });
+
+    // Add a reaction by userB to ensure we only delete userA's reactions
+    await reactionConcept.addReactionToPost({
+      user: userB,
+      post: postA,
+      type: ReactionType.CELEBRATE,
+    });
+
+    // Verify setup: userA should have 2 reactions, userB should have 1
+    const userAReactionsBefore = await reactionConcept.reactions.find({
+      user: userA,
+    }).toArray();
+    const userBReactionsBefore = await reactionConcept.reactions.find({
+      user: userB,
+    }).toArray();
+    assertEquals(userAReactionsBefore.length, 2);
+    assertEquals(userBReactionsBefore.length, 1);
+
+    // 1. Test successful removal of all reactions by userA
+    const removeAllResult = await reactionConcept.removeAllReactionsForUser({
+      user: userA,
+    });
+
+    assert(
+      !("error" in removeAllResult),
+      "removeAllReactionsForUser should succeed",
+    );
+    assertEquals(
+      removeAllResult.success,
+      true,
+      "removeAllReactionsForUser should return success: true",
+    );
+
+    // Verify all reactions by userA are removed
+    const userAReactionsAfter = await reactionConcept.reactions.find({
+      user: userA,
+    }).toArray();
+    assertEquals(
+      userAReactionsAfter.length,
+      0,
+      "All reactions by userA should be deleted",
+    );
+
+    // Verify reactions by userB are still intact
+    const userBReactionsAfter = await reactionConcept.reactions.find({
+      user: userB,
+    }).toArray();
+    assertEquals(
+      userBReactionsAfter.length,
+      1,
+      "Reactions by userB should remain unchanged",
+    );
+
+    // 2. Test removing all reactions for a user with no reactions (should still succeed)
+    const emptyUserResult = await reactionConcept.removeAllReactionsForUser({
+      user: userA, // Already deleted all reactions
+    });
+
+    assert(
+      !("error" in emptyUserResult),
+      "removeAllReactionsForUser should succeed even if no reactions exist",
+    );
+    assertEquals(
+      emptyUserResult.success,
+      true,
+      "removeAllReactionsForUser should return success: true even when no reactions",
+    );
+
+    await client.close();
+  },
+);
 Deno.test(
   "ReactionConcept - _getReactionsForPostId",
   { sanitizeOps: false, sanitizeResources: false },

@@ -1,5 +1,6 @@
 import { actions, Frames, Sync } from "@engine";
 import { Comment, Post, Reaction, Requesting, Sessioning } from "@concepts";
+import { ID } from "@utils/types.ts";
 
 /**
  * CascadePostDeletion
@@ -16,6 +17,45 @@ export const CascadePostDeletion: Sync = ({ postId }) => ({
     // The `postId` from the deleted post is used to remove associated comments and reactions.
     [Comment.removeAllCommentsFromPost, { post: postId }],
     [Reaction.removeAllReactionsFromPost, { post: postId }],
+  ),
+});
+
+/**
+ * CascadeAllPostsDeletionForUser
+ *
+ * When all posts for a user are deleted (via removeAllPostsForUser), automatically removes
+ * all associated comments and reactions for each of those posts. This ensures data consistency
+ * by cleaning up all related data when a user's posts are bulk-deleted (e.g., during account deletion).
+ */
+export const CascadeAllPostsDeletionForUser: Sync = ({ postIds, post }) => ({
+  when: actions(
+    // This sync triggers only on a successful `removeAllPostsForUser` action.
+    // The action returns `postIds` array containing all deleted post IDs.
+    [Post.removeAllPostsForUser, {}, { success: true, postIds }],
+  ),
+  where: async (frames) => {
+    // Expand the postIds array into individual frames, one per post.
+    // This allows us to iterate over each post and delete its comments and reactions.
+    const newFrames: Array<Record<string, unknown>> = [];
+    for (const frame of frames) {
+      const ids = frame[postIds] as ID[] | undefined;
+      if (ids && ids.length > 0) {
+        for (const postId of ids) {
+          newFrames.push({ ...frame, [post]: postId });
+        }
+      }
+    }
+    // If no posts were deleted, return empty frames to avoid errors
+    if (newFrames.length === 0) {
+      return new Frames();
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    // For each post, remove all associated comments and reactions.
+    // The `post` binding comes from the expansion in the `where` clause.
+    [Comment.removeAllCommentsFromPost, { post }],
+    [Reaction.removeAllReactionsFromPost, { post }],
   ),
 });
 

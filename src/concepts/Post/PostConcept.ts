@@ -196,4 +196,24 @@ export default class PostConcept {
       .toArray();
     return posts.map((post) => ({ post }));
   }
+
+  /**
+   * removeAllPostsForUser (user: User)
+   *
+   * **requires** The `user` exists.
+   * **effects** Removes all `Post`s authored by the given `user` from the state; returns `success: true` and `postIds` array of deleted post IDs.
+   */
+  async removeAllPostsForUser(
+    { user }: { user: User },
+  ): Promise<{ success: true; postIds: ID[] } | { error: string }> {
+    // First, get all post IDs before deletion so they can be used for cascade deletion
+    const postsToDelete = await this.posts.find({ author: user })
+      .project({ _id: 1 })
+      .toArray();
+    const postIds = postsToDelete.map((post) => post._id);
+
+    // Then delete all posts
+    await this.posts.deleteMany({ author: user });
+    return { success: true, postIds };
+  }
 }

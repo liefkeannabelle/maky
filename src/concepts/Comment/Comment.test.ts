@@ -373,6 +373,97 @@ Deno.test(
     await client.close();
   },
 );
+
+Deno.test(
+  "CommentConcept - removeAllCommentsForUser",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const commentConcept = new CommentConcept(db);
+    await commentConcept.comments.deleteMany({});
+
+    // Setup: Add multiple comments by userA to different posts
+    await commentConcept.addCommentToPost({
+      post: post1,
+      author: userA,
+      content: "UserA comment on post1",
+    });
+    await commentConcept.addCommentToPost({
+      post: post2,
+      author: userA,
+      content: "UserA comment on post2",
+    });
+
+    // Add a comment by userB to ensure we only delete userA's comments
+    await commentConcept.addCommentToPost({
+      post: post1,
+      author: userB,
+      content: "UserB comment on post1",
+    });
+
+    // Verify setup: userA should have 2 comments, userB should have 1
+    const userACommentsBefore = await commentConcept.comments.find({
+      author: userA,
+    }).toArray();
+    const userBCommentsBefore = await commentConcept.comments.find({
+      author: userB,
+    }).toArray();
+    assertEquals(userACommentsBefore.length, 2);
+    assertEquals(userBCommentsBefore.length, 1);
+
+    // 1. Test successful removal of all comments by userA
+    const removeAllResult = await commentConcept.removeAllCommentsForUser({
+      user: userA,
+    });
+
+    assert(
+      !("error" in removeAllResult),
+      "removeAllCommentsForUser should succeed",
+    );
+    assertEquals(
+      removeAllResult.success,
+      true,
+      "removeAllCommentsForUser should return success: true",
+    );
+
+    // Verify all comments by userA are removed
+    const userACommentsAfter = await commentConcept.comments.find({
+      author: userA,
+    }).toArray();
+    assertEquals(
+      userACommentsAfter.length,
+      0,
+      "All comments by userA should be deleted",
+    );
+
+    // Verify comments by userB are still intact
+    const userBCommentsAfter = await commentConcept.comments.find({
+      author: userB,
+    }).toArray();
+    assertEquals(
+      userBCommentsAfter.length,
+      1,
+      "Comments by userB should remain unchanged",
+    );
+
+    // 2. Test removing all comments for a user with no comments (should still succeed)
+    const emptyUserResult = await commentConcept.removeAllCommentsForUser({
+      user: userA, // Already deleted all comments
+    });
+
+    assert(
+      !("error" in emptyUserResult),
+      "removeAllCommentsForUser should succeed even if no comments exist",
+    );
+    assertEquals(
+      emptyUserResult.success,
+      true,
+      "removeAllCommentsForUser should return success: true even when no comments",
+    );
+
+    await client.close();
+  },
+);
 Deno.test(
   "CommentConcept - _getCommentsForPostId",
   { sanitizeOps: false, sanitizeResources: false },

@@ -83,4 +83,17 @@ export default class SessioningConcept {
 
     return [{ user: sessionDoc.user }];
   }
+
+  /**
+   * removeAllSessionsForUser (user: User)
+   *
+   * **requires** The `user` exists.
+   * **effects** Removes all `Session`s associated with the given `user` from the state; returns `success: true`.
+   */
+  async removeAllSessionsForUser(
+    { user }: { user: User },
+  ): Promise<{ success: true } | { error: string }> {
+    await this.sessions.deleteMany({ user });
+    return { success: true };
+  }
 }

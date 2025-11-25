@@ -39,3 +39,38 @@
   - Returns array of post documents from multiple users, ordered by creation date (newest first)
   - Added to passthrough exclusions (queries should go through Requesting for authentication/authorization)
   - Added comprehensive tests covering multiple users, ordering, filtering, and edge cases
+
+- Added `removeAllPostsForUser` action to Post concept
+  - Purpose: Enables efficient cascade deletion of all posts when a user account is deleted
+  - Implementation: Uses `find` to retrieve all post IDs, then `deleteMany` to remove all posts for a given user in a single operation
+  - Returns `success: true` and `postIds` array containing all deleted post IDs (used by `CascadeAllPostsDeletionForUser` sync)
+  - Updated `OnDeleteAccount` sync to use this new action
+  - Added to passthrough exclusions (internal action used by synchronizations)
+  - Added comprehensive tests covering multiple posts and edge cases
+
+- Added `removeAllCommentsForUser` action to Comment concept
+  - Purpose: Enables efficient cascade deletion of all comments when a user account is deleted
+  - Implementation: Uses `deleteMany` to remove all comments for a given user in a single operation
+  - Updated `OnDeleteAccount` sync to use this new action
+  - Added to passthrough exclusions (internal action used by synchronizations)
+  - Added comprehensive tests covering multiple comments and edge cases
+
+- Added `removeAllReactionsForUser` action to Reaction concept
+  - Purpose: Enables efficient cascade deletion of all reactions when a user account is deleted
+  - Implementation: Uses `deleteMany` to remove all reactions for a given user in a single operation
+  - Updated `OnDeleteAccount` sync to use this new action
+  - Added to passthrough exclusions (internal action used by synchronizations)
+  - Added comprehensive tests covering multiple reactions and edge cases
+
+- Added `removeAllSessionsForUser` action to Sessioning concept
+  - Purpose: Enables efficient cascade deletion of all sessions when a user account is deleted
+  - Implementation: Uses `deleteMany` to remove all sessions for a given user in a single operation
+  - Updated `OnDeleteAccount` sync to use this new action
+  - Added to passthrough exclusions (internal action used by synchronizations)
+  - Created Sessioning.test.ts with comprehensive tests covering multiple sessions and edge cases
+
+- Added `CascadeAllPostsDeletionForUser` sync
+  - Purpose: Ensures data integrity by cascading deletion of comments and reactions when all posts for a user are deleted via `removeAllPostsForUser`
+  - Implementation: Triggers when `Post.removeAllPostsForUser` succeeds, queries all posts for that user using `Post._getPostsForUser`, then deletes all comments and reactions for each post
+  - This sync complements `CascadePostDeletion` which handles single post deletions, ensuring consistent cleanup behavior for both individual and bulk post deletions
+  - Follows the same pattern as `CascadePostDeletion` but handles bulk deletion scenarios (e.g., during account deletion)
