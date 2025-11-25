@@ -227,22 +227,48 @@ export const RespondToRemoveFriendError: Sync = ({ request, error }) => ({
 
 /**
  * Handles a query to check if the authenticated user is friends with another user.
+ * This sync authenticates the request, performs the query, processes the array result,
+ * and sends the final boolean response.
  */
 export const HandleAreFriendsQuery: Sync = (
-  { request, sessionId, otherUser, user1 },
+  { request, sessionId, otherUser, user1, isFriend, queryResult },
 ) => ({
   when: actions([
     Requesting.request,
     { path: "/Friendship/areFriends", sessionId, otherUser },
     { request },
   ]),
-  where: (frames) =>
-    frames.query(Sessioning._getUser, { sessionId }, { user: user1 }),
-  then: actions([Friendship.areFriends, { user1, user2: otherUser }]),
+  where: async (frames: Frames) => {
+    // Step 1: Authenticate the session and get the user ID, aliasing it as 'user1'.
+    frames = await frames.query(Sessioning._getUser, { sessionId }, {
+      user: user1,
+    });
+
+    // Step 2: Perform the `areFriends` query. The query returns `[{ isFriend: boolean }]`.
+    // We bind the entire result array to a temporary variable `queryResult`.
+    frames = await frames.query(
+      Friendship.areFriends,
+      { user1, user2: otherUser },
+      { queryResult },
+    );
+
+    // Step 3: Extract the boolean value from the result array and bind it to `isFriend`.
+    // This safely handles cases where the query might return an empty or unexpected result.
+    return frames.map(($) => {
+      const rawResult = $[queryResult];
+      const arrayResult = Array.isArray(rawResult) ? rawResult : [];
+      const result = typeof arrayResult[0]?.isFriend === "boolean"
+        ? arrayResult[0]!.isFriend
+        : false;
+      return { ...$, [isFriend]: result };
+    });
+  },
+  then: actions([Requesting.respond, { request, isFriend }]),
 });
 
 /**
  * Responds to a successful areFriends query with the boolean result.
+ * @deprecated This synchronization is now handled by the consolidated HandleAreFriendsQuery.
  */
 export const RespondToAreFriendsQuerySuccess: Sync = (
   { request, isFriend },
@@ -257,6 +283,7 @@ export const RespondToAreFriendsQuerySuccess: Sync = (
 
 /**
  * Responds to a failed areFriends query.
+ * @deprecated This synchronization is now handled by the consolidated HandleAreFriendsQuery.
  */
 export const RespondToAreFriendsQueryError: Sync = (
   { request, error },

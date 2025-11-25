@@ -19,17 +19,17 @@ sendFriendRequest (requester: User, recipient: User): (friendship: Friendship)
 acceptFriendRequest (requester: User, recipient: User)
 
 *   **requires** A `Friendship` exists where the `requester` is the requester, the `recipient` is the recipient, and the `status` is `PENDING`.
-*   **effects** Updates the `status` of the existing `Friendship` to `ACCEPTED`.
+*   **effects** Updates the `status` of the existing `Friendship` to `ACCEPTED` and returns `success: true`.
 
 declineFriendRequest (requester: User, recipient: User)
 
 *   **requires** A `Friendship` exists where the `requester` is the requester, the `recipient` is the recipient, and the `status` is `PENDING`.
-*   **effects** Updates the `status` of the existing `Friendship` to `DECLINED`.
+*   **effects** Updates the `status` of the existing `Friendship` to `DECLINED` and returns `success: true`.
 
 removeFriend (user1: User, user2: User)
 
 *   **requires** A `Friendship` exists between `user1` and `user2` (where one is the requester and the other is the recipient).
-*   **effects** Removes the `Friendship` object associated with these two users from the state.
+*   **effects** Removes the `Friendship` object associated with these two users from the state and returns `success: true`.
 
 removeAllFriendshipsForUser (user: User)
 

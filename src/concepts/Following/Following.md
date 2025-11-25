@@ -19,7 +19,7 @@ followUser (follower: User, followed: User): (follow: Follow)
 unfollowUser (follower: User, followed: User)
 
 *   **requires** A `Follow` object exists where `follower` is the follower and `followed` is the followed user.
-*   **effects** Removes the matching `Follow` object from the state.
+*   **effects** Removes the matching `Follow` object from the state and returns `success: true`.
 
 removeUserAsFollower (user: User)
 

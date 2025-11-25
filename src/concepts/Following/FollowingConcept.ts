@@ -73,11 +73,11 @@ export default class FollowingConcept {
    * unfollowUser (follower: User, followed: User)
    *
    * @requires A `Follow` object exists where `follower` is the follower and `followed` is the followed user.
-   * @effects Removes the matching `Follow` object from the state.
+   * @effects Removes the matching `Follow` object from the state; returns `success: true`.
    */
   async unfollowUser(
     { follower, followed }: { follower: User; followed: User },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     // Effects: Removes the matching `Follow` object
     const result = await this.follows.deleteOne({ follower, followed });
 
@@ -86,7 +86,7 @@ export default class FollowingConcept {
       return { error: "Follow relationship not found." };
     }
 
-    return {};
+    return { success: true };
   }
 
   /**

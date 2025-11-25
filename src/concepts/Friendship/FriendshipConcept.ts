@@ -88,11 +88,11 @@ export default class FriendshipConcept {
    * acceptFriendRequest (requester: User, recipient: User)
    *
    * @requires A `Friendship` exists where the `requester` is the requester, the `recipient` is the recipient, and the `status` is `PENDING`.
-   * @effects Updates the `status` of the existing `Friendship` to `ACCEPTED`.
+   * @effects Updates the `status` of the existing `Friendship` to `ACCEPTED` and returns `success: true`.
    */
   async acceptFriendRequest(
     { requester, recipient }: { requester: User; recipient: User },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.friendships.updateOne(
       { requester, recipient, status: FriendshipStatus.PENDING },
       { $set: { status: FriendshipStatus.ACCEPTED } },
@@ -102,18 +102,18 @@ export default class FriendshipConcept {
       return { error: "No pending friend request found to accept." };
     }
 
-    return {};
+    return { success: true };
   }
 
   /**
    * declineFriendRequest (requester: User, recipient: User)
    *
    * @requires A `Friendship` exists where the `requester` is the requester, the `recipient` is the recipient, and the `status` is `PENDING`.
-   * @effects Updates the `status` of the existing `Friendship` to `DECLINED`.
+   * @effects Updates the `status` of the existing `Friendship` to `DECLINED` and returns `success: true`.
    */
   async declineFriendRequest(
     { requester, recipient }: { requester: User; recipient: User },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.friendships.updateOne(
       { requester, recipient, status: FriendshipStatus.PENDING },
       { $set: { status: FriendshipStatus.DECLINED } },
@@ -123,18 +123,18 @@ export default class FriendshipConcept {
       return { error: "No pending friend request found to decline." };
     }
 
-    return {};
+    return { success: true };
   }
 
   /**
    * removeFriend (user1: User, user2: User)
    *
    * @requires A `Friendship` exists between `user1` and `user2` (where one is the requester and the other is the recipient).
-   * @effects Removes the `Friendship` object associated with these two users from the state.
+   * @effects Removes the `Friendship` object associated with these two users from the state and returns `success: true`.
    */
   async removeFriend(
     { user1, user2 }: { user1: User; user2: User },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.friendships.deleteOne({
       $or: [
         { requester: user1, recipient: user2 },
@@ -146,7 +146,7 @@ export default class FriendshipConcept {
       return { error: "No friendship found between these users to remove." };
     }
 
-    return {};
+    return { success: true };
   }
 
   /**

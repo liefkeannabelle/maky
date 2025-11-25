@@ -110,6 +110,8 @@ Deno.test(
       followed: userB,
     });
     assert(!("error" in result), "Unfollow should not return an error");
+    assert("success" in result, "Successful unfollow should return success");
+    assertEquals(result.success, true);
 
     // Verify the follow relationship is gone
     const finalCheck = await followingConcept._isFollowing({

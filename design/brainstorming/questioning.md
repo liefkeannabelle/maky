@@ -864,7 +864,7 @@ This document provides the API specification for the various concepts that make 
 - A `Friendship` exists where the `requester` is the requester, the `recipient` is the recipient, and the `status` is `PENDING`.
 
 **Effects:**
-- Updates the `status` of the existing `Friendship` to `ACCEPTED`.
+- Updates the `status` of the existing `Friendship` to `ACCEPTED` and returns `success: true`.
 
 **Request Body:**
 ```json
@@ -876,7 +876,9 @@ This document provides the API specification for the various concepts that make 
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -894,7 +896,7 @@ This document provides the API specification for the various concepts that make 
 - A `Friendship` exists where the `requester` is the requester, the `recipient` is the recipient, and the `status` is `PENDING`.
 
 **Effects:**
-- Updates the `status` of the existing `Friendship` to `DECLINED`.
+- Updates the `status` of the existing `Friendship` to `DECLINED` and returns `success: true`.
 
 **Request Body:**
 ```json
@@ -906,7 +908,9 @@ This document provides the API specification for the various concepts that make 
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -924,7 +928,7 @@ This document provides the API specification for the various concepts that make 
 - A `Friendship` exists between `user1` and `user2` (where one is the requester and the other is the recipient).
 
 **Effects:**
-- Removes the `Friendship` object associated with these two users from the state.
+- Removes the `Friendship` object associated with these two users from the state and returns `success: true`.
 
 **Request Body:**
 ```json
@@ -936,7 +940,9 @@ This document provides the API specification for the various concepts that make 
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
