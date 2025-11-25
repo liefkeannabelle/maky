@@ -28,6 +28,12 @@ export const inclusions: Record<string, string> = {
   // Feel free to delete these example inclusions
   // "/api/LikertSurvey/_getSurveyQuestions": "this is a public query",
   // "/api/UserAccount/register": "anyone can register",
+
+  "/api/Song/createSong": "Admin action",
+  "/api/Song/deleteSong": "Admin action",
+  "/api/Chord/createChord": "Admin action",
+  "/api/Chord/deleteChord": "Admin action",
+  "/api/RecommendationEngine/_getRecommendation": "Public query for recommendation details",
 };
 
 /**
