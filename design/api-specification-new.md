@@ -203,7 +203,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The user associated with `sessionId` exists.
 
 **Effects:**
-- Sets the `isKidAccount` status for the authenticated user to the provided `status`.
+- Sets the `isKidAccount` status for the authenticated user to the provided `status`; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -417,19 +417,21 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The user associated with `sessionId` exists and has an associated `Profile`.
 
 **Effects:**
-- Updates the `avatarUrl` in the authenticated user's `Profile` to `newAvatarUrl`.
+- Updates the `avatarUrl` in the authenticated user's `Profile` to `newAvatarUrl`, removing the field when the literal string `"UNDEFINED"` is supplied; returns `true` as `success`.
 
 **Request Body:**
 ```json
 {
   "sessionId": "string",
-  "newAvatarUrl": "string" // optional
+  "newAvatarUrl": "string" // always include; send "UNDEFINED" to clear the avatar
 }
 ```
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -449,7 +451,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The user associated with `sessionId` exists and has an associated `Profile`.
 
 **Effects:**
-- Replaces the `genrePreferences` in the authenticated user's `Profile` with `newGenrePreferences`.
+- Replaces the `genrePreferences` in the authenticated user's `Profile` with `newGenrePreferences`; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -461,7 +463,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -481,7 +485,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The user associated with `sessionId` exists and has an associated `Profile`.
 
 **Effects:**
-- Updates the `skillLevel` in the authenticated user's `Profile` to `newSkillLevel`.
+- Updates the `skillLevel` in the authenticated user's `Profile` to `newSkillLevel`; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -493,7 +497,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -513,7 +519,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The user associated with `sessionId` exists and has an associated `Profile`. The `song` exists.
 
 **Effects:**
-- Updates the `targetSong` in the authenticated user's `Profile` to the provided `song`.
+- Updates the `targetSong` in the authenticated user's `Profile` to the provided `song`; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -525,7 +531,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -545,7 +553,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The user associated with `sessionId` exists and has an associated `Profile`.
 
 **Effects:**
-- Removes the `targetSong` from the authenticated user's `Profile`.
+- Removes the `targetSong` from the authenticated user's `Profile`; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -556,7 +564,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -576,7 +586,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The user associated with `sessionId` exists and has an associated `Profile`.
 
 **Effects:**
-- Removes the `Profile` associated with the authenticated user from the state.
+- Removes the `Profile` associated with the authenticated user from the state; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -587,7 +597,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -1189,6 +1201,8 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
+### POST /api/Reaction/_getReactionsForPostId
+
 **Description:** Retrieves a summary of reaction counts, grouped by type, for a specific post.
 
 **Requirements:**
@@ -1196,19 +1210,16 @@ After a user logs in, all authenticated API requests should include a `sessionId
 -   The `post` exists.
 
 **Effects:**
-
--   Returns an array of objects, each containing a reaction type and its total count for the given `post`. Includes types with a count of 0.
+- Returns an array of objects, each containing a reaction `type` and its total `count` for the given `post`. Includes types with a count of 0.
 
 **Request Body:**
-
 ```json
 {
-  "post": "ID"
+  "post": "string"
 }
 ```
 
 **Success Response Body (Query):**
-
 ```json
 [
   {
@@ -1227,7 +1238,6 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ```
 
 **Error Response Body:**
-
 ```json
 {
   "error": "string"

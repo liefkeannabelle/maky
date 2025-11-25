@@ -288,7 +288,8 @@ Deno.test(
       user: userId,
       status: true,
     });
-    assert(!("error" in setResult), "Setting kid status should succeed");
+    assert("success" in setResult, "Setting kid status should succeed");
+    assertEquals(setResult.success, true);
 
     let userDoc = await userAccount.users.findOne({ _id: userId });
     assertEquals(userDoc?.isKidAccount, true);
@@ -298,7 +299,8 @@ Deno.test(
       user: userId,
       status: false,
     });
-    assert(!("error" in unSetResult), "Unsetting kid status should succeed");
+    assert("success" in unSetResult, "Unsetting kid status should succeed");
+    assertEquals(unSetResult.success, true);
 
     userDoc = await userAccount.users.findOne({ _id: userId });
     assertEquals(userDoc?.isKidAccount, false);

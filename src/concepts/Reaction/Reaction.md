@@ -21,14 +21,19 @@ addReactionToPost (user: User, post: Post, type: ReactionType): (reaction: React
 *   **requires** The `user` and `post` exist. No `Reaction` already exists for this specific combination of `user` and `post`.
 *   **effects** Creates a new `Reaction` with a unique `reactionId`; sets the `user`, `post`, `type`, and sets `createdAt` to the current time; adds the new reaction to the `reactions` set of `post`; returns the new `reaction`.
 
-changeReactionType (user: User, post: Post, newType: ReactionType)
+changeReactionType (user: User, post: Post, newType: ReactionType): (success: boolean)
 *   **requires** A `Reaction` exists for this user and post.
-*   **effects** Updates the reaction’s `type` to `newType`.
+*   **effects** Updates the reaction’s `type` to `newType`; returns `success: true`.
 
-removeReactionFromPost (user: User, post: Post)
+removeReactionFromPost (user: User, post: Post): (success: boolean)
 
 *   **requires** A `Reaction` exists associated with the given `user` and `post`.
-*   **effects** Removes the matching `Reaction` from the state and from the `reactions` set of `post`.
+*   **effects** Removes the matching `Reaction` from the state and from the `reactions` set of `post`; returns `success: true`.
+
+removeAllReactionsFromPost (post: Post): (success: boolean)
+
+*   **requires** The `post` exists.
+*   **effects** Removes all `Reaction`s associated with the given `post` from the state; returns `success: true`.
 
 **queries**
 _getReactionsForPostId (post: Post): (type: ReactionType, count: number)

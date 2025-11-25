@@ -171,7 +171,7 @@ This document provides the API specification for the various concepts that make 
 - The `user` exists.
 
 **Effects:**
-- Sets the `isKidAccount` status for the given `user` to the provided `status`.
+- Sets the `isKidAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -183,7 +183,9 @@ This document provides the API specification for the various concepts that make 
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -335,7 +337,7 @@ This document provides the API specification for the various concepts that make 
 - The `user` exists and has an associated `Profile`.
 
 **Effects:**
-- Updates the `avatarUrl` in the `user`'s `Profile` to `newAvatarUrl`, removing the field when `newAvatarUrl` is `undefined`.
+- Updates the `avatarUrl` in the `user`'s `Profile` to `newAvatarUrl`, removing the field when `newAvatarUrl` is `undefined`; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -347,7 +349,9 @@ This document provides the API specification for the various concepts that make 
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -365,7 +369,7 @@ This document provides the API specification for the various concepts that make 
 - The `user` exists and has an associated `Profile`.
 
 **Effects:**
-- Replaces the `genrePreferences` in the `user`'s `Profile` with `newGenrePreferences`.
+- Replaces the `genrePreferences` in the `user`'s `Profile` with `newGenrePreferences`; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -377,7 +381,9 @@ This document provides the API specification for the various concepts that make 
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -395,7 +401,7 @@ This document provides the API specification for the various concepts that make 
 - The `user` exists and has an associated `Profile`.
 
 **Effects:**
-- Updates the `skillLevel` in the `user`'s `Profile` to `newSkillLevel`.
+- Updates the `skillLevel` in the `user`'s `Profile` to `newSkillLevel`; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -407,7 +413,9 @@ This document provides the API specification for the various concepts that make 
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -425,7 +433,7 @@ This document provides the API specification for the various concepts that make 
 - The `user` exists and has an associated `Profile`. The `song` exists.
 
 **Effects:**
-- Updates the `targetSong` in the `user`'s `Profile` to the provided `song`.
+- Updates the `targetSong` in the `user`'s `Profile` to the provided `song`; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -437,7 +445,9 @@ This document provides the API specification for the various concepts that make 
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -455,7 +465,7 @@ This document provides the API specification for the various concepts that make 
 - The `user` exists and has an associated `Profile`.
 
 **Effects:**
-- Removes the `targetSong` from the `user`'s `Profile`.
+- Removes the `targetSong` from the `user`'s `Profile`; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -466,7 +476,9 @@ This document provides the API specification for the various concepts that make 
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**
@@ -484,7 +496,7 @@ This document provides the API specification for the various concepts that make 
 - The user exists and has an associated `Profile`.
 
 **Effects:**
-- Removes the `Profile` associated with the user from the state.
+- Removes the `Profile` associated with the user from the state; returns `true` as `success`.
 
 **Request Body:**
 ```json
@@ -495,7 +507,9 @@ This document provides the API specification for the various concepts that make 
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": "boolean"
+}
 ```
 
 **Error Response Body:**

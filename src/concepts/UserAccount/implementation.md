@@ -214,14 +214,14 @@ export default class UserAccountConcept {
   }
 
   /**
-   * setKidAccountStatus (user: User, status: Boolean)
+   * setKidAccountStatus (user: User, status: Boolean): (success: Boolean)
    *
    * **requires** The `user` exists.
-   * **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`.
+   * **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
    */
   async setKidAccountStatus(
     { user: userId, status }: { user: User; status: boolean },
-  ): Promise<Empty | { error: string }> {
+  ): Promise<{ success: true } | { error: string }> {
     const result = await this.users.updateOne(
       { _id: userId },
       { $set: { isKidAccount: status } },
@@ -231,7 +231,7 @@ export default class UserAccountConcept {
       return { error: "User not found" };
     }
 
-    return {};
+    return { success: true };
   }
 
   /**
@@ -710,10 +710,11 @@ updateCredentials (user: User, newUsername: String, newEmail: String): (success:
 * **requires** The `user` exists. The `newUsername` and `newEmail` are not already in use by another User.
 * **effects** Updates the `username` to `newUsername` and `email` to `newEmail` for the given `user`; returns `true` as `success`.
 
-setKidAccountStatus (user: User, status: Boolean)
+
+setKidAccountStatus (user: User, status: Boolean): (success: Boolean)
 
 * **requires** The `user` exists.
-* **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`.
+* **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
 
 deleteAccount (user: User, password: String): (success: Boolean)
 
