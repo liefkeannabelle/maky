@@ -41,8 +41,21 @@ async function main() {
 
   console.log(`Seeding ${rawSongs.length} songs into Song...`);
 
+  let seeded = 0;
+  let skipped_invalid = 0;
+
   for (const [idx, s] of rawSongs.entries()) {
     console.log(`[debug] rawSongs[${idx}].id =`, s.id);
+
+    // Filter out placeholder songs
+    if (s.title.startsWith("Chordonomicon Song") || 
+        s.artist.startsWith("Artist ") || 
+        s.artist === "Unknown Artist" ||
+        s.artist.includes("Unknown")) {
+      console.log(`[${idx}] Skipping invalid metadata: "${s.title}" – ${s.artist}`);
+      skipped_invalid++;
+      continue;
+    }
 
     try {
       await songConcept.createSong({
@@ -66,6 +79,7 @@ async function main() {
           s.source ?? "curated"
         }]`,
       );
+      seeded++;
     } catch (err) {
       // SongConcept throws this on duplicates:
       // "Song already exists"
@@ -77,7 +91,7 @@ async function main() {
     }
   }
 
-  console.log("Done seeding songs.");
+  console.log(`Done seeding songs. Seeded: ${seeded}, Skipped invalid: ${skipped_invalid}`);
   // If getDb() returns a client, you can close it here if you want:
   // await client.close();
 }

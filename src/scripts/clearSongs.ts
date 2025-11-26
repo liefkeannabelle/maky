@@ -1,18 +1,23 @@
 // file: src/scripts/clearSongs.ts
 
 import { getDb } from "@utils/database.ts";
-import SongLibraryConcept from "@concepts/SongLibrary/SongLibraryConcept.ts";
 
 async function main() {
+  console.log("Connecting to database...");
   const [db] = await getDb();
-  const songLib = new SongLibraryConcept(db);
-
-  // This is the collection you defined in the concept:
-  // const PREFIX = "SongLibrary" + ".";
-  // this.songs = this.db.collection(PREFIX + "songs");
-  const result = await songLib.songs.deleteMany({});
-
-  console.log(`Cleared songs collection. Deleted ${result.deletedCount} document(s).`);
+  
+  // We need to clear the "Song.songs" collection where the actual song data lives.
+  // (SongLibrary.songs tracks user progress, Song.songs tracks the catalog)
+  
+  const songCollection = db.collection("Song.songs");
+  console.log(`Clearing all entries from 'Song.songs'...`);
+  
+  try {
+    const result = await songCollection.deleteMany({});
+    console.log(`✅ Deleted ${result.deletedCount} songs from the catalog.`);
+  } catch (error) {
+    console.error("❌ Error clearing songs:", error);
+  }
 }
 
 if (import.meta.main) {

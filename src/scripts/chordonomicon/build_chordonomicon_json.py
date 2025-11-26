@@ -32,7 +32,10 @@ RAW_CSV_PATH = RAW_DIR / "chordonomicon_v2.csv"
 OUTPUT_JSON_PATH = Path("../data/chordonomicon_songs.json")
 
 # Limit how many songs we keep (None = all; careful, ~680k total)
-MAX_SONGS = 5000
+MAX_SONGS = 4000
+
+# Skip the first N songs (useful for resuming after rate limiting)
+SKIP_FIRST_N = 7697
 
 # Filter out songs with too many distinct chords
 MAX_UNIQUE_CHORDS = 8
@@ -333,9 +336,9 @@ def build_song_object(
 def main() -> None:
     maybe_download_csv()
 
-    if not RAW_CSV_PATH.exists():
-        print(f"[error] CSV file still not found at {RAW_CSV_PATH}")
-        raise SystemExit(1)
+    # if not RAW_CSV_PATH.exists():
+    #     print(f"[error] CSV file still not found at {RAW_CSV_PATH}")
+    #     raise SystemExit(1)
 
     # Try to get Spotify token (optional)
     spotify_token = get_spotify_token()
@@ -343,11 +346,21 @@ def main() -> None:
 
     print(f"[info] Reading CSV from {RAW_CSV_PATH}…")
 
-    songs: List[Dict] = []
+    # Load existing songs if the output file exists to avoid duplicates
+    existing_songs: List[Dict] = []
+    if OUTPUT_JSON_PATH.exists():
+        print(f"[info] Loading existing songs from {OUTPUT_JSON_PATH} to avoid duplicates...")
+        with open(OUTPUT_JSON_PATH, "r", encoding="utf-8") as f:
+            existing_songs = json.load(f)
+        print(f"[info] Found {len(existing_songs)} existing songs.")
+
+    songs: List[Dict] = existing_songs
     total_rows = 0
-    kept = 0
+    kept = len(existing_songs)
     skipped_invalid = 0
     skipped_complex = 0
+    skipped_no_metadata = 0
+    skipped_for_resume = 0
 
     with open(RAW_CSV_PATH, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -355,6 +368,11 @@ def main() -> None:
 
         for row in reader:
             total_rows += 1
+
+            # Skip rows if we're resuming from a specific point
+            if SKIP_FIRST_N > 0 and total_rows <= SKIP_FIRST_N:
+                skipped_for_resume += 1
+                continue
 
             chords_str = row.get("chords")
             if not chords_str:
@@ -389,6 +407,16 @@ def main() -> None:
                 if info:
                     title, artist = info
 
+            # --- Filter out placeholder names ---
+            # We only want songs with valid metadata (real title/artist)
+            # Check both before AND after Spotify enrichment
+            if (title.startswith("Chordonomicon Song") or 
+                artist.startswith("Artist ") or 
+                artist == "Unknown Artist" or
+                "Unknown" in artist):
+                skipped_no_metadata += 1
+                continue
+
             try:
                 song = build_song_object(row, parsed, title, artist)
             except ValueError:
@@ -407,8 +435,10 @@ def main() -> None:
 
     print(f"[summary] Processed rows: {total_rows}")
     print(f"[summary] Kept songs:    {kept}")
+    print(f"[summary] Skipped for resume:     {skipped_for_resume}")
     print(f"[summary] Skipped invalid chords: {skipped_invalid}")
     print(f"[summary] Skipped too complex:    {skipped_complex}")
+    print(f"[summary] Skipped no metadata:    {skipped_no_metadata}")
 
     OUTPUT_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_JSON_PATH, "w", encoding="utf-8") as out:
