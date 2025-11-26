@@ -44,13 +44,8 @@ export const TriggerChordRecommendation: Sync = (
       });
       const knownChordsList = knownChordsObjs.map((c: any) => c.chord);
 
-      // Get All Songs
-      const allSongsObjs = await Song._getAllSongs({});
-      const allSongsList = allSongsObjs.map((s: any) => ({
-        _id: s.song._id,
-        chords: s.song.chords,
-        difficulty: s.song.difficulty,
-      }));
+      // Get All Songs (optimized projection)
+      const allSongsList = await Song._getAllSongsForRecommendation({});
 
       newFrames.push({
         ...frame,
@@ -119,13 +114,8 @@ export const HandleRequestChordRecommendation: Sync = ({ request, knownChords, r
     [Requesting.request, { path: "/RecommendationEngine/requestChordRecommendation", knownChords }, { request }]
   ),
   where: async (frames) => {
-    // Fetch all songs once
-    const allSongsObjs = await Song._getAllSongs({});
-    const allSongsList = allSongsObjs.map((s) => ({
-        _id: s.song._id,
-        chords: s.song.chords,
-        difficulty: s.song.difficulty,
-    }));
+    // Fetch all songs once (optimized projection)
+    const allSongsList = await Song._getAllSongsForRecommendation({});
 
     const newFrames = [];
     for (const frame of frames) {
@@ -150,12 +140,8 @@ export const HandleRequestSongUnlockRecommendation: Sync = ({ request, knownChor
     [Requesting.request, { path: "/RecommendationEngine/requestSongUnlockRecommendation", knownChords, potentialChord }, { request }]
   ),
   where: async (frames) => {
-    const allSongsObjs = await Song._getAllSongs({});
-    const allSongsList = allSongsObjs.map((s) => ({
-        _id: s.song._id,
-        chords: s.song.chords,
-        difficulty: s.song.difficulty,
-    }));
+    const allSongsObjs = await Song._getAllSongsForRecommendation({});
+    const allSongsList = allSongsObjs;
 
     const newFrames = [];
     for (const frame of frames) {
@@ -187,14 +173,8 @@ export const HandleRequestPersonalizedSongRecommendation: Sync = ({ request, ses
       frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
       console.log("DEBUG: User resolved");
 
-      const allSongsObjs = await Song._getAllSongs({});
-      console.log(`DEBUG: Fetched ${allSongsObjs.length} songs`);
-      
-      const allSongsList = allSongsObjs.map((s) => ({
-          _id: s.song._id,
-          chords: s.song.chords,
-          difficulty: s.song.difficulty,
-      }));
+      const allSongsList = await Song._getAllSongsForRecommendation({});
+      console.log(`DEBUG: Fetched ${allSongsList.length} songs`);
 
       const newFrames = [];
       for (const frame of frames) {
@@ -239,7 +219,7 @@ export const HandleRecommendNextChordsForTargetSong: Sync = ({ request, sessionI
   where: async (frames) => {
     frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
 
-    const allSongsObjs = await Song._getAllSongs({});
+    const allSongsObjs = await Song._getAllSongsForRecommendation({});
     
     const newFrames = [];
     for (const frame of frames) {
@@ -251,7 +231,7 @@ export const HandleRecommendNextChordsForTargetSong: Sync = ({ request, sessionI
       const knownChordsList = knownChordsObjs.map((c) => c.chord);
 
       // Find Target Song
-      const targetSongObj = allSongsObjs.find(s => s.song._id === targetSongId);
+      const targetSongObj = allSongsObjs.find(s => s._id === targetSongId);
       
       if (!targetSongObj) {
           newFrames.push({ ...frame, [recommendedPath]: [] }); // Or error
@@ -259,9 +239,9 @@ export const HandleRecommendNextChordsForTargetSong: Sync = ({ request, sessionI
       }
 
       const targetSongInput = {
-          _id: targetSongObj.song._id,
-          chords: targetSongObj.song.chords,
-          difficulty: targetSongObj.song.difficulty
+          _id: targetSongObj._id,
+          chords: targetSongObj.chords,
+          difficulty: targetSongObj.difficulty
       };
 
       const result = await RecommendationEngine.recommendNextChordsForTargetSong({
@@ -293,12 +273,7 @@ export const HandleCalculateRecommendation: Sync = ({ request, sessionId, user, 
       const knownChordsObjs = await ChordLibrary._getKnownChords({ user: currentUser });
       const knownChordsList = knownChordsObjs.map((c) => c.chord);
 
-      const allSongsObjs = await Song._getAllSongs({});
-      const allSongsList = allSongsObjs.map((s) => ({
-        _id: s.song._id,
-        chords: s.song.chords,
-        difficulty: s.song.difficulty,
-      }));
+      const allSongsList = await Song._getAllSongsForRecommendation({});
 
       newFrames.push({
         ...frame,
