@@ -170,4 +170,26 @@ export default class ReactionConcept {
 
     return finalCounts;
   }
+
+  /**
+   * _getReactionOnPostFromUser (user: User, post: Post): (type: ReactionType, count: number)
+   *
+   * @requires The `user` and `post` exist.
+   * @effects Returns an array of objects, each containing a reaction type and its count (0 or 1) for the given `user` and `post`.
+   */
+  async _getReactionOnPostFromUser(
+    { user, post }: { user: User; post: Post },
+  ): Promise<{ type: ReactionType; count: number }[]> {
+    const reaction = await this.reactions.findOne({ user, post });
+
+    const result: { type: ReactionType; count: number }[] = [];
+    for (const type of Object.values(ReactionType)) {
+      result.push({
+        type: type,
+        count: reaction && reaction.type === type ? 1 : 0,
+      });
+    }
+
+    return result;
+  }
 }

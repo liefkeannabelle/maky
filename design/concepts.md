@@ -182,39 +182,39 @@ _getPostsForUsers (users: set of User): (post: Post)
 - postType will be used to capture the general content a post is focused on: "I mastered this song!", "Just practicing!", or a general update 
 ---
 
-**concept** Comment [User, Post] \
-**purpose** to allow users to interact with posts \
-**principle** Users can add textual comments to existing posts, which are publicly visible to others. Comments can be edited or deleted by their author.
+**concept** Comment [User, Item] \
+**purpose** to allow users to interact with items \
+**principle** Users can add textual comments to existing items, which are publicly visible to others. Comments can be edited or deleted by their author.
 
 **state**
 > a set of Comments with
 >
 > > a commentId String \
-> > a post Post \
+> > a item Item \
 > > an author User \
 > > a content String \
 > > a createdAt DateTime \
 > > an optional lastEditedAt DateTime 
 >
-> a set of Posts each with
+> a set of Items each with
 > > a set of Comments
 
 **actions** \
-addCommentToPost (post: Post, author: User, content: String): (comment: Comment)
-*   **requires** The `post` exists and the `author` exists.
-*   **effects** Creates a new `Comment` with a unique `commentId`, links it to the `post` and `author`, sets its `content` and `createdAt` timestamp; adds it to the comments set of `post`; returns the new `comment`.
+addCommentToItem (item: Item, author: User, content: String): (comment: Comment)
+*   **requires** The `item` exists and the `author` exists.
+*   **effects** Creates a new `Comment` with a unique `commentId`, links it to the `item` and `author`, sets its `content` and `createdAt` timestamp; adds it to the comments set of `item`; returns the new `comment`.
 
 deleteComment (comment: Comment, author: User)
 *   **requires** The `comment` exists and its `author` matches the provided `author`.
-*   **effects** Removes the `comment` from the set of `Comments` and from the `comments` set of `comment.post`.
+*   **effects** Removes the `comment` from the set of `Comments` and from the `comments` set of `comment.item`.
 
 editComment (comment: Comment, author: User, newContent: String)
 *   **requires** The `comment` exists and its `author` matches the provided `author`.
 *   **effects** Updates the `content` of the `comment` to `newContent`, sets `lastEditedAt` to the current timestamp, and returns `success: true`.
 
-removeAllCommentsFromPost (post: Post)
-*   **requires** The `post` exists.
-  *   **effects** Removes all `Comment`s associated with the given `post` from the state and from the `comments` set of `post`; returns `success: true` on completion.
+removeAllCommentsFromItem (item: Item)
+*   **requires** The `item` exists.
+  *   **effects** Removes all `Comment`s associated with the given `item` from the state and from the `comments` set of `items`; returns `success: true` on completion.
 
 removeAllCommentsForUser (user: User)
 *   **requires** The `user` exists.
@@ -224,55 +224,57 @@ removeAllCommentsForUser (user: User)
 - lastEditedAt will be used to track if/when a comment was edited
 ---
 
-**concept** Reaction [User, Post] \
-**purpose** to allow users to express positive sentiment on posts \
-**principle** A user can attach a specific sentiment (such as "like" or "love") to a post. A user provides only one reaction per post, which can be subsequently removed to retract the sentiment.
+**concept** Reaction [User, Item] \
+**purpose** to allow users to express positive sentiment on items \
+**principle** A user can attach a specific sentiment (such as "like" or "love") to a item. A user provides only one reaction per item, which can be subsequently removed to retract the sentiment.
 
 **state** 
 > a set of Reactions with
 >
 > > a reactionId String
-> > a post Post
+> > a item Item
 > > a user User
 > > a type of LIKE or LOVE or CELEBRATE
 > > a createdAt DateTime
 >
-> a set of Posts each with
+> a set of Items each with
 > > a set of Reactions
 
 **actions** \
-addReactionToPost (user: User, post: Post, type: ReactionType): (reaction: Reaction)
+addReactionToItem (user: User, item: Item, type: ReactionType): (reaction: Reaction)
 
-*   **requires** The `user` and `post` exist. No `Reaction` already exists for this specific combination of `user` and `post`.
-*   **effects** Creates a new `Reaction` with a unique `reactionId`; sets the `user`, `post`, `type`, and sets `createdAt` to the current time; adds the new reaction to the `reactions` set of `post`; returns the new `reaction`.
+*   **requires** The `user` and `item` exist. No `Reaction` already exists for this specific combination of `user` and `item`.
+*   **effects** Creates a new `Reaction` with a unique `reactionId`; sets the `user`, `item`, `type`, and sets `createdAt` to the current time; adds the new reaction to the `reactions` set of `item`; returns the new `reaction`.
 
-changeReactionType (user: User, post: Post, newType: ReactionType)
-*   **requires** A `Reaction` exists for this user and post.
+changeReactionType (user: User, item: Item, newType: ReactionType)
+*   **requires** A `Reaction` exists for this user and item.
 *   **effects** Updates the reaction’s `type` to `newType`.
 
-removeReactionFromPost (user: User, post: Post)
+removeReactionFromItem (user: User, item: Item)
 
-*   **requires** A `Reaction` exists associated with the given `user` and `post`.
-*   **effects** Removes the matching `Reaction` from the state and from the `reactions` set of `post`.
+*   **requires** A `Reaction` exists associated with the given `user` and `item`.
+*   **effects** Removes the matching `Reaction` from the state and from the `reactions` set of `item`.
 
-removeAllReactionsFromPost (post: Post)
+removeAllReactionsFromItem (item: Item)
 
-*   **requires** The `post` exists.
-*   **effects** Removes all `Reaction`s associated with the given `post` from the state and from the `reactions` set of `post`.
+*   **requires** The `item` exists.
+*   **effects** Removes all `Reaction`s associated with the given `item` from the state and from the `reactions` set of `item`.
 
 removeAllReactionsForUser (user: User)
 *   **requires** The `user` exists.
 *   **effects** Removes all `Reaction`s created by the given `user` from the state; returns `success: true`.
 
 **queries**
-_getReactionsForPostId (post: Post): (type: ReactionType, count: number)
+_getReactionsForItemId (item: Item): (type: ReactionType, count: number)
 
-*   **requires** The `post` exists.
-*   **effects** Returns an array of objects, each containing a reaction type and its total count for the given `post`. Includes types with a count of 0.
+*   **requires** The `item` exists.
+*   **effects** Returns an array of objects, each containing a reaction type and its total count for the given `item`. Includes types with a count of 0.
 
+_getReactionOnItemFromUser (user: User, item: Item): (type: ReactionType, count: number)
 
-**notes**
-There are no non-obvious design choices in this concept.
+*   **requires** The `user` and `item` exist.
+*   **effects** Returns an array of objects, each containing a reaction type and its count (0 or 1) for the given `user` and `item`.
+
 
 ---
 **concept** Friendship [User] \
