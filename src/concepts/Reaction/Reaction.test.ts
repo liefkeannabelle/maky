@@ -382,3 +382,48 @@ Deno.test(
     await client.close();
   },
 );
+
+Deno.test(
+  "ReactionConcept - _getReactionOnPostFromUser",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const reactionConcept = new ReactionConcept(db);
+    await reactionConcept.reactions.deleteMany({});
+
+    // Setup: Add a LIKE reaction from userA to postA
+    await reactionConcept.addReactionToPost({
+      user: userA,
+      post: postA,
+      type: ReactionType.LIKE,
+    });
+
+    // 1. Test getting reaction for userA on postA (should be LIKE)
+    const resultA = await reactionConcept._getReactionOnPostFromUser({
+      user: userA,
+      post: postA,
+    });
+    resultA.sort((a, b) => a.type.localeCompare(b.type));
+
+    assertEquals(resultA, [
+      { type: ReactionType.CELEBRATE, count: 0 },
+      { type: ReactionType.LIKE, count: 1 },
+      { type: ReactionType.LOVE, count: 0 },
+    ]);
+
+    // 2. Test getting reaction for userB on postA (should be none)
+    const resultB = await reactionConcept._getReactionOnPostFromUser({
+      user: userB,
+      post: postA,
+    });
+    resultB.sort((a, b) => a.type.localeCompare(b.type));
+
+    assertEquals(resultB, [
+      { type: ReactionType.CELEBRATE, count: 0 },
+      { type: ReactionType.LIKE, count: 0 },
+      { type: ReactionType.LOVE, count: 0 },
+    ]);
+
+    await client.close();
+  },
+);

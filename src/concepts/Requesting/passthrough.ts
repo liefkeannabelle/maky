@@ -127,6 +127,7 @@ export const exclusions: Array<string> = [
   "/api/UserAccount/_isUserById",
   "/api/UserProfile/_searchByDisplayName",
   "/api/UserProfile/_getProfile",
+  "/api/Reaction/_getReactionOnPostFromUser",
 ];
 
 /** */

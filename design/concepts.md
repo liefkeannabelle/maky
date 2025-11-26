@@ -270,6 +270,11 @@ _getReactionsForPostId (post: Post): (type: ReactionType, count: number)
 *   **requires** The `post` exists.
 *   **effects** Returns an array of objects, each containing a reaction type and its total count for the given `post`. Includes types with a count of 0.
 
+_getReactionOnPostFromUser (user: User, post: Post): (type: ReactionType, count: number)
+
+*   **requires** The `user` and `post` exist.
+*   **effects** Returns an array of objects, each containing a reaction type and its count (0 or 1) for the given `user` and `post`.
+
 
 **notes**
 There are no non-obvious design choices in this concept.
