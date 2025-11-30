@@ -47,6 +47,7 @@ describe("PostConcept", () => {
         content: "This is a general post.",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
 
       assert(!("error" in result), "createPost should not return an error");
@@ -67,6 +68,7 @@ describe("PostConcept", () => {
         content: "Made progress on this item!",
         postType: "PROGRESS",
         items: [itemA],
+        visibility: "PRIVATE",
       });
 
       assert(!("error" in result), "createPost should not return an error");
@@ -87,6 +89,7 @@ describe("PostConcept", () => {
         // deno-lint-ignore no-explicit-any
         postType: "INVALID_TYPE" as any,
         items: [],
+        visibility: "PUBLIC",
       });
 
       assert("error" in result, "createPost should return an error");
@@ -94,6 +97,23 @@ describe("PostConcept", () => {
       assertEquals(
         error,
         "Invalid postType specified. Must be 'PROGRESS' or 'GENERAL'.",
+      );
+    });
+
+    it("should return an error for an invalid visibility", async () => {
+      const result = await postConcept.createPost({
+        author: userA,
+        content: "Invalid visibility",
+        postType: "GENERAL",
+        items: [],
+        // deno-lint-ignore no-explicit-any
+        visibility: "HIDDEN" as any,
+      });
+
+      assert("error" in result, "createPost should return an error");
+      assertEquals(
+        (result as { error: string }).error,
+        "Invalid visibility specified. Must be 'PUBLIC' or 'PRIVATE'.",
       );
     });
   });
@@ -107,6 +127,7 @@ describe("PostConcept", () => {
         content: "Original content for editing",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
       postId = (createResult as { postId: ID }).postId;
     });
@@ -198,6 +219,64 @@ describe("PostConcept", () => {
     });
   });
 
+  describe("editPostVisibility", () => {
+    let postId: ID;
+
+    beforeEach(async () => {
+      const createResult = await postConcept.createPost({
+        author: userA,
+        content: "Privacy test",
+        postType: "GENERAL",
+        items: [],
+        visibility: "PUBLIC",
+      });
+      postId = (createResult as { postId: ID }).postId;
+    });
+
+    it("allows the author to change visibility", async () => {
+      const result = await postConcept.editPostVisibility({
+        postId,
+        editor: userA,
+        newVisibility: "PRIVATE",
+      });
+
+      assert("success" in result, "editPostVisibility should return success");
+      const post = await postConcept.posts.findOne({ _id: postId });
+      assertExists(post);
+      assertEquals(post.visibility, "PRIVATE");
+      assertExists(post.editedAt);
+    });
+
+    it("rejects non-authors", async () => {
+      const result = await postConcept.editPostVisibility({
+        postId,
+        editor: userB,
+        newVisibility: "PRIVATE",
+      });
+
+      assert("error" in result, "Non-authors should be blocked");
+      assertEquals(
+        (result as { error: string }).error,
+        "Permission denied: user is not the author of the post",
+      );
+    });
+
+    it("rejects invalid visibility values", async () => {
+      const result = await postConcept.editPostVisibility({
+        postId,
+        editor: userA,
+        // deno-lint-ignore no-explicit-any
+        newVisibility: "FRIENDS" as any,
+      });
+
+      assert("error" in result, "Invalid visibilities should error");
+      assertEquals(
+        (result as { error: string }).error,
+        "Invalid visibility specified. Must be 'PUBLIC' or 'PRIVATE'.",
+      );
+    });
+  });
+
   describe("deletePost", () => {
     let postIdForDeletion: ID;
 
@@ -208,6 +287,7 @@ describe("PostConcept", () => {
         content: "This post will be deleted.",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
       postIdForDeletion = (createResult as { postId: ID }).postId;
     });
@@ -260,6 +340,7 @@ describe("PostConcept", () => {
         content: "First post",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
       const post1Id = (post1 as { postId: ID }).postId;
 
@@ -271,6 +352,7 @@ describe("PostConcept", () => {
         content: "Second post",
         postType: "PROGRESS",
         items: [itemA],
+        visibility: "PRIVATE",
       });
       const post2Id = (post2 as { postId: ID }).postId;
 
@@ -281,6 +363,7 @@ describe("PostConcept", () => {
         content: "Third post",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
       const post3Id = (post3 as { postId: ID }).postId;
 
@@ -290,6 +373,7 @@ describe("PostConcept", () => {
         content: "User B post",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
 
       const results = await postConcept._getPostsForUser({ user: userA });
@@ -320,6 +404,7 @@ describe("PostConcept", () => {
         content: "User A post",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
 
       await postConcept.createPost({
@@ -327,6 +412,7 @@ describe("PostConcept", () => {
         content: "User B post",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
 
       const results = await postConcept._getPostsForUser({ user: userA });
@@ -334,6 +420,58 @@ describe("PostConcept", () => {
       assertEquals(results.length, 1, "Should return only userA's post");
       assertEquals(results[0].post.author, userA);
       assertEquals(results[0].post.content, "User A post");
+    });
+  });
+
+  describe("_getPublicPostsForUser", () => {
+    it("returns only public posts", async () => {
+      await postConcept.createPost({
+        author: userA,
+        content: "Public post",
+        postType: "GENERAL",
+        items: [],
+        visibility: "PUBLIC",
+      });
+
+      await postConcept.createPost({
+        author: userA,
+        content: "Private post",
+        postType: "GENERAL",
+        items: [],
+        visibility: "PRIVATE",
+      });
+
+      const results = await postConcept._getPublicPostsForUser({ user: userA });
+      assertEquals(results.length, 1);
+      assertEquals(results[0].post.content, "Public post");
+      assertEquals(results[0].post.visibility, "PUBLIC");
+    });
+  });
+
+  describe("_getPrivatePostsForUser", () => {
+    it("returns only private posts", async () => {
+      await postConcept.createPost({
+        author: userA,
+        content: "Private post",
+        postType: "GENERAL",
+        items: [],
+        visibility: "PRIVATE",
+      });
+
+      await postConcept.createPost({
+        author: userA,
+        content: "Public post",
+        postType: "GENERAL",
+        items: [],
+        visibility: "PUBLIC",
+      });
+
+      const results = await postConcept._getPrivatePostsForUser({
+        user: userA,
+      });
+      assertEquals(results.length, 1);
+      assertEquals(results[0].post.content, "Private post");
+      assertEquals(results[0].post.visibility, "PRIVATE");
     });
   });
 
@@ -345,6 +483,7 @@ describe("PostConcept", () => {
         content: "User A post 1",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
       const postA1Id = (postA1 as { postId: ID }).postId;
 
@@ -355,6 +494,7 @@ describe("PostConcept", () => {
         content: "User A post 2",
         postType: "PROGRESS",
         items: [itemA],
+        visibility: "PRIVATE",
       });
       const postA2Id = (postA2 as { postId: ID }).postId;
 
@@ -366,6 +506,7 @@ describe("PostConcept", () => {
         content: "User B post 1",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
       const postB1Id = (postB1 as { postId: ID }).postId;
 
@@ -376,6 +517,7 @@ describe("PostConcept", () => {
         content: "User C post",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
 
       const results = await postConcept._getPostsForUsers({
@@ -413,6 +555,7 @@ describe("PostConcept", () => {
         content: "User A post",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
 
       await postConcept.createPost({
@@ -420,6 +563,7 @@ describe("PostConcept", () => {
         content: "User B post",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
 
       const results = await postConcept._getPostsForUsers({ users: [userA] });
@@ -429,24 +573,82 @@ describe("PostConcept", () => {
     });
   });
 
+  describe("_getPublicPostsForUsers", () => {
+    it("returns only public posts across users", async () => {
+      await postConcept.createPost({
+        author: userA,
+        content: "User A public",
+        postType: "GENERAL",
+        items: [],
+        visibility: "PUBLIC",
+      });
+
+      await postConcept.createPost({
+        author: userA,
+        content: "User A private",
+        postType: "GENERAL",
+        items: [],
+        visibility: "PRIVATE",
+      });
+
+      await postConcept.createPost({
+        author: userB,
+        content: "User B public",
+        postType: "GENERAL",
+        items: [],
+        visibility: "PUBLIC",
+      });
+
+      const results = await postConcept._getPublicPostsForUsers({
+        users: [userA, userB],
+      });
+
+      assertEquals(results.length, 2);
+      const contents = results.map((r) => r.post.content);
+      assert(contents.includes("User A public"));
+      assert(contents.includes("User B public"));
+      assert(!contents.includes("User A private"));
+    });
+
+    it("returns empty array for empty users list", async () => {
+      const results = await postConcept._getPublicPostsForUsers({ users: [] });
+      assertEquals(results.length, 0);
+    });
+
+    it("returns empty when users have no public posts", async () => {
+      await postConcept.createPost({
+        author: userA,
+        content: "User A private",
+        postType: "GENERAL",
+        items: [],
+        visibility: "PRIVATE",
+      });
+
+      const results = await postConcept._getPublicPostsForUsers({
+        users: [userA],
+      });
+      assertEquals(results.length, 0);
+    });
+  });
+
   describe("removeAllPostsForUser", () => {
     it("should remove all posts for a user", async () => {
       // Create multiple posts for userA
-      const post1 = await postConcept.createPost({
+      await postConcept.createPost({
         author: userA,
         content: "Post 1",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
-      const post1Id = (post1 as { postId: ID }).postId;
 
-      const post2 = await postConcept.createPost({
+      await postConcept.createPost({
         author: userA,
         content: "Post 2",
         postType: "PROGRESS",
         items: [itemA],
+        visibility: "PRIVATE",
       });
-      const post2Id = (post2 as { postId: ID }).postId;
 
       // Create a post for userB (should not be deleted)
       const post3 = await postConcept.createPost({
@@ -454,21 +656,30 @@ describe("PostConcept", () => {
         content: "User B post",
         postType: "GENERAL",
         items: [],
+        visibility: "PUBLIC",
       });
       const post3Id = (post3 as { postId: ID }).postId;
 
       // Verify setup
-      const userAPostsBefore = await postConcept._getPostsForUser({ user: userA });
+      const userAPostsBefore = await postConcept._getPostsForUser({
+        user: userA,
+      });
       assertEquals(userAPostsBefore.length, 2, "UserA should have 2 posts");
 
       // Remove all posts for userA
       const result = await postConcept.removeAllPostsForUser({ user: userA });
       assert(!("error" in result), "removeAllPostsForUser should succeed");
       assertEquals((result as { success: true; postIds: ID[] }).success, true);
-      assertEquals((result as { success: true; postIds: ID[] }).postIds.length, 2, "Should return 2 post IDs");
+      assertEquals(
+        (result as { success: true; postIds: ID[] }).postIds.length,
+        2,
+        "Should return 2 post IDs",
+      );
 
       // Verify all posts for userA are removed
-      const userAPostsAfter = await postConcept._getPostsForUser({ user: userA });
+      const userAPostsAfter = await postConcept._getPostsForUser({
+        user: userA,
+      });
       assertEquals(userAPostsAfter.length, 0, "UserA should have no posts");
 
       // Verify userB's post is still intact
@@ -479,9 +690,16 @@ describe("PostConcept", () => {
 
     it("should succeed even if user has no posts", async () => {
       const result = await postConcept.removeAllPostsForUser({ user: userA });
-      assert(!("error" in result), "removeAllPostsForUser should succeed even with no posts");
+      assert(
+        !("error" in result),
+        "removeAllPostsForUser should succeed even with no posts",
+      );
       assertEquals((result as { success: true; postIds: ID[] }).success, true);
-      assertEquals((result as { success: true; postIds: ID[] }).postIds.length, 0, "Should return empty postIds array");
+      assertEquals(
+        (result as { success: true; postIds: ID[] }).postIds.length,
+        0,
+        "Should return empty postIds array",
+      );
     });
   });
 });

@@ -33,7 +33,8 @@ export const inclusions: Record<string, string> = {
   "/api/Song/deleteSong": "Admin action",
   "/api/Chord/createChord": "Admin action",
   "/api/Chord/deleteChord": "Admin action",
-  "/api/RecommendationEngine/_getRecommendation": "Public query for recommendation details",
+  "/api/RecommendationEngine/_getRecommendation":
+    "Public query for recommendation details",
 };
 
 /**
@@ -134,6 +135,7 @@ export const exclusions: Array<string> = [
   "/api/UserProfile/_searchByDisplayName",
   "/api/UserProfile/_getProfile",
   "/api/Reaction/_getReactionOnPostFromUser",
+  "/api/Post/editPostVisibility",
 ];
 
 /** */

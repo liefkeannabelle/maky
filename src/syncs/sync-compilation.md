@@ -7,15 +7,24 @@ Our Design:
 
 [@syncs](../../design/syncs.md)
 
+[@post.sync.ts](post.sync.ts)
+
+[@friendship.sync.ts](friendship.sync.ts)
+
+
+
+[@reaction.sync.ts](reaction.sync.ts)
+
+
 
 Some Concepts:
 
-[@FollowingConcept.ts](../concepts/Following/FollowingConcept.ts)
-
-[@UserProfileConcept.ts](../concepts/UserProfile/UserProfileConcept.ts)
-
 
 [@PostConcept.ts](../concepts/Post/PostConcept.ts)
+
+[@FriendshipConcept.ts](../concepts/Friendship/FriendshipConcept.ts)
+
+
 
 [@SessioningConcept.ts](../concepts/Sessioning/SessioningConcept.ts)
 
@@ -23,4 +32,10 @@ Some Concepts:
 
 
 
+[@PostConcept.ts](../concepts/Post/PostConcept.ts)
+
+
+
+
+[@ReactionConcept.ts](../concepts/Reaction/ReactionConcept.ts)
 

@@ -698,10 +698,10 @@ After a user logs in, all authenticated API requests should include a `sessionId
 **Authentication:** Requires a valid `sessionId`. The author is automatically extracted from the session.
 
 **Requirements:**
-- The user associated with `sessionId` exists. Every `item` in `items` must exist.
+- The user associated with `sessionId` exists. Every `item` in `items` must exist. `visibility` must be either `PUBLIC` or `PRIVATE`.
 
 **Effects:**
-- Creates a new `Post` with a unique `postId`; sets `author` to the authenticated user, `content`, `postType`, `items`, and `createdAt` to the current DateTime; returns the `postId`.
+- Creates a new `Post` with a unique `postId`; sets `author` to the authenticated user, `content`, `postType`, `items`, `visibility`, and `createdAt` to the current DateTime; returns the `postId`.
 
 **Request Body:**
 ```json
@@ -709,7 +709,8 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "sessionId": "string",
   "content": "string",
   "postType": "string", // "PROGRESS" | "GENERAL"
-  "items": ["string"]
+  "items": ["string"],
+  "visibility": "string" // "PUBLIC" | "PRIVATE"
 }
 ```
 
@@ -799,6 +800,42 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
+### POST /api/Post/editPostVisibility
+
+**Description:** Updates the visibility of an existing post without changing other fields.
+
+**Authentication:** Requires a valid `sessionId`. The editor is automatically extracted from the session.
+
+**Requirements:**
+- The `postId` exists. The user associated with `sessionId` is the `author` of the `Post`.
+- `newVisibility` must be either `PUBLIC` or `PRIVATE`.
+
+**Effects:**
+- Updates the `visibility` of the `Post` identified by `postId` to `newVisibility` and sets `editedAt` to the current DateTime; returns `success: true` on completion.
+
+**Request Body:**
+```json
+{
+  "sessionId": "string",
+  "postId": "string",
+  "newVisibility": "string" // "PUBLIC" | "PRIVATE"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "success": "boolean"
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
 ### POST /api/Post/_getPostsForUser
 
 **Description:** Retrieves all posts authored by a specific user.
@@ -826,6 +863,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
       "content": "string",
       "items": ["string"],
       "postType": "string",
+      "visibility": "string",
       "createdAt": "string",
       "editedAt": "string"
     }
@@ -867,6 +905,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
       "content": "string",
       "items": ["string"],
       "postType": "string",
+      "visibility": "string",
       "createdAt": "string",
       "editedAt": "string"
     }
@@ -879,6 +918,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 {
   "error": "string"
 }
+```
 ```
 ```
 
@@ -919,6 +959,187 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "error": "string"
 }
 ```
+
+### POST /api/Post/_getPublicPostsForUser
+
+**Description:** Retrieves all public posts authored by a specific user.
+
+**Requirements:**
+- The `user` must exist.
+
+**Effects:**
+- Returns an array of all posts authored by the specified `user` where `visibility` is `PUBLIC`, ordered by creation date (newest first). If the user has no public posts, an empty array is returned.
+
+**Request Body:**
+```json
+{
+  "user": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "post": {
+      "_id": "string",
+      "author": "string",
+      "content": "string",
+      "items": ["string"],
+      "postType": "string",
+      "visibility": "string",
+      "createdAt": "string",
+      "editedAt": "string"
+    }
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+
+### POST /api/Post/_getPersonalPrivatePosts
+
+**Description:** Retrieves all private posts for the authenticated user. Although the request includes a `user` parameter, the server validates that the session user matches the requested user before returning data.
+
+**Authentication:** Requires a valid `sessionId` for the user whose private posts are being viewed.
+
+**Requirements:**
+- The `sessionId` is valid and belongs to the same user provided in `user`.
+
+**Effects:**
+- Returns all `PRIVATE` posts authored by the authenticated user, ordered by creation date (newest first).
+
+**Request Body:**
+```json
+{
+  "sessionId": "string",
+  "user": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "post": {
+      "_id": "string",
+      "author": "string",
+      "content": "string",
+      "items": ["string"],
+      "postType": "string",
+      "visibility": "string",
+      "createdAt": "string",
+      "editedAt": "string"
+    }
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+
+### POST /api/Post/_getPersonalPublicPosts
+
+**Description:** Retrieves all public posts for the authenticated user. Despite including `user` in the request, the server ensures that the session user matches the requested user before serving data.
+
+**Authentication:** Requires a valid `sessionId`.
+
+**Requirements:**
+- The `sessionId` belongs to the same user identified by `user`.
+
+**Effects:**
+- Returns all `PUBLIC` posts authored by the authenticated user, ordered by creation date (newest first).
+
+**Request Body:**
+```json
+{
+  "sessionId": "string",
+  "user": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "post": {
+      "_id": "string",
+      "author": "string",
+      "content": "string",
+      "items": ["string"],
+      "postType": "string",
+      "visibility": "string",
+      "createdAt": "string",
+      "editedAt": "string"
+    }
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+
+### POST /api/Post/_getPublicPostsOfUsers
+
+**Description:** Retrieves public posts from a supplied list of users. A `sessionId` is required so that future logic can verify follower or friend relationships for the requesting user.
+
+**Authentication:** Requires a valid `sessionId`.
+
+**Requirements:**
+- The `sessionId` is valid. All `users` in the request must exist.
+
+**Effects:**
+- Returns all `PUBLIC` posts authored by any of the specified `users`, ordered by creation date (newest first).
+
+**Request Body:**
+```json
+{
+  "sessionId": "string",
+  "users": ["string"]
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "post": {
+      "_id": "string",
+      "author": "string",
+      "content": "string",
+      "items": ["string"],
+      "postType": "string",
+      "visibility": "string",
+      "createdAt": "string",
+      "editedAt": "string"
+    }
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
 
 ---
 # API Specification: Comment Concept

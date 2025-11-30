@@ -1,112 +1,71 @@
 
-[@friendship.sync.ts](friendship.sync.ts)
-
-[@FriendshipConcept.ts](../concepts/Friendship/FriendshipConcept.ts)
 
 
 [@sync-compilation](sync-compilation.md)
 
 
+[@trace-snippets](trace-snippets.md)
 
 
-#  why is are friends timing out? investigate the problem. propose a solution that is minimal but correct. and only output the changed or added functions. i don't need unchanged functions. this is the trace: 
-Requesting.request {
-  sessionId: '019ab32c-6110-7c99-9c15-93379498a5ac',
-  otherUser: '019aae08-b57a-7f65-a030-fbb53b0ce9c6',
-  path: '/Friendship/areFriends'
-} => { request: '019ab8cb-d555-7924-8ff2-8e33c635b350' }
 
-
-Friendship.areFriends {
-  user1: '019ab32b-33db-7723-a4ad-caac0f4b0afb',
-  user2: '019aae08-b57a-7f65-a030-fbb53b0ce9c6'
-} => [ { isFriend: false } ]
-
-[Requesting] Error processing request: Request 019ab8cb-d555-7924-8ff2-8e33c635b350 timed out after 10000ms
+#  FIX PROBLEM: my Post.editPostVisibility doesn't work, and I have snippets of the backend trace that are relevant. analyze, find out the bug and propose a fix. only output the pieces of code you added or changed. don't include in the answer code that wasn't changed. the issue is in editPostAvaialbility. why is editPostavailabulity failibg but others syncs aren't failing like that? wht is different?
 
 # response:
 
-The timeout for the `/Friendship/areFriends` endpoint occurs because the response synchronization, `RespondToAreFriendsQuerySuccess`, fails to match the output of the `Friendship.areFriends` action.
+Excellent analysis of the problem. Based on the log traces and the code you provided, the issue is not with the logic of your synchronization itself, but with how the API request is being routed by the server.
 
-### Problem Analysis
+### The Root Cause
 
-1.  **Query Output Format**: The `Friendship.areFriends` method is a query and, per convention, correctly returns its result as an array of objects: `[{ isFriend: boolean }]`. The trace confirms this: `=> [ { isFriend: false } ]`.
-2.  **Pattern Matching Failure**: The `when` clause in `RespondToAreFriendsQuerySuccess` uses the pattern `[Friendship.areFriends, {}, { isFriend }]`. This pattern expects the action to output a single plain object like `{ isFriend: false }`. It cannot match against an array like `[{ isFriend: false }]`, causing the synchronization to never fire.
-3.  **Result**: Because `RespondToAreFriendsQuerySuccess` never fires, the `Requesting.respond` action is never called, and the original HTTP request eventually times out.
+The request to `/api/Post/editPostVisibility` is being handled by the **passthrough route** mechanism instead of your `HandleEditPostVisibilityRequest` synchronization.
 
-### Solution
+Here's why that causes the error:
 
-The correct architectural pattern for handling queries is to perform the query, process its result, and send the response within a single synchronization, primarily using the `where` clause. This avoids the pattern matching issue and simplifies the logic.
+1.  The passthrough route takes the raw JSON body from the frontend (`{ "sessionId": "...", "postId": "...", "newVisibility": "..." }`) and passes it directly to the `PostConcept.editPostVisibility` action.
+2.  The `editPostVisibility` action expects its argument to have an `editor` property for the authorization check: `if (post.author !== editor)`.
+3.  Since the passthrough route sends `sessionId` instead of `editor`, the `editor` parameter inside the action is `undefined`. The check `post.author !== undefined` is always true, causing the "Permission denied" error.
 
-The solution is to replace the three existing synchronizations (`HandleAreFriendsQuery`, `RespondToAreFriendsQuerySuccess`, and `RespondToAreFriendsQueryError`) with a single, robust synchronization that correctly handles the query's array output.
+Your other authenticated actions (like `createPost` and `deletePost`) likely work because their routes are correctly configured to be **excluded** from passthrough, which forces the request to be handled by their respective synchronizations. The sync then correctly uses the `sessionId` to look up the user and passes that user ID as the `author` or `deleter` parameter to the concept action.
 
-***
+### The Solution
 
-### file: src\syncs\friendship.sync.ts
+To fix this, you must explicitly exclude the `/api/Post/editPostVisibility` route from the passthrough mechanism. This will ensure your `HandleEditPostVisibilityRequest` synchronization is triggered to handle the request correctly.
+
+#### file: src/concepts/Requesting/passthrough.ts
 
 ```typescript
-/**
- * Handles a query to check if the authenticated user is friends with another user.
- * This sync authenticates the request, performs the query, processes the array result,
- * and sends the final boolean response.
- */
-export const HandleAreFriendsQuery: Sync = (
-  { request, sessionId, otherUser, user1, isFriend, queryResult },
-) => ({
-  when: actions([
-    Requesting.request,
-    { path: "/Friendship/areFriends", sessionId, otherUser },
-    { request },
-  ]),
-  where: async (frames: Frames) => {
-    // Step 1: Authenticate the session and get the user ID, aliasing it as 'user1'.
-    frames = await frames.query(Sessioning._getUser, { sessionId }, { user: user1 });
+// Add the route for editPostVisibility to the exclusions array.
+// This ensures that the passthrough handler ignores it, and the
+// Requesting concept fires a `Requesting.request` action instead,
+// which will be caught by your synchronization.
 
-    // Step 2: Perform the `areFriends` query. The query returns `[{ isFriend: boolean }]`.
-    // We bind the entire result array to a temporary variable `queryResult`.
-    frames = await frames.query(
-      Friendship.areFriends,
-      { user1, user2: otherUser },
-      { queryResult },
-    );
+// ... (existing inclusions)
 
-    // Step 3: Extract the boolean value from the result array and bind it to `isFriend`.
-    // This safely handles cases where the query might return an empty or unexpected result.
-    return frames.map(($) => {
-      const result = $[queryResult]?.[0]?.isFriend ?? false;
-      return { ...$, [isFriend]: result };
-    });
-  },
-  then: actions([Requesting.respond, { request, isFriend }]),
-});
-
-/**
- * Responds to a successful areFriends query with the boolean result.
- * @deprecated This synchronization is now handled by the consolidated HandleAreFriendsQuery.
- */
-export const RespondToAreFriendsQuerySuccess: Sync = (
-  { request, isFriend },
-) => ({
-  when: actions(
-    [Requesting.request, { path: "/Friendship/areFriends" }, { request }],
-    // The query returns `[{ isFriend: boolean }]`. The pattern matching extracts `isFriend`.
-    [Friendship.areFriends, {}, { isFriend }],
-  ),
-  then: actions([Requesting.respond, { request, isFriend }]),
-});
-
-/**
- * Responds to a failed areFriends query.
- * @deprecated This synchronization is now handled by the consolidated HandleAreFriendsQuery.
- */
-export const RespondToAreFriendsQueryError: Sync = (
-  { request, error },
-) => ({
-  when: actions(
-    [Requesting.request, { path: "/Friendship/areFriends" }, { request }],
-    // Match on the failure case, which returns an `error`.
-    [Friendship.areFriends, {}, { error }],
-  ),
-  then: actions([Requesting.respond, { request, error }]),
-});
+export const exclusions: string[] = [
+  "/api/UserAccount/register",
+  "/api/UserAccount/login",
+  "/api/UserAccount/changePassword",
+  "/api/UserAccount/updateCredentials",
+  "/api/UserAccount/deleteAccount",
+  "/api/UserProfile/createProfile",
+  "/api/UserProfile/updateDisplayName",
+  "/api/UserProfile/updateBio",
+  "/api/UserProfile/updateAvatar",
+  "/api/UserProfile/setGenrePreferences",
+  "/api/UserProfile/changeSkillLevel",
+  "/api/Post/createPost",
+  "/api/Post/deletePost",
+  "/api/Post/editPost",
+  "/api/Post/editPostVisibility", // <--- ADD THIS LINE
+  "/api/Comment/addCommentToPost",
+  "/api/Comment/deleteComment",
+  "/api/Comment/editComment",
+  "/api/Reaction/addReactionToPost",
+  "/api/Reaction/changeReactionType",
+  "/api/Reaction/removeReactionFromPost",
+  "/api/Friendship/sendFriendRequest",
+  "/api/Friendship/acceptFriendRequest",
+  "/api/Friendship/declineFriendRequest",
+  "/api/Friendship/removeFriend",
+  // ... any other existing exclusions
+];
 ```
