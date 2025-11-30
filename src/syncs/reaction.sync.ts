@@ -60,7 +60,9 @@ export const HandleChangeReactionTypeRequest: Sync = (
 /**
  * Responds to a successful change reaction type request by passing along the success flag.
  */
-export const RespondToChangeReactionTypeSuccess: Sync = ({ request, success }) => ({
+export const RespondToChangeReactionTypeSuccess: Sync = (
+  { request, success },
+) => ({
   when: actions(
     [
       Requesting.request,
@@ -175,4 +177,57 @@ export const HandleGetReactionsForPostRequest: Sync = (
     Requesting.respond,
     { request, results },
   ]),
+});
+// --- Get Reaction On Post From User (Authenticated Query) ---
+
+/**
+ * Handles a request to get the reaction (per-type counts) that a specific user
+ * has on a specific post. This requires authentication: the provided
+ * `sessionId` must map to the same `user` requested.
+ */
+export const HandleGetReactionOnPostFromUserRequest: Sync = (
+  { request, sessionId, user, post, type, count, results, viewer },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Reaction/_getReactionOnPostFromUser", sessionId, user, post },
+    { request },
+  ]),
+  where: async (frames) => {
+    // Verify session -> user mapping
+    const withViewer = await frames.query(Sessioning._getUser, { sessionId }, {
+      user: viewer,
+    });
+
+    // No session or invalid session
+    if (withViewer.length === 0) {
+      return new Frames();
+    }
+
+    // Ensure the session user matches the requested user
+    const authorized = withViewer.filter((frame) =>
+      frame[viewer] === frame[user]
+    );
+
+    if (authorized.length === 0) {
+      return new Frames();
+    }
+
+    // Query the Reaction concept for the per-type reaction presence (0 or 1)
+    const queried = await authorized.query(
+      Reaction._getReactionOnPostFromUser,
+      { user, post },
+      { type, count },
+    );
+
+    // If no results (shouldn't happen because the concept returns all types),
+    // return an empty results array for robustness.
+    if (queried.length === 0) {
+      const responseFrame = { ...authorized[0], [results]: [] };
+      return new Frames(responseFrame);
+    }
+
+    return queried.collectAs([type, count], results);
+  },
+  then: actions([Requesting.respond, { request, results }]),
 });

@@ -66,11 +66,18 @@ export const CascadeAllPostsDeletionForUser: Sync = ({ postIds, post }) => ({
  * It authenticates the user via their session before triggering the `createPost` action.
  */
 export const HandleCreatePostRequest: Sync = (
-  { request, sessionId, content, postType, items, user },
+  { request, sessionId, content, postType, items, visibility, user },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/Post/createPost", sessionId, content, postType, items },
+    {
+      path: "/Post/createPost",
+      sessionId,
+      content,
+      postType,
+      items,
+      visibility,
+    },
     { request },
   ]),
   // The `where` clause authenticates the request by getting the user from the session.
@@ -79,7 +86,7 @@ export const HandleCreatePostRequest: Sync = (
   then: actions([
     // The `user` from the session is used as the `author` of the post.
     Post.createPost,
-    { author: user, content, postType, items },
+    { author: user, content, postType, items, visibility },
   ]),
 });
 
@@ -195,6 +202,43 @@ export const RespondToEditPostError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
+// --- Edit Post Visibility (Authenticated) ---
+
+/**
+ * Handles a request to edit the visibility of an existing post.
+ */
+export const HandleEditPostVisibilityRequest: Sync = (
+  { request, sessionId, postId, newVisibility, user },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Post/editPostVisibility", sessionId, postId, newVisibility },
+    { request },
+  ]),
+  where: (frames) => frames.query(Sessioning._getUser, { sessionId }, { user }),
+  then: actions([
+    Post.editPostVisibility,
+    { editor: user, postId, newVisibility },
+  ]),
+});
+export const RespondToEditPostVisibilitySuccess: Sync = (
+  { request, success },
+) => ({
+  when: actions(
+    [Requesting.request, { path: "/Post/editPostVisibility" }, { request }],
+    [Post.editPostVisibility, {}, { success }],
+  ),
+  then: actions([Requesting.respond, { request, success }]),
+});
+
+export const RespondToEditPostVisibilityError: Sync = ({ request, error }) => ({
+  when: actions(
+    [Requesting.request, { path: "/Post/editPostVisibility" }, { request }],
+    [Post.editPostVisibility, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
 // --- Get Posts For User (Public Query) ---
 
 /**
@@ -249,6 +293,193 @@ export const HandleGetPostsForUsersRequest: Sync = (
     }
 
     return frames.collectAs([post], results);
+  },
+  then: actions([Requesting.respond, { request, results }]),
+});
+
+// --- Get Public Posts For User (Public Query) ---
+
+export const HandleGetPublicPostsForUserRequest: Sync = (
+  { request, user, post, results },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Post/_getPublicPostsForUser", user },
+    { request },
+  ]),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    frames = await frames.query(Post._getPublicPostsForUser, { user }, {
+      post,
+    });
+
+    if (frames.length === 0) {
+      const responseFrame = { ...originalFrame, [results]: [] };
+      return new Frames(responseFrame);
+    }
+
+    return frames.collectAs([post], results);
+  },
+  then: actions([Requesting.respond, { request, results }]),
+});
+
+// --- Get Private Posts For User (Private Data Query) ---
+
+export const HandleGetPrivatePostsForUserRequest: Sync = (
+  { request, user, post, results },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Post/_getPrivatePostsForUser", user },
+    { request },
+  ]),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    frames = await frames.query(Post._getPrivatePostsForUser, { user }, {
+      post,
+    });
+
+    if (frames.length === 0) {
+      const responseFrame = { ...originalFrame, [results]: [] };
+      return new Frames(responseFrame);
+    }
+
+    return frames.collectAs([post], results);
+  },
+  then: actions([Requesting.respond, { request, results }]),
+});
+
+// --- Personal Post Queries (Authenticated) ---
+
+const requireViewerMatchesUser = async (
+  frames: Frames,
+  sessionId: symbol,
+  userSymbol: symbol,
+  viewerSymbol: symbol,
+) => {
+  const withViewer = await frames.query(Sessioning._getUser, { sessionId }, {
+    user: viewerSymbol,
+  });
+
+  if (withViewer.length === 0) {
+    return new Frames();
+  }
+
+  const authorized = withViewer.filter((frame) =>
+    frame[viewerSymbol] === frame[userSymbol]
+  );
+  if (authorized.length === 0) {
+    return new Frames();
+  }
+
+  return authorized;
+};
+
+export const HandleGetPersonalPrivatePostsRequest: Sync = (
+  { request, sessionId, user, post, results, viewer },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Post/_getPersonalPrivatePosts", sessionId, user },
+    { request },
+  ]),
+  where: async (frames) => {
+    const authorized = await requireViewerMatchesUser(
+      frames,
+      sessionId,
+      user,
+      viewer,
+    );
+
+    if (authorized.length === 0) {
+      return authorized;
+    }
+
+    const queried = await authorized.query(
+      Post._getPrivatePostsForUser,
+      { user },
+      { post },
+    );
+
+    if (queried.length === 0) {
+      const responseFrame = { ...authorized[0], [results]: [] };
+      return new Frames(responseFrame);
+    }
+
+    return queried.collectAs([post], results);
+  },
+  then: actions([Requesting.respond, { request, results }]),
+});
+
+export const HandleGetPersonalPublicPostsRequest: Sync = (
+  { request, sessionId, user, post, results, viewer },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Post/_getPersonalPublicPosts", sessionId, user },
+    { request },
+  ]),
+  where: async (frames) => {
+    const authorized = await requireViewerMatchesUser(
+      frames,
+      sessionId,
+      user,
+      viewer,
+    );
+
+    if (authorized.length === 0) {
+      return authorized;
+    }
+
+    const queried = await authorized.query(
+      Post._getPublicPostsForUser,
+      { user },
+      { post },
+    );
+
+    if (queried.length === 0) {
+      const responseFrame = { ...authorized[0], [results]: [] };
+      return new Frames(responseFrame);
+    }
+
+    return queried.collectAs([post], results);
+  },
+  then: actions([Requesting.respond, { request, results }]),
+});
+
+// --- Get Public Posts Of Users With Session (future follower checks) ---
+
+export const HandleGetPublicPostsOfUsersRequest: Sync = (
+  { request, sessionId, users, viewer, post, results },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Post/_getPublicPostsOfUsers", sessionId, users },
+    { request },
+  ]),
+  where: async (frames) => {
+    // Authenticate the requesting user; future work will validate follower/friend relationship.
+    const withViewer = await frames.query(Sessioning._getUser, { sessionId }, {
+      user: viewer,
+    });
+
+    if (withViewer.length === 0) {
+      return new Frames();
+    }
+
+    const originalFrame = withViewer[0];
+    const queried = await withViewer.query(
+      Post._getPublicPostsForUsers,
+      { users },
+      { post },
+    );
+
+    if (queried.length === 0) {
+      const responseFrame = { ...originalFrame, [results]: [] };
+      return new Frames(responseFrame);
+    }
+
+    return queried.collectAs([post], results);
   },
   then: actions([Requesting.respond, { request, results }]),
 });

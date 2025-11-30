@@ -11,9 +11,13 @@ type Item = ID;
 
 // PostType enum from spec
 type PostType = "PROGRESS" | "GENERAL";
+type PostVisibility = "PUBLIC" | "PRIVATE";
 
 const UNDEFINED_SENTINEL = "UNDEFINED" as const;
 type MaybeProvided<T> = T | typeof UNDEFINED_SENTINEL;
+
+const isValidVisibility = (value: unknown): value is PostVisibility =>
+  value === "PUBLIC" || value === "PRIVATE";
 
 /**
  * a set of Posts with
@@ -24,6 +28,7 @@ type MaybeProvided<T> = T | typeof UNDEFINED_SENTINEL;
  *  a postType of PROGRESS or GENERAL
  *  a createdAt DateTime
  *  an optional editedAt DateTime
+ *  a visibility PrivacyLevel
  */
 interface PostDoc {
   _id: ID;
@@ -33,6 +38,7 @@ interface PostDoc {
   postType: PostType;
   createdAt: Date;
   editedAt?: Date;
+  visibility: PostVisibility;
 }
 
 /**
@@ -47,22 +53,29 @@ export default class PostConcept {
   }
 
   /**
-   * createPost (author: User, content: String, postType: PostType, items: List<Item>): (postId: String)
+   * createPost (author: User, content: String, postType: PostType, items: List<Item>, visibility: PostVisibility): (postId: String)
    *
-   * **requires** The `author` (User) exists. Every `item` in `items` must exist.
-   * **effects** Creates a new `Post` with a unique `postId`; sets `author`, `content`, `postType`, `items`, and `createdAt` to the current DateTime; returns the `postId`.
+   * **requires** The `author` (User) exists. Every `item` in `items` must exist. `visibility` must be either `PUBLIC` or `PRIVATE`.
+   * **effects** Creates a new `Post` with a unique `postId`; sets `author`, `content`, `postType`, `items`, `visibility`, and `createdAt` to the current DateTime; returns the `postId`.
    */
   async createPost(
-    { author, content, postType, items }: {
+    { author, content, postType, items, visibility }: {
       author: User;
       content: string;
       postType: PostType;
       items: Item[];
+      visibility: PostVisibility;
     },
   ): Promise<{ postId: ID } | { error: string }> {
     if (postType !== "PROGRESS" && postType !== "GENERAL") {
       return {
         error: "Invalid postType specified. Must be 'PROGRESS' or 'GENERAL'.",
+      };
+    }
+
+    if (!isValidVisibility(visibility)) {
+      return {
+        error: "Invalid visibility specified. Must be 'PUBLIC' or 'PRIVATE'.",
       };
     }
 
@@ -73,6 +86,7 @@ export default class PostConcept {
       items,
       postType,
       createdAt: new Date(),
+      visibility,
     };
 
     await this.posts.insertOne(post);
@@ -165,6 +179,63 @@ export default class PostConcept {
   }
 
   /**
+   * editPostVisibility (postId: String, editor: User, newVisibility: PostVisibility)
+   *
+   * **requires** The `postId` exists. The `editor` is the author of the `Post`. `newVisibility` must be either `PUBLIC` or `PRIVATE`.
+   * **effects** Updates the `visibility` of the `Post` to `newVisibility` and sets `editedAt` to the current DateTime.
+   */
+  async editPostVisibility(
+    { postId, editor, newVisibility }: {
+      postId: ID;
+      editor: User;
+      newVisibility: PostVisibility;
+    },
+  ): Promise<{ success: true } | { error: string }> {
+    console.error("HELLO[editPostVisibility] invoked", {
+      postId,
+      editor,
+      newVisibility,
+    });
+    if (!isValidVisibility(newVisibility)) {
+      return {
+        error: "Invalid visibility specified. Must be 'PUBLIC' or 'PRIVATE'.",
+      };
+    }
+
+    const post = await this.posts.findOne({ _id: postId });
+    if (!post) {
+      return { error: "Post not found" };
+    }
+
+    if (post.author !== editor) {
+      console.error(
+        "[editPostVisibility] author mismatch",
+        { postAuthor: post.author, editor },
+      );
+      return {
+        error: "Permission denied: user is not the author of the post",
+      };
+    }
+
+    console.error(
+      "[editPostVisibility] author match",
+      { postAuthor: post.author, editor },
+    );
+
+    await this.posts.updateOne(
+      { _id: postId },
+      { $set: { visibility: newVisibility, editedAt: new Date() } },
+    );
+
+    console.error(
+      "[editPostVisibility] updated visibility",
+      { postId, editor, newVisibility },
+    );
+
+    return { success: true };
+  }
+
+  /**
    * _getPostsForUser (user: User): (post: PostDoc)
    *
    * **requires** The `user` exists.
@@ -174,6 +245,36 @@ export default class PostConcept {
     { user }: { user: User },
   ): Promise<{ post: PostDoc }[]> {
     const posts = await this.posts.find({ author: user })
+      .sort({ createdAt: -1 })
+      .toArray();
+    return posts.map((post) => ({ post }));
+  }
+
+  /**
+   * _getPublicPostsForUser (user: User): (post: PostDoc)
+   *
+   * **requires** The `user` exists.
+   * **effects** Returns all `PUBLIC` posts authored by the given `user`, ordered by creation date (newest first).
+   */
+  async _getPublicPostsForUser(
+    { user }: { user: User },
+  ): Promise<{ post: PostDoc }[]> {
+    const posts = await this.posts.find({ author: user, visibility: "PUBLIC" })
+      .sort({ createdAt: -1 })
+      .toArray();
+    return posts.map((post) => ({ post }));
+  }
+
+  /**
+   * _getPrivatePostsForUser (user: User): (post: PostDoc)
+   *
+   * **requires** The `user` exists.
+   * **effects** Returns all `PRIVATE` posts authored by the given `user`, ordered by creation date (newest first).
+   */
+  async _getPrivatePostsForUser(
+    { user }: { user: User },
+  ): Promise<{ post: PostDoc }[]> {
+    const posts = await this.posts.find({ author: user, visibility: "PRIVATE" })
       .sort({ createdAt: -1 })
       .toArray();
     return posts.map((post) => ({ post }));
@@ -192,6 +293,27 @@ export default class PostConcept {
       return [];
     }
     const posts = await this.posts.find({ author: { $in: users } })
+      .sort({ createdAt: -1 })
+      .toArray();
+    return posts.map((post) => ({ post }));
+  }
+
+  /**
+   * _getPublicPostsForUsers (users: set of User): (post: PostDoc)
+   *
+   * **requires** All `users` exist.
+   * **effects** Returns all PUBLIC posts authored by any of the given `users`, ordered by creation date (newest first).
+   */
+  async _getPublicPostsForUsers(
+    { users }: { users: User[] },
+  ): Promise<{ post: PostDoc }[]> {
+    if (!users || users.length === 0) {
+      return [];
+    }
+    const posts = await this.posts.find({
+      author: { $in: users },
+      visibility: "PUBLIC",
+    })
       .sort({ createdAt: -1 })
       .toArray();
     return posts.map((post) => ({ post }));

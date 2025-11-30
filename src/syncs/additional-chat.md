@@ -1,21 +1,49 @@
-[@useracc.sync.ts](useracc.sync.ts)
 
 [@sync-compilation](sync-compilation.md)
 
-[@post.sync.ts](post.sync.ts)
 
-
-# fix: the following to syncs in the "useraccount.sync.ts" are currently combinigng the success response and error response together, they need to be separate:RespondToChangePassword` - `RespondToUpdateCredentials` `RespondToSetKidStatus` - `RespondToDeleteAccount  please separate them and write the sync correctly, according to instructions and following the post.sync.ts which correctly implements its syncs (the create post specifically). output only the edited syncs, I don't need the unchanged syncs.
-
-
+# write up an API spec for editPostVisibility, including all the necessary information. include only the added or changed text I should put in api-specification-new.md
 # response:
 
+***
 
-# response:
+### POST /api/Post/editPostVisibility
 
-```typescript
+**Description:** Updates the visibility of an existing post without changing other fields.
 
+**Authentication:** Requires a valid `sessionId`. The editor is automatically extracted from the session.
 
-// --- Set Kid Account Status (Authenticated) ---
+**Requirements:**
 
+* The `postId` exists. The user associated with `sessionId` is the `author` of the `Post`.
+* `newVisibility` must be either `PUBLIC` or `PRIVATE`.
+
+**Effects:**
+
+* Updates the `visibility` of the `Post` identified by `postId` to `newVisibility` and sets `editedAt` to the current DateTime; returns `success: true` on completion.
+
+**Request Body:**
+
+```json
+{
+  "sessionId": "string",
+  "postId": "string",
+  "newVisibility": "string" // "PUBLIC" | "PRIVATE"
+}
+```
+
+**Success Response Body (Action):**
+
+```json
+{
+  "success": "boolean"
+}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
 ```
