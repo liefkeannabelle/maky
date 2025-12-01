@@ -11,6 +11,7 @@ async function createUser(
     email: string;
     password: string;
     isKidAccount: boolean;
+    isPrivateAccount: boolean;
   },
 ): Promise<ID> {
   const result = await concept.register(details);
@@ -33,6 +34,7 @@ Deno.test(
       email: "alice@example.com",
       password: "password123",
       isKidAccount: false,
+      isPrivateAccount: false,
     });
 
     assert(!("error" in result), "Registration should succeed");
@@ -60,6 +62,7 @@ Deno.test(
       email: "bob@example.com",
       password: "password123",
       isKidAccount: false,
+      isPrivateAccount: false,
     });
 
     // Test duplicate username
@@ -68,6 +71,7 @@ Deno.test(
       email: "another@example.com",
       password: "password456",
       isKidAccount: false,
+      isPrivateAccount: false,
     });
     assert(
       "error" in duplicateUsernameResult,
@@ -84,6 +88,7 @@ Deno.test(
       email: "bob@example.com",
       password: "password789",
       isKidAccount: false,
+      isPrivateAccount: false,
     });
     assert("error" in duplicateEmailResult, "Should fail on duplicate email");
     assertEquals(
@@ -108,6 +113,7 @@ Deno.test(
       email: "carol@example.com",
       password: "password123",
       isKidAccount: false,
+      isPrivateAccount: false,
     });
 
     // Successful login with username
@@ -165,6 +171,7 @@ Deno.test(
       email: "eve@example.com",
       password: "oldPassword",
       isKidAccount: false,
+      isPrivateAccount: false,
     });
 
     // Successful change
@@ -220,12 +227,14 @@ Deno.test(
       email: "frank@example.com",
       password: "password123",
       isKidAccount: false,
+      isPrivateAccount: false,
     });
     await createUser(userAccount, {
       username: "grace",
       email: "grace@example.com",
       password: "password123",
       isKidAccount: false,
+      isPrivateAccount: false,
     });
 
     // Successful update
@@ -281,6 +290,7 @@ Deno.test(
       email: "heidi@example.com",
       password: "password123",
       isKidAccount: false,
+      isPrivateAccount: false,
     });
 
     // Set to true
@@ -318,6 +328,53 @@ Deno.test(
 );
 
 Deno.test(
+  "UserAccountConcept - setIsPrivateAccountStatus",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const userAccount = new UserAccountConcept(db);
+    await userAccount.users.deleteMany({});
+
+    const userId = await createUser(userAccount, {
+      username: "private_user",
+      email: "private@example.com",
+      password: "password123",
+      isKidAccount: false,
+      isPrivateAccount: false,
+    });
+
+    const setResult = await userAccount.setIsPrivateAccountStatus({
+      user: userId,
+      status: true,
+    });
+    assert("success" in setResult, "Setting private status should succeed");
+    assertEquals(setResult.success, true);
+
+    let userDoc = await userAccount.users.findOne({ _id: userId });
+    assertEquals(userDoc?.isPrivateAccount, true);
+
+    const unsetResult = await userAccount.setIsPrivateAccountStatus({
+      user: userId,
+      status: false,
+    });
+    assert("success" in unsetResult, "Clearing private status should succeed");
+    assertEquals(unsetResult.success, true);
+
+    userDoc = await userAccount.users.findOne({ _id: userId });
+    assertEquals(userDoc?.isPrivateAccount, false);
+
+    const failResult = await userAccount.setIsPrivateAccountStatus({
+      user: "nonexistent" as ID,
+      status: true,
+    });
+    assert("error" in failResult, "Should fail for non-existent user");
+    assertEquals(failResult.error, "User not found");
+
+    await client.close();
+  },
+);
+
+Deno.test(
   "UserAccountConcept - deleteAccount",
   { sanitizeOps: false, sanitizeResources: false },
   async () => {
@@ -330,6 +387,7 @@ Deno.test(
       email: "ivan@example.com",
       password: "password123",
       isKidAccount: false,
+      isPrivateAccount: false,
     });
 
     // Fail with wrong password
@@ -355,6 +413,80 @@ Deno.test(
 );
 
 Deno.test(
+  "UserAccountConcept - _isKidOrPrivateAccount",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const userAccount = new UserAccountConcept(db);
+    await userAccount.users.deleteMany({});
+
+    const regularUserId = await createUser(userAccount, {
+      username: "regular",
+      email: "regular@example.com",
+      password: "password123",
+      isKidAccount: false,
+      isPrivateAccount: false,
+    });
+
+    const kidUserId = await createUser(userAccount, {
+      username: "kid",
+      email: "kid@example.com",
+      password: "password123",
+      isKidAccount: true,
+      isPrivateAccount: false,
+    });
+
+    const privateUserId = await createUser(userAccount, {
+      username: "private",
+      email: "private@example.com",
+      password: "password123",
+      isKidAccount: false,
+      isPrivateAccount: true,
+    });
+
+    const bothUserId = await createUser(userAccount, {
+      username: "kidprivate",
+      email: "kidprivate@example.com",
+      password: "password123",
+      isKidAccount: true,
+      isPrivateAccount: true,
+    });
+
+    const regularResult = await userAccount._isKidOrPrivateAccount({
+      user: regularUserId,
+    });
+    assertEquals(regularResult.length, 1);
+    assertEquals(regularResult[0], { isKidOrPrivate: false });
+
+    const kidResult = await userAccount._isKidOrPrivateAccount({
+      user: kidUserId,
+    });
+    assertEquals(kidResult.length, 1);
+    assertEquals(kidResult[0], { isKidOrPrivate: true });
+
+    const privateResult = await userAccount._isKidOrPrivateAccount({
+      user: privateUserId,
+    });
+    assertEquals(privateResult.length, 1);
+    assertEquals(privateResult[0], { isKidOrPrivate: true });
+
+    const bothResult = await userAccount._isKidOrPrivateAccount({
+      user: bothUserId,
+    });
+    assertEquals(bothResult.length, 1);
+    assertEquals(bothResult[0], { isKidOrPrivate: true });
+
+    const missingResult = await userAccount._isKidOrPrivateAccount({
+      user: "nonexistent-user-id" as ID,
+    });
+    assertEquals(missingResult.length, 1);
+    assertEquals(missingResult[0], { isKidOrPrivate: false });
+
+    await client.close();
+  },
+);
+
+Deno.test(
   "UserAccountConcept - _getUserByUsername",
   { sanitizeOps: false, sanitizeResources: false },
   async () => {
@@ -367,6 +499,7 @@ Deno.test(
       email: "judy@example.com",
       password: "password123",
       isKidAccount: false,
+      isPrivateAccount: false,
     });
 
     // Find existing user
@@ -399,6 +532,7 @@ Deno.test(
       email: "isuser@example.com",
       password: "password123",
       isKidAccount: false,
+      isPrivateAccount: false,
     });
 
     // Test with existing user

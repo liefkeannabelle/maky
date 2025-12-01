@@ -1,4 +1,4 @@
-import { actions, Sync } from "@engine";
+import { actions, Frames, Sync } from "@engine";
 import {
   ChordLibrary,
   Comment,
@@ -19,7 +19,7 @@ import {
  * This is a public endpoint and does not require a session.
  */
 export const HandleRegisterRequest: Sync = (
-  { request, username, email, password, isKidAccount },
+  { request, username, email, password, isKidAccount, isPrivateAccount },
 ) => ({
   when: actions(
     [
@@ -30,12 +30,19 @@ export const HandleRegisterRequest: Sync = (
         email,
         password,
         isKidAccount,
+        isPrivateAccount,
       },
       { request },
     ],
   ),
   then: actions(
-    [UserAccount.register, { username, email, password, isKidAccount }],
+    [UserAccount.register, {
+      username,
+      email,
+      password,
+      isKidAccount,
+      isPrivateAccount,
+    }],
   ),
 });
 
@@ -332,6 +339,121 @@ export const RespondToSetKidStatusError: Sync = ({ request, error }) => ({
     [UserAccount.setKidAccountStatus, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
+});
+
+/**
+ * Handles a request to set the 'isPrivateAccount' status, authenticating via session.
+ */
+export const HandleSetPrivateStatusRequest: Sync = (
+  { request, sessionId, status, user },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/UserAccount/setPrivateAccountStatus", sessionId, status },
+      { request },
+    ],
+  ),
+  where: (frames) =>
+    frames.query(Sessioning._getUser, { sessionId: sessionId }, { user }),
+  then: actions(
+    [UserAccount.setIsPrivateAccountStatus, { user, status }],
+  ),
+});
+
+/**
+ * Responds to a successful 'isPrivateAccount' status update.
+ */
+export const RespondToSetPrivateStatusSuccess: Sync = (
+  { request, success },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/UserAccount/setPrivateAccountStatus" },
+      { request },
+    ],
+    [UserAccount.setIsPrivateAccountStatus, {}, { success }],
+  ),
+  then: actions([Requesting.respond, { request, success }]),
+});
+
+/**
+ * Responds to a failed 'isPrivateAccount' status update.
+ */
+export const RespondToSetPrivateStatusError: Sync = ({ request, error }) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/UserAccount/setPrivateAccountStatus" },
+      { request },
+    ],
+    [UserAccount.setIsPrivateAccountStatus, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+/**
+ * Responds when a private-status update is attempted with an invalid session.
+ */
+export const RespondToSetPrivateStatusInvalidSession: Sync = (
+  { request, sessionId, _user },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/UserAccount/setPrivateAccountStatus", sessionId },
+    { request },
+  ]),
+  where: async (frames: Frames) => {
+    const originalFrame = frames[0];
+    const sessionFrames = await frames.query(
+      Sessioning._getUser,
+      { sessionId },
+      { user: _user },
+    );
+    if (sessionFrames.length === 0) {
+      return new Frames({ ...originalFrame });
+    }
+    return sessionFrames.filter(() => false);
+  },
+  then: actions([
+    Requesting.respond,
+    { request, error: "Invalid session" },
+  ]),
+});
+
+/**
+ * Handles a request to determine whether a user is a kid account or a private account.
+ * This is treated as a public query.
+ */
+export const HandleIsKidOrPrivateAccountRequest: Sync = (
+  { request, user, isKidOrPrivate, results },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/UserAccount/_isKidOrPrivateAccount", user },
+    { request },
+  ]),
+  where: async (frames: Frames) => {
+    const originalFrame = frames[0];
+
+    frames = await frames.query(
+      UserAccount._isKidOrPrivateAccount,
+      { user },
+      { isKidOrPrivate },
+    );
+
+    if (frames.length === 0) {
+      const responseFrame = { ...originalFrame, [results]: [] };
+      return new Frames(responseFrame);
+    }
+
+    return frames.collectAs([isKidOrPrivate], results);
+  },
+  then: actions([
+    Requesting.respond,
+    { request, results },
+  ]),
 });
 
 // --- Delete Account (Authenticated) ---

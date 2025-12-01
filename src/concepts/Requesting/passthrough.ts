@@ -58,8 +58,10 @@ export const exclusions: Array<string> = [
   "/api/UserAccount/login",
   "/api/UserAccount/updateCredentials",
   "/api/UserAccount/setKidAccountStatus",
+  "/api/UserAccount/setPrivateAccountStatus",
   "/api/UserAccount/deleteAccount",
   "/api/UserAccount/_getUserByUsername",
+  "/api/UserAccount/_isKidOrPrivateAccount",
   "/api/ChordLibrary/addUser",
   "/api/ChordLibrary/addChordToInventory",
   "/api/ChordLibrary/updateChordMastery",
@@ -136,6 +138,8 @@ export const exclusions: Array<string> = [
   "/api/UserProfile/_getProfile",
   "/api/Reaction/_getReactionOnPostFromUser",
   "/api/Post/editPostVisibility",
+
+  "/api/UserAccount/setPrivateAccountStatus",
 ];
 
 /** */

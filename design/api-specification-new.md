@@ -60,7 +60,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - No User exists with the given `username` or `email`.
 
 **Effects:**
-- Creates a new User; sets its `username`, `email`, `isKidAccount` status, and a hash of the `password`; returns the new user.
+- Creates a new User; sets its `username`, `email`, `isKidAccount` status, `isPrivateAccount` status, and a hash of the `password`; returns the new user.
 
 **Request Body:**
 ```json
@@ -68,7 +68,8 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "username": "string",
   "email": "string",
   "password": "string",
-  "isKidAccount": "boolean"
+  "isKidAccount": "boolean",
+  "isPrivateAccount": "boolean"
 }
 ```
 
@@ -227,6 +228,40 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
+### POST /api/UserAccount/setPrivateAccountStatus
+
+**Description:** Sets the 'isPrivateAccount' status for a given user.
+
+**Authentication:** Requires a valid `sessionId`. The user is automatically extracted from the session.
+
+**Requirements:**
+- The user associated with `sessionId` exists.
+
+**Effects:**
+- Sets the `isPrivateAccount` status for the authenticated user to the provided `status`; returns `true` as `success`.
+
+**Request Body:**
+```json
+{
+  "sessionId": "string",
+  "status": "boolean"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "success": "boolean"
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
 ### POST /api/UserAccount/deleteAccount
 
 **Description:** Deletes a user's account after verifying their password.
@@ -283,6 +318,39 @@ After a user logs in, all authenticated API requests should include a `sessionId
 [
   {
     "result": true
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+### POST /api/UserAccount/_isKidOrPrivateAccount
+
+**Description:** Determines if a user account is marked as a kid account, a private account, or both.
+
+**Requirements:**
+- A User exists with the given `user` ID.
+
+**Effects:**
+- Returns `true` as `isKidOrPrivate` if the user is a kid account or a private account (or both), `false` otherwise.
+
+**Request Body:**
+```json
+{
+  "user": "ID"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "isKidOrPrivate": true
   }
 ]
 ```

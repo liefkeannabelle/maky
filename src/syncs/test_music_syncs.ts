@@ -22,7 +22,7 @@ Deno.test("Music System Integration Tests", async (t) => {
   let username = "music_tester";
 
   await t.step("Setup: Create User and Session", async () => {
-    const userRes = await UserAccount.register({ username, password: "password123", email: "test@example.com", isKidAccount: false });
+    const userRes = await UserAccount.register({ username, password: "password123", email: "test@example.com", isKidAccount: false, isPrivateAccount: false });
     if ("error" in userRes) throw new Error(userRes.error);
     userId = userRes.user;
 

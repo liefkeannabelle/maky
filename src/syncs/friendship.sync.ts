@@ -316,6 +316,7 @@ export const HandleGetFriendsRequest: Sync = (
 
   // WHERE: We authenticate the user and fetch the data.
   where: async (frames: Frames) => {
+    const originalFrame = frames[0];
     // Step 1: Get the user from the session. If the session is invalid, `frames` will become empty,
     // and this sync will not proceed to the `then` clause.
     frames = await frames.query(Sessioning._getUser, { sessionId }, {
@@ -324,6 +325,11 @@ export const HandleGetFriendsRequest: Sync = (
 
     // Step 2: Get the list of friends for that user. This query returns one frame per friend.
     frames = await frames.query(Friendship._getFriends, { user }, { friend });
+
+    if (frames.length === 0) {
+      const responseFrame = { ...originalFrame, [friends]: [] };
+      return new Frames(responseFrame);
+    }
 
     // Step 3: Collect all the individual `friend` frames into a single `friends` array.
     // This gracefully handles the case of having zero friends (resulting in an empty array).

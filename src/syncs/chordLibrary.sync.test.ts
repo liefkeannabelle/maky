@@ -43,7 +43,7 @@ Deno.test({
             const password = "password123";
             const email = "test@example.com";
             
-            await UserAccount.register({ username, password, email, isKidAccount: false });
+            await UserAccount.register({ username, password, email, isKidAccount: false, isPrivateAccount: false });
             const userDoc = await UserAccount.users.findOne({ username });
             const uId = userDoc!._id;
             
@@ -68,7 +68,7 @@ Deno.test({
             const password = "password123";
             const email = "test2@example.com";
             
-            await UserAccount.register({ username, password, email, isKidAccount: false });
+            await UserAccount.register({ username, password, email, isKidAccount: false, isPrivateAccount: false });
             const userDoc = await UserAccount.users.findOne({ username });
             const uId = userDoc!._id;
             
@@ -104,7 +104,7 @@ Deno.test({
             const password = "password123";
             const email = "test3@example.com";
             
-            await UserAccount.register({ username, password, email, isKidAccount: false });
+            await UserAccount.register({ username, password, email, isKidAccount: false, isPrivateAccount: false });
             const userDoc = await UserAccount.users.findOne({ username });
             const uId = userDoc!._id;
             

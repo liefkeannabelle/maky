@@ -9,13 +9,14 @@
 > > a username String\
 > > an email String\
 > > a passwordHash String\
-> > a isKidAccount Boolean
+> > a isKidAccount Boolean\
+> > a isPrivateAccount Boolean
 
 **actions** \
-register (username: String, email: String, password: String, isKidAccount: Boolean): (user: User)
+register (username: String, email: String, password: String, isKidAccount: Boolean, isPrivateAccount: Boolean): (user: User)
 
 *   **requires** No User exists with the given `username` or `email`.
-*   **effects** Creates a new User; sets its `username`, `email`, `isKidAccount` status, and a hash of the `password`; returns the new user.
+*   **effects** Creates a new User; sets its `username`, `email`, `isKidAccount` status, `isPrivateAccount` status, and a hash of the `password`; returns the new user.
 
 login (username: String, password: String): (user: User)
 
@@ -44,6 +45,11 @@ setKidAccountStatus (user: User, status: Boolean): (success: Boolean)
 *   **requires** The `user` exists.
 *   **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
 
+setIsPrivateAccountStatus (user: User, status: Boolean): (success: Boolean)
+
+*   **requires** The `user` exists.
+*   **effects** Sets the `isPrivateAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
+
 deleteAccount (user: User, password: String): (success: Boolean)
 
 *   **requires** The `user` exists and the provided `password` matches their `passwordHash`.
@@ -61,10 +67,16 @@ deleteAccount (user: User, password: String): (success: Boolean)
 *   **requires**: true
 *   **effects**: returns `true` as `result` if a user with the given id exists, `false` otherwise.
 
+\_isKidOrPrivateAccount (user: User): (isKidOrPrivate: Boolean)
+
+*   **requires**: a User with the given `user` id exists.
+*   **effects**: returns `true` as `isKidOrPrivate` if the user is a kid account or a private account, `false` otherwise.
+
 
 **notes**
 - The user account will store the core authentification details for a given user as they would appear on functionally any such app. The app-specific preferences are stored instead in UserProfile. 
 - The isKidAccount flag will serve to enforce limited social functionality for users marked as children.
+- The isPrivateAccount flag limits visibility and interactions for users who prefer tighter privacy controls.
 ---
 **concept** UserProfile [User] \
 **purpose** to allow users to personalize their in-app identity and preferences \
