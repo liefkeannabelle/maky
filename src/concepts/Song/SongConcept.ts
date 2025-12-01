@@ -1,6 +1,7 @@
 import { Collection, Db, Filter } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
+import { ChordDiagram } from "../../theory/chordDiagrams.ts";
 
 const PREFIX = "Song.";
 
@@ -18,6 +19,9 @@ export interface Song {
   artist: string;
   chords: Chord[];
   genre?: Genre;
+  // Precomputed diagrams available for the song's chords.
+  // Map from chord symbol -> array of diagrams (may be empty if none available)
+  availableChordDiagrams?: Record<string, ChordDiagram[]>;
 
   // Extended metadata from JSON requirements
   key?: string;
@@ -100,6 +104,20 @@ export default class SongConcept {
     }
 
     await this.songs.deleteOne({ _id: params.song });
+    return {};
+  }
+
+  /**
+   * updateSong (song: Song, updates: Partial<Song>)
+   *
+   * **requires** The Song exists.
+   * **effects** Applies partial updates to the Song document.
+   */
+  async updateSong(params: { song: SongID; updates: Partial<Song> }): Promise<Empty | { error: string }> {
+    const songExists = await this.songs.findOne({ _id: params.song });
+    if (!songExists) return { error: "Song does not exist" };
+
+    await this.songs.updateOne({ _id: params.song }, { $set: params.updates });
     return {};
   }
 

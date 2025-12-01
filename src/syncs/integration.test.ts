@@ -6,7 +6,7 @@ import {
   Sessioning,
   Song,
   SongLibrary,
-} from "../concepts/test_concepts.ts";
+} from "@concepts";
 import syncs from "@syncs";
 import { ID } from "@utils/types.ts";
 
