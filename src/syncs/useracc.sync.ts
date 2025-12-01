@@ -521,8 +521,6 @@ export const OnDeleteAccount: Sync = ({ user }) => ({
     [ChordLibrary.removeUser, { user }],
     [SongLibrary.removeUser, { user }],
     [Friendship.removeAllFriendshipsForUser, { user }],
-    [Following.removeUserFollowing, { user }], // Removes user's outbound follows
-    [Following.removeUserAsFollower, { user }], // Removes user's inbound follows
     [Post.removeAllPostsForUser, { user }], // Removes all posts by the user
     [Comment.removeAllCommentsForUser, { user }], // Removes all comments by the user
     [Reaction.removeAllReactionsForUser, { user }], // Removes all reactions by the user

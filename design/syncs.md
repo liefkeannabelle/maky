@@ -124,8 +124,6 @@ UserProfile.deleteProfile(user) \
 ChordLibrary.removeUser(user) \
 SongLibrary.removeUser(user) \
 Friendship.removeAllFriendshipsForUser(user) \
-Following.removeUserFollowing(user) \
-Following.removeUserAsFollower(user) \
 JamGroup.removeUserFromAllGroups(user)
 
 **notes**
