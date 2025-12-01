@@ -22,11 +22,6 @@ import {
 } from "@concepts";
 import syncs from "@syncs";
 import { ID } from "@utils/types.ts";
-import { Logging } from "@engine";
-
-// Enable verbose logging to debug sync issues
-Engine.logging = Logging.TRACE;
-
 // Register all syncs
 Engine.register(syncs);
 

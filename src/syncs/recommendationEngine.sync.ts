@@ -124,29 +124,24 @@ export const HandleRequestChordRecommendation: Sync = ({ request, knownChords, r
     [Requesting.request, { path: "/RecommendationEngine/requestChordRecommendation", knownChords }, { request }]
   ),
   where: async (frames) => {
-    console.log("[Sync] HandleRequestChordRecommendation: Starting");
     // Fetch all songs once (optimized projection)
     const allSongsList = await Song._getAllSongsForRecommendation({});
-    console.log(`[Sync] HandleRequestChordRecommendation: Fetched ${allSongsList.length} songs`);
 
     const newFrames = [];
     for (const frame of frames) {
       const kChords = frame[knownChords] as string[];
-      console.log(`[Sync] HandleRequestChordRecommendation: Known chords = ${kChords}`);
       const result = await RecommendationEngine.requestChordRecommendation({
         knownChords: kChords,
         allSongs: allSongsList
       });
       // result is Array<{ recommendedChord: string }>
       const rec = result.length > 0 ? result[0].recommendedChord : null;
-      console.log(`[Sync] HandleRequestChordRecommendation: Recommended = ${rec}`);
       
       // Fetch diagram for the recommended chord
       let diagramResult = null;
       if (rec) {
         const diagrams = await Chord._getChordDiagram({ name: rec });
         diagramResult = diagrams.diagrams;
-        console.log(`[Sync] HandleRequestChordRecommendation: Diagram fetched for ${rec}`);
       }
       
       newFrames.push({ 
@@ -195,44 +190,32 @@ export const HandleRequestPersonalizedSongRecommendation: Sync = ({ request, ses
     [Requesting.request, { path: "/RecommendationEngine/requestPersonalizedSongRecommendation", sessionId }, { request }]
   ),
   where: async (frames) => {
-    console.log("DEBUG: HandleRequestPersonalizedSongRecommendation started");
-    try {
-      frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
-      console.log("DEBUG: User resolved");
+    frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
 
-      const allSongsList = await Song._getAllSongsForRecommendation({});
-      console.log(`DEBUG: Fetched ${allSongsList.length} songs`);
+    const allSongsList = await Song._getAllSongsForRecommendation({});
 
-      const newFrames = [];
-      for (const frame of frames) {
-        const currentUser = frame[user] as ID;
-        console.log(`DEBUG: Processing for user ${currentUser}`);
-        
-        // Get Known Chords
-        const knownChordsObjs = await ChordLibrary._getKnownChords({ user: currentUser });
-        const knownChordsList = knownChordsObjs.map((c) => c.chord);
-        console.log(`DEBUG: Known chords: ${knownChordsList.length}`);
+    const newFrames = [];
+    for (const frame of frames) {
+      const currentUser = frame[user] as ID;
+      
+      // Get Known Chords
+      const knownChordsObjs = await ChordLibrary._getKnownChords({ user: currentUser });
+      const knownChordsList = knownChordsObjs.map((c) => c.chord);
 
-        // Get User Profile for Genre Preferences
-        const profileObjs = await UserProfile._getProfile({ user: currentUser });
-        const genrePreferences = profileObjs.length > 0 ? profileObjs[0].profile.genrePreferences : [];
-        console.log(`DEBUG: Genre prefs: ${genrePreferences}`);
+      // Get User Profile for Genre Preferences
+      const profileObjs = await UserProfile._getProfile({ user: currentUser });
+      const genrePreferences = profileObjs.length > 0 ? profileObjs[0].profile.genrePreferences : [];
 
-        const result = await RecommendationEngine.requestPersonalizedSongRecommendation({
-          knownChords: knownChordsList,
-          allSongs: allSongsList,
-          genrePreferences
-        });
-        console.log("DEBUG: Recommendation calculated");
-        
-        const recs = result.length > 0 ? result[0].recommendedSongs : [];
-        newFrames.push({ ...frame, [recommendedSongs]: recs });
-      }
-      return new Frames(...newFrames);
-    } catch (e) {
-      console.error("DEBUG: Error in HandleRequestPersonalizedSongRecommendation", e);
-      throw e;
+      const result = await RecommendationEngine.requestPersonalizedSongRecommendation({
+        knownChords: knownChordsList,
+        allSongs: allSongsList,
+        genrePreferences
+      });
+      
+      const recs = result.length > 0 ? result[0].recommendedSongs : [];
+      newFrames.push({ ...frame, [recommendedSongs]: recs });
     }
+    return new Frames(...newFrames);
   },
   then: actions(
     [Requesting.respond, { request, recommendedSongs }]
