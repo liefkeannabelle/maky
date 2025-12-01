@@ -3309,6 +3309,191 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
+### POST /api/Chord/_getChordDiagram
+
+**Description:** Get guitar fingering diagram(s) for a specific chord name. Returns multiple voicings if available, or null if no diagram exists for this chord.
+
+**Requirements:**
+
+*   None.
+
+**Effects:**
+
+*   Returns an array of chord diagrams (different voicings) for the requested chord, or null if not found.
+
+**Request Body:**
+
+```json
+{
+  "name": "string" // e.g., "C", "Am", "Gmaj7"
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+{
+  "diagrams": [
+    {
+      "frets": [0, 3, 2, 0, 1, 0],
+      "fingers": [0, 3, 2, 0, 1, 0],
+      "baseFret": 1,
+      "barres": []
+    }
+  ]
+}
+```
+
+**Note:** `diagrams` will be `null` if no diagram exists for the chord.
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/Chord/_getChordDiagrams
+
+**Description:** Get guitar fingering diagrams for multiple chords at once. Efficient for fetching diagrams for an entire song's chord progression.
+
+**Requirements:**
+
+*   None.
+
+**Effects:**
+
+*   Returns a map object where keys are chord names and values are arrays of diagrams. If a chord has no diagram, its value will be an empty array.
+
+**Request Body:**
+
+```json
+{
+  "names": ["string"] // e.g., ["C", "Am", "F", "G"]
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+{
+  "diagrams": {
+    "C": [
+      {
+        "frets": [0, 3, 2, 0, 1, 0],
+        "fingers": [0, 3, 2, 0, 1, 0],
+        "baseFret": 1,
+        "barres": []
+      }
+    ],
+    "Am": [
+      {
+        "frets": [0, 0, 2, 2, 1, 0],
+        "fingers": [0, 0, 2, 3, 1, 0],
+        "baseFret": 1,
+        "barres": []
+      }
+    ],
+    "F": [],
+    "G": [
+      {
+        "frets": [3, 2, 0, 0, 0, 3],
+        "fingers": [2, 1, 0, 0, 0, 3],
+        "baseFret": 1,
+        "barres": []
+      }
+    ]
+  }
+}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/Chord/_getAvailableChordDiagrams
+
+**Description:** Get a list of all chord names that have guitar diagrams available in the system. Useful for checking which chords can be visualized.
+
+**Requirements:**
+
+*   None.
+
+**Effects:**
+
+*   Returns an array of chord name strings.
+
+**Request Body:**
+
+```json
+{}
+```
+
+**Success Response Body (Query):**
+
+```json
+{
+  "chords": ["C", "Cm", "C7", "Cmaj7", "D", "Dm", "D7", "Dmaj7", "E", "Em", "E7", "F", "Fm", "G", "Gm", "G7", "A", "Am", "A7", "B", "Bm", "B7"]
+}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/Chord/_hasChordDiagram
+
+**Description:** Check if a diagram exists for a given chord name without fetching the full diagram data.
+
+**Requirements:**
+
+*   None.
+
+**Effects:**
+
+*   Returns a boolean indicating whether a diagram is available.
+
+**Request Body:**
+
+```json
+{
+  "name": "string" // e.g., "C"
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+{
+  "exists": true
+}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
 # API Specification: Song Concept
 
 **Purpose:** Manage the global catalog of songs.
