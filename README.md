@@ -8,4 +8,5 @@
 - [11/13 Meeting](/meetings/11-13/agenda.md)
 - [11/20 Meeting](/meetings/11-20/agenda.md)
 - [11/25 Meeting](/meetings/11-25/agenda.md)
+- [12/1 Meeting](/meetings/12-1/agenda.md)
 

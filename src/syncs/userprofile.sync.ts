@@ -105,20 +105,30 @@ export const RespondToUpdateDisplayNameError: Sync = ({ request, error }) => ({
  * Handles a request to update a user's bio, authenticating via session.
  */
 export const HandleUpdateBioRequest: Sync = (
-  { request, sessionId, newBio, user },
-) => {
-  const normalizedNewBio = normalizeOptionalString(newBio);
-  return {
-    when: actions([
-      Requesting.request,
-      { path: "/UserProfile/updateBio", sessionId, newBio },
-      { request },
-    ]),
-    where: (frames) =>
-      frames.query(Sessioning._getUser, { sessionId }, { user }),
-    then: actions([UserProfile.updateBio, { user, newBio: normalizedNewBio }]),
-  };
-};
+  { request, sessionId, newBio, user, normalizedBio },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/UserProfile/updateBio", sessionId, newBio },
+    { request },
+  ]),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
+
+    const newFrames = [];
+    for (const frame of frames) {
+      const incomingBio = frame[newBio];
+      const sanitizedBio = normalizeOptionalString(incomingBio);
+      newFrames.push({
+        ...frame,
+        [normalizedBio]: sanitizedBio,
+      });
+    }
+
+    return new Frames(...newFrames);
+  },
+  then: actions([UserProfile.updateBio, { user, newBio: normalizedBio }]),
+});
 
 /**
  * Responds to the update bio request.
