@@ -143,8 +143,9 @@ export const RespondToChordAddition: Sync = (
 
       let recommendation: {
         recommendedChord: string | null;
+        recommendedChordDiagram: unknown;
         unlockedSongIds: ID[];
-      } = { recommendedChord: null, unlockedSongIds: [] };
+      } = { recommendedChord: null, recommendedChordDiagram: null, unlockedSongIds: [] };
       if (recs.length > 0) {
         const recChord = recs[0].recommendedChord;
         const unlocks = await RecommendationEngine
@@ -153,8 +154,13 @@ export const RespondToChordAddition: Sync = (
             potentialChord: recChord,
             allSongs: allSongsList,
           });
+        
+        // Fetch diagram for recommended chord
+        const diagramResult = await Chord._getChordDiagram({ name: recChord });
+        
         recommendation = {
           recommendedChord: recChord,
+          recommendedChordDiagram: diagramResult.diagrams,
           unlockedSongIds: unlocks.length > 0 ? unlocks[0].unlockedSongs : [],
         };
       }

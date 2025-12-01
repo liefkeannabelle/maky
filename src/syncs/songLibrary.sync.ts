@@ -1,5 +1,5 @@
 import { actions, Frames, Sync } from "@engine";
-import { ChordLibrary, Requesting, Sessioning, Song, SongLibrary } from "@concepts";
+import { ChordLibrary, Requesting, Sessioning, Song, SongLibrary, Chord } from "@concepts";
 import { ID } from "@utils/types.ts";
 
 /**
@@ -303,4 +303,33 @@ export const HandleSearchSongs: Sync = ({ request, query, songs }) => ({
   then: actions(
     [Requesting.respond, { request, songs }]
   )
+});
+
+/**
+ * Sync: AutoComputeChordDiagramsOnCreate
+ *
+ * When a Song is created, compute available chord diagrams for its chords
+ * and store them on the Song document as `availableChordDiagrams`.
+ */
+export const AutoComputeChordDiagramsOnCreate: Sync = ({ song, diagrams }) => ({
+  when: actions(
+    [Song.createSong, {}, { song }],
+  ),
+  where: async (frames) => {
+    const newFrames = [];
+    for (const frame of frames) {
+      const created = frame[song] as { song: any };
+      if (!created || !created.song) continue;
+      const songObj = created.song;
+      const chordNames: string[] = songObj.chords || [];
+      if (chordNames.length === 0) continue;
+
+      const result = await Chord._getChordDiagrams({ names: chordNames });
+      newFrames.push({ ...frame, [diagrams]: result.diagrams });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    [Song.updateSong, { song, updates: { availableChordDiagrams: diagrams } }],
+  ),
 });

@@ -2859,7 +2859,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Effects:**
 
-*   Normalizes the chord symbol and creates a new `KnownChord` entry.
+*   Normalizes the chord symbol and creates a new `KnownChord` entry. Additionally, through the `/chords/add` sync, returns updated inventory, playable songs, and a next chord recommendation with diagram.
 
 **Request Body:**
 
@@ -2874,8 +2874,39 @@ After a user logs in, all authenticated API requests should include a `sessionId
 **Success Response Body (Action):**
 
 ```json
-{}
+{
+  "success": true,
+  "normalizedChord": "string",
+  "inventory": ["string"],
+  "playableSongs": [
+    {
+      "id": "string",
+      "title": "string",
+      "artist": "string",
+      "source": "string",
+      "difficulty": "number"
+    }
+  ],
+  "recommendation": {
+    "recommendedChord": "string | null",
+    "recommendedChordDiagram": [
+      {
+        "frets": ["number"],
+        "fingers": ["number"],
+        "baseFret": "number",
+        "barres": ["number"],
+        "name": "string"
+      }
+    ],
+    "unlockedSongIds": ["string"]
+  }
+}
 ```
+
+**Note:** When adding a chord via the `/chords/add` sync (handled internally), the response is enriched with:
+- Updated `inventory`: All known chords after adding the new chord
+- `playableSongs`: Songs that can now be played with the updated chord inventory
+- `recommendation`: Next chord to learn, including its diagram and which songs it would unlock
 
 **Error Response Body:**
 
@@ -3806,9 +3837,27 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ```json
 {
-  "recommendedChord": "string"
+  "recommendedChord": "string",
+  "diagram": [
+    {
+      "frets": ["number", "number", "number", "number", "number", "number"],
+      "fingers": ["number", "number", "number", "number", "number", "number"],
+      "baseFret": "number",
+      "barres": ["number"],
+      "capo": "boolean",
+      "name": "string"
+    }
+  ]
 }
 ```
+
+**Note:** The `diagram` field contains an array of chord diagram voicings for the recommended chord. Each diagram includes:
+- `frets`: Array of 6 numbers (one per string, -1 means not played, 0 means open)
+- `fingers`: Array of 6 numbers (finger positions, 0 means open/not played)
+- `baseFret`: Starting fret position (1 for open position)
+- `barres`: Optional array of fret numbers where barres occur
+- `capo`: Optional boolean indicating if this is a capo position
+- `name`: Display name for this voicing
 
 **Error Response Body:**
 
@@ -3878,9 +3927,23 @@ After a user logs in, all authenticated API requests should include a `sessionId
 **Success Response Body (Action):**
 ```json
 {
-  "recommendedPath": "string[]"
+  "recommendedPath": "string[]",
+  "pathDiagrams": {
+    "chordName": [
+      {
+        "frets": ["number", "number", "number", "number", "number", "number"],
+        "fingers": ["number", "number", "number", "number", "number", "number"],
+        "baseFret": "number",
+        "barres": ["number"],
+        "capo": "boolean",
+        "name": "string"
+      }
+    ]
+  }
 }
 ```
+
+**Note:** The `pathDiagrams` field is a map from chord name to an array of diagram voicings. Each chord in `recommendedPath` will have a corresponding entry in `pathDiagrams` with fingering diagrams to help users learn the chord.
 
 **Error Response Body:**
 ```json
