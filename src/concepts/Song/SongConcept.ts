@@ -260,4 +260,64 @@ export default class SongConcept {
 
     return results.map((s) => ({ song: s }));
   }
+
+  /**
+   * _getSuggestedSongs (knownChords: set of Chord): (songs: set of SuggestedSong)
+   *
+   * **effects** Returns songs ranked by how "close" the user is to playing them.
+   * Each result includes the song, the number of known chords, and which chords are missing.
+   * This is useful when the user knows few chords and no songs are fully playable.
+   */
+  async _getSuggestedSongs(params: {
+    knownChords: Chord[];
+    limit?: number;
+  }): Promise<Array<{ 
+    song: Song; 
+    knownCount: number; 
+    totalChords: number;
+    missingChords: Chord[];
+    percentComplete: number;
+  }>> {
+    const knownSet = new Set(params.knownChords);
+    const limit = params.limit || 10;
+
+    // Fetch all songs (could be optimized with aggregation pipeline)
+    const allSongs = await this.songs.find({}).toArray();
+
+    // Calculate "closeness" for each song
+    const scoredSongs = allSongs.map(song => {
+      const uniqueChords = [...new Set(song.chords)];
+      const totalChords = uniqueChords.length;
+      const knownCount = uniqueChords.filter(c => knownSet.has(c)).length;
+      const missingChords = uniqueChords.filter(c => !knownSet.has(c));
+      const percentComplete = totalChords > 0 ? (knownCount / totalChords) * 100 : 0;
+
+      return {
+        song,
+        knownCount,
+        totalChords,
+        missingChords,
+        percentComplete,
+      };
+    });
+
+    // Sort by: 
+    // 1. Fewest missing chords first (closer to playable)
+    // 2. Then by percentage complete (higher is better)
+    // 3. Then by difficulty (easier first)
+    scoredSongs.sort((a, b) => {
+      const missingDiff = a.missingChords.length - b.missingChords.length;
+      if (missingDiff !== 0) return missingDiff;
+      
+      const percentDiff = b.percentComplete - a.percentComplete;
+      if (percentDiff !== 0) return percentDiff;
+      
+      return (a.song.difficulty || 0) - (b.song.difficulty || 0);
+    });
+
+    // Filter out songs with 0 known chords (not relevant) and return top results
+    return scoredSongs
+      .filter(s => s.knownCount > 0)
+      .slice(0, limit);
+  }
 }

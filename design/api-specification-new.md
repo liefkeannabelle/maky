@@ -3636,6 +3636,62 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
+### POST /api/Song/_getSuggestedSongs
+
+**Description:** Returns songs ranked by how close the user is to being able to play them. Useful when the user knows few chords and no songs are fully playable.
+
+**Requirements:**
+
+*   `knownChords` array is provided (can be empty, but will return no results).
+
+**Effects:**
+
+*   Returns songs that contain at least one of the user's known chords, ranked by:
+    1. Fewest missing chords (closest to playable)
+    2. Highest percentage complete
+    3. Easiest difficulty
+*   Each result includes progress information showing which chords are known and which are missing.
+
+**Request Body:**
+
+```json
+{
+  "knownChords": ["string"],
+  "limit": "number"  // optional, defaults to 10
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+[
+  {
+    "song": {
+      "_id": "string",
+      "title": "string",
+      "artist": "string",
+      "chords": ["string"],
+      "genre": "string",
+      "difficulty": "number"
+    },
+    "knownCount": "number",
+    "totalChords": "number",
+    "missingChords": ["string"],
+    "percentComplete": "number"
+  }
+]
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
 # API Specification: RecommendationEngine Concept
 
 **Purpose:** Calculate optimal learning paths and chord suggestions.
