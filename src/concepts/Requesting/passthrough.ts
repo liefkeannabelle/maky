@@ -33,9 +33,11 @@ export const inclusions: Record<string, string> = {
   "/api/Song/deleteSong": "Admin action",
   "/api/Chord/createChord": "Admin action",
   "/api/Chord/deleteChord": "Admin action",
-  "/api/Chord/_getChordVocabulary": "Public reference query - returns all possible chord symbols",
+  "/api/Chord/_getChordVocabulary":
+    "Public reference query - returns all possible chord symbols",
   "/api/RecommendationEngine/_getRecommendation":
     "Public query for recommendation details",
+  "/api/Chord/_getChordDiagram": "Query to get chord diagrams",
 };
 
 /**
@@ -116,7 +118,6 @@ export const exclusions: Array<string> = [
   "/api/Song/_getSuggestedSongs",
   "/api/Chord/_getAllChords",
   "/api/Chord/_getChordByName",
-  "/api/Chord/_getChordDiagram",
   "/api/Chord/_getChordDiagrams",
   "/api/Chord/_getAvailableChordDiagrams",
   "/api/Chord/_hasChordDiagram",
