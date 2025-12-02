@@ -78,3 +78,8 @@
 - Modified `addCommentToPost` to only accept if the requester is friends with the poster
 
 - Modified `createPost` to attach multiple Items (a.k.a. songs and chords) in their posts.
+
+- Refactored `JamSession` concept for improved modularity
+  - Purpose: To decouple the `JamSession` concept from specific implementations of groups and items, making it more abstract and reusable across different contexts.
+  - Replaced concrete types like `Song` and `JamGroup` with generic dependencies `Item` and `Group`.
+  - Updated `requires` clauses for `startJamSession` and `joinSession` to use abstract permission checks (e.g., "user is permitted to...") instead of concrete membership checks. This delegates authorization logic to the `Group` concept, improving separation of concerns.
