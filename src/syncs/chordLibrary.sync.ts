@@ -507,3 +507,43 @@ export const HandleGetChordByName: Sync = ({ request, name, chord }) => ({
     [Requesting.respond, { request, chord }]
   )
 });
+
+/**
+ * Sync: HandleGetOverlappingChords
+ *
+ * Handles requests to get overlapping chords between multiple users.
+ * Designed for jam groups to find shared musical vocabulary.
+ */
+export const HandleGetOverlappingChords: Sync = ({
+  request,
+  sessionId,
+  userIds,
+  overlappingChords,
+  userChordCounts,
+}) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/ChordLibrary/_getOverlappingChords", sessionId, userIds },
+    { request },
+  ]),
+  where: async (frames) => {
+    // Verify session is valid
+    frames = await frames.query(Sessioning._getUser, { sessionId }, {});
+
+    const newFrames = [];
+    for (const frame of frames) {
+      const ids = frame[userIds] as ID[];
+      const result = await ChordLibrary._getOverlappingChords({ userIds: ids });
+      newFrames.push({
+        ...frame,
+        [overlappingChords]: result.overlappingChords,
+        [userChordCounts]: result.userChordCounts,
+      });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions([
+    Requesting.respond,
+    { request, overlappingChords, userChordCounts },
+  ]),
+});

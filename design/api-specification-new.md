@@ -3056,6 +3056,67 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ```
 ---
 
+### POST /api/ChordLibrary/_getOverlappingChords
+
+**Description:** Finds chords that all specified users have in common. Designed for jam groups to identify shared musical vocabulary.
+
+**Authentication:** Requires a valid `sessionId`.
+
+**Requirements:**
+
+*   At least two user IDs are provided.
+*   All specified users exist in ChordLibrary.
+
+**Effects:**
+
+*   Returns the set of chords that ALL specified users have in common, sorted by minimum mastery level (highest first).
+*   For each overlapping chord, includes the minimum mastery level across users (the "weakest link" for group playing).
+*   Also returns the total chord count for each user.
+
+**Request Body:**
+
+```json
+{
+  "sessionId": "string",
+  "userIds": ["string", "string"]
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+{
+  "overlappingChords": [
+    {
+      "chord": "string",
+      "minMastery": "not started" | "in progress" | "proficient" | "mastered",
+      "userMasteries": [
+        {
+          "userId": "string",
+          "mastery": "not started" | "in progress" | "proficient" | "mastered"
+        }
+      ]
+    }
+  ],
+  "userChordCounts": [
+    {
+      "userId": "string",
+      "chordCount": 4
+    }
+  ]
+}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
 
 # API Specification: Chord Concept
 

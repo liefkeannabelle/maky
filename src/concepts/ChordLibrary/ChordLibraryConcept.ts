@@ -203,4 +203,103 @@ export default class ChordLibraryConcept {
 
     return [{ mastery: doc.mastery }];
   }
+
+  /**
+   * _getOverlappingChords (userIds: User[]): overlapping chord data
+   *
+   * **requires** At least two user IDs are provided. All users exist in ChordLibrary.
+   * **effects** Returns the set of chords that ALL specified users have in common,
+   *             along with the minimum mastery level across users for each chord
+   *             (representing the "weakest link" for group playing).
+   */
+  async _getOverlappingChords(input: {
+    userIds: User[];
+  }): Promise<{
+    overlappingChords: Array<{
+      chord: Chord;
+      minMastery: MasteryLevel;
+      userMasteries: Array<{ userId: User; mastery: MasteryLevel }>;
+    }>;
+    userChordCounts: Array<{ userId: User; chordCount: number }>;
+  }> {
+    const { userIds } = input;
+
+    if (userIds.length < 2) {
+      return { overlappingChords: [], userChordCounts: [] };
+    }
+
+    // Mastery level ordering for comparison (lower index = lower mastery)
+    const masteryOrder: MasteryLevel[] = [
+      "not started",
+      "in progress",
+      "proficient",
+      "mastered",
+    ];
+
+    // Get all chords for each user
+    const userChordMaps: Map<User, Map<Chord, MasteryLevel>> = new Map();
+    const userChordCounts: Array<{ userId: User; chordCount: number }> = [];
+
+    for (const userId of userIds) {
+      const chords = await this._getKnownChords({ user: userId });
+      const chordMap = new Map<Chord, MasteryLevel>();
+      for (const { chord, mastery } of chords) {
+        chordMap.set(chord, mastery);
+      }
+      userChordMaps.set(userId, chordMap);
+      userChordCounts.push({ userId, chordCount: chords.length });
+    }
+
+    // Find intersection: start with first user's chords, filter to those all users have
+    const firstUserChords = userChordMaps.get(userIds[0]);
+    if (!firstUserChords || firstUserChords.size === 0) {
+      return { overlappingChords: [], userChordCounts };
+    }
+
+    const overlappingChords: Array<{
+      chord: Chord;
+      minMastery: MasteryLevel;
+      userMasteries: Array<{ userId: User; mastery: MasteryLevel }>;
+    }> = [];
+
+    for (const [chord] of firstUserChords) {
+      // Check if all other users have this chord
+      let allHave = true;
+      const userMasteries: Array<{ userId: User; mastery: MasteryLevel }> = [];
+      let minMasteryIndex = masteryOrder.length - 1; // Start with highest
+
+      for (const userId of userIds) {
+        const userChords = userChordMaps.get(userId)!;
+        const mastery = userChords.get(chord);
+
+        if (mastery === undefined) {
+          allHave = false;
+          break;
+        }
+
+        userMasteries.push({ userId, mastery });
+        const masteryIndex = masteryOrder.indexOf(mastery);
+        if (masteryIndex < minMasteryIndex) {
+          minMasteryIndex = masteryIndex;
+        }
+      }
+
+      if (allHave) {
+        overlappingChords.push({
+          chord,
+          minMastery: masteryOrder[minMasteryIndex],
+          userMasteries,
+        });
+      }
+    }
+
+    // Sort by minimum mastery (highest first) so best shared chords come first
+    overlappingChords.sort((a, b) => {
+      return (
+        masteryOrder.indexOf(b.minMastery) - masteryOrder.indexOf(a.minMastery)
+      );
+    });
+
+    return { overlappingChords, userChordCounts };
+  }
 }

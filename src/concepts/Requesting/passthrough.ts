@@ -69,6 +69,7 @@ export const exclusions: Array<string> = [
   "/api/ChordLibrary/removeUser",
   "/api/ChordLibrary/_getKnownChords",
   "/api/ChordLibrary/_getChordMastery",
+  "/api/ChordLibrary/_getOverlappingChords",
   "/api/Comment/addCommentToPost",
   "/api/Comment/deleteComment",
   "/api/Comment/editComment",
