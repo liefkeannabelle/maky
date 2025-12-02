@@ -1,5 +1,5 @@
 import { actions, Frames, Sync } from "@engine";
-import { Reaction, Requesting, Sessioning } from "@concepts";
+import { Friendship, Post, Reaction, Requesting, Sessioning } from "@concepts";
 
 // --- Add Reaction to Post (Authenticated) ---
 
@@ -143,39 +143,103 @@ export const RespondToRemoveReactionError: Sync = ({ request, error }) => ({
  * This is a public query and does not require a session.
  */
 export const HandleGetReactionsForPostRequest: Sync = (
-  { request, post, type, count, results },
+  {
+    request,
+    sessionId,
+    post,
+    type,
+    count,
+    results,
+    viewer,
+    author,
+    friendStatus,
+    error,
+  },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/Reaction/_getReactionsForPostId", post },
+    { path: "/Reaction/_getReactionsForPostId", sessionId, post },
     { request },
   ]),
   where: async (frames) => {
     const originalFrame = frames[0];
 
-    // The _getReactionsForPostId query returns an array like [{type: "LIKE", count: 5}, ...].
-    // The frames.query helper will create a new frame for each object in this array.
-    frames = await frames.query(
-      Reaction._getReactionsForPostId,
-      { post }, // Input to the query
-      { type, count }, // Bind `type` and `count` from each result object
-    );
+    // Authenticate session
+    const withViewer = await frames.query(Sessioning._getUser, { sessionId }, {
+      user: viewer,
+    });
 
-    // The query is designed to always return an array of all reaction types, even with count 0.
-    // So, `frames` should not be empty unless the post does not exist.
-    // Handling the empty case is good practice for robustness.
-    if (frames.length === 0) {
-      const responseFrame = { ...originalFrame, [results]: [] };
-      return new Frames(responseFrame);
+    if (withViewer.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Invalid session",
+        [results]: [],
+      });
     }
 
-    // `collectAs` groups the frames back into a single result.
-    // It collects the `type` and `count` variables into an array named `results`.
-    return frames.collectAs([type, count], results);
+    // Determine post author
+    const withAuthor = await withViewer.query(Post._getPostAuthor, { post }, {
+      author,
+    });
+
+    if (withAuthor.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Post not found",
+        [results]: [],
+      });
+    }
+
+    const selfAuthorized = withAuthor.filter((frame) =>
+      frame[viewer] === frame[author]
+    );
+    const others = withAuthor.filter((frame) => frame[viewer] !== frame[author]);
+
+    let friendAuthorized = new Frames();
+    if (others.length > 0) {
+      const friendChecked = await new Frames(...others).query(
+        Friendship.areFriends,
+        { user1: viewer, user2: author },
+        { isFriend: friendStatus },
+      );
+
+      friendAuthorized = new Frames(
+        ...friendChecked.filter((frame) => frame[friendStatus] === true),
+      );
+    }
+
+    const authorizedFrames = new Frames(...selfAuthorized, ...friendAuthorized);
+
+    if (authorizedFrames.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Unauthorized",
+        [results]: [],
+      });
+    }
+
+    const reactionFrames = await authorizedFrames.query(
+      Reaction._getReactionsForPostId,
+      { post },
+      { type, count },
+    );
+
+    if (reactionFrames.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [results]: [],
+        [error]: null,
+      });
+    }
+
+    const collected = reactionFrames.collectAs([type, count], results);
+    return new Frames(
+      ...collected.map((frame) => ({ ...frame, [error]: null })),
+    );
   },
   then: actions([
     Requesting.respond,
-    { request, results },
+    { request, results, error },
   ]),
 });
 // --- Get Reaction On Post From User (Authenticated Query) ---

@@ -1,5 +1,5 @@
 import { actions, Frames, Sync } from "@engine";
-import { Comment, Requesting, Sessioning } from "@concepts";
+import { Comment, Friendship, Post, Requesting, Sessioning } from "@concepts";
 
 // --- Add Comment (Authenticated) ---
 
@@ -181,35 +181,104 @@ export const RespondToRemoveAllCommentsFromPostError: Sync = (
  * This is a public query and does not require authentication.
  */
 export const HandleGetCommentsForPostRequest: Sync = (
-  { request, post, comments, results },
+  {
+    request,
+    sessionId,
+    post,
+    comments,
+    results,
+    viewer,
+    author,
+    friendStatus,
+    error,
+  },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/Comment/_getCommentsForPostId", post },
+    { path: "/Comment/_getCommentsForPostId", sessionId, post },
     { request },
   ]),
   where: async (frames) => {
-    // Preserve the original frame to keep the `request` binding, especially for the case of no results.
     const originalFrame = frames[0];
 
-    frames = await frames.query(
+    // Authenticate session
+    const withViewer = await frames.query(Sessioning._getUser, { sessionId }, {
+      user: viewer,
+    });
+
+    if (withViewer.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Invalid session",
+        [results]: [],
+      });
+    }
+
+    // Fetch the author of the post
+    const withAuthor = await withViewer.query(
+      Post._getPostAuthor,
+      { post },
+      { author },
+    );
+
+    if (withAuthor.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Post not found",
+        [results]: [],
+      });
+    }
+
+    // Split into self vs. others
+    const selfAuthorized = withAuthor.filter((frame) =>
+      frame[viewer] === frame[author]
+    );
+    const others = withAuthor.filter((frame) => frame[viewer] !== frame[author]);
+
+    let friendAuthorized = new Frames();
+    if (others.length > 0) {
+      const friendChecked = await new Frames(...others).query(
+        Friendship.areFriends,
+        { user1: viewer, user2: author },
+        { isFriend: friendStatus },
+      );
+
+      friendAuthorized = new Frames(
+        ...friendChecked.filter((frame) => frame[friendStatus] === true),
+      );
+    }
+
+    const authorizedFrames = new Frames(...selfAuthorized, ...friendAuthorized);
+
+    if (authorizedFrames.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Unauthorized",
+        [results]: [],
+      });
+    }
+
+    const commentFrames = await authorizedFrames.query(
       Comment._getCommentsForPostId,
       { post },
       { comments },
     );
 
-    // If something goes wrong and no frame is returned, respond with a single-element
-    // array that contains an empty `comments` list. This aligns with the concept spec
-    // and avoids request timeouts.
-    if (frames.length === 0) {
-      const responseFrame = { ...originalFrame, [results]: [{ comments: [] }] };
-      return new Frames(responseFrame);
+    if (commentFrames.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [results]: [],
+        [error]: null,
+      });
     }
 
-    return frames.collectAs([comments], results);
+    const collected = commentFrames.collectAs([comments], results);
+    return new Frames(
+      ...collected.map((frame) => ({ ...frame, [error]: null })),
+    );
   },
   then: actions([
     Requesting.respond,
-    { request, results }, // Respond with the collected results array
+    { request, results, error },
   ]),
 });

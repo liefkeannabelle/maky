@@ -274,6 +274,27 @@ export default class PostConcept {
   }
 
   /**
+   * _getPostAuthor (post: Post): (author: User)
+   *
+   * **requires** The `post` exists.
+   * **effects** Returns the author for the specified post so callers can enforce authorization.
+   */
+  async _getPostAuthor(
+    { post }: { post: ID },
+  ): Promise<{ author: User }[]> {
+    const found = await this.posts.findOne(
+      { _id: post },
+      { projection: { author: 1 } },
+    );
+
+    if (!found) {
+      return [];
+    }
+
+    return [{ author: found.author }];
+  }
+
+  /**
    * _getPostsViewableToUsers (users: set of User): (post: PostDoc)
    *
    * **requires** All `users` exist.
