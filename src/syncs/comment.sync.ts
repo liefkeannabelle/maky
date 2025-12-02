@@ -233,7 +233,9 @@ export const HandleGetCommentsForPostRequest: Sync = (
     const selfAuthorized = withAuthor.filter((frame) =>
       frame[viewer] === frame[author]
     );
-    const others = withAuthor.filter((frame) => frame[viewer] !== frame[author]);
+    const others = withAuthor.filter((frame) =>
+      frame[viewer] !== frame[author]
+    );
 
     let friendAuthorized = new Frames();
     if (others.length > 0) {

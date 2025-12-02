@@ -299,21 +299,21 @@ This document provides the API specification for the various concepts that make 
 }
 ```
 ---
-### POST /api/UserProfile/updateBio
+### POST /api/UserProfile/updateLearningGoals
 
-**Description:** Updates (or clears) the bio in a user's profile.
+**Description:** Updates (or clears) the learning-goals blurb in a user's profile.
 
 **Requirements:**
 - The `user` exists and has an associated `Profile`.
 
 **Effects:**
-- Updates the `bio` in the `user`'s `Profile` to `newBio`, removing the field when `newBio` is `undefined`.
+- Updates the `learningGoals` in the `user`'s `Profile` to `newLearningGoals`, removing the field when `newLearningGoals` is `undefined`.
 
 **Request Body:**
 ```json
 {
   "user": "string",
-  "newBio": "string" // always include; send "UNDEFINED" to clear the bio
+  "newLearningGoals": "string" // always include; send "UNDEFINED" to clear the entry
 }
 ```
 

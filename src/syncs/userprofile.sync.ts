@@ -99,17 +99,17 @@ export const RespondToUpdateDisplayNameError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
-// --- Update Bio (Authenticated) ---
+// --- Update Learning Goals (Authenticated) ---
 
 /**
- * Handles a request to update a user's bio, authenticating via session.
+ * Handles a request to update a user's learning goals, authenticating via session.
  */
-export const HandleUpdateBioRequest: Sync = (
-  { request, sessionId, newBio, user, normalizedBio },
+export const HandleUpdateLearningGoalsRequest: Sync = (
+  { request, sessionId, newLearningGoals, user, normalizedLearningGoals },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/UserProfile/updateBio", sessionId, newBio },
+    { path: "/UserProfile/updateLearningGoals", sessionId, newLearningGoals },
     { request },
   ]),
   where: async (frames) => {
@@ -117,34 +117,49 @@ export const HandleUpdateBioRequest: Sync = (
 
     const newFrames = [];
     for (const frame of frames) {
-      const incomingBio = frame[newBio];
-      const sanitizedBio = normalizeOptionalString(incomingBio);
+      const incomingLearningGoals = frame[newLearningGoals];
+      const sanitizedLearningGoals = normalizeOptionalString(
+        incomingLearningGoals,
+      );
       newFrames.push({
         ...frame,
-        [normalizedBio]: sanitizedBio,
+        [normalizedLearningGoals]: sanitizedLearningGoals,
       });
     }
 
     return new Frames(...newFrames);
   },
-  then: actions([UserProfile.updateBio, { user, newBio: normalizedBio }]),
+  then: actions([UserProfile.updateLearningGoals, {
+    user,
+    newLearningGoals: normalizedLearningGoals,
+  }]),
 });
 
 /**
- * Responds to the update bio request.
+ * Responds to the update learning goals request.
  */
-export const RespondToUpdateBioSuccess: Sync = ({ request }) => ({
+export const RespondToUpdateLearningGoalsSuccess: Sync = ({ request }) => ({
   when: actions(
-    [Requesting.request, { path: "/UserProfile/updateBio" }, { request }],
-    [UserProfile.updateBio, {}, { success: true }],
+    [
+      Requesting.request,
+      { path: "/UserProfile/updateLearningGoals" },
+      { request },
+    ],
+    [UserProfile.updateLearningGoals, {}, { success: true }],
   ),
   then: actions([Requesting.respond, { request, success: true }]),
 });
 
-export const RespondToUpdateBioError: Sync = ({ request, error }) => ({
+export const RespondToUpdateLearningGoalsError: Sync = (
+  { request, error },
+) => ({
   when: actions(
-    [Requesting.request, { path: "/UserProfile/updateBio" }, { request }],
-    [UserProfile.updateBio, {}, { error }],
+    [
+      Requesting.request,
+      { path: "/UserProfile/updateLearningGoals" },
+      { request },
+    ],
+    [UserProfile.updateLearningGoals, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
 });

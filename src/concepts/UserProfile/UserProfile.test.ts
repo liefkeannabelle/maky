@@ -83,15 +83,15 @@ Deno.test(
     let profileInDb = await userProfile.profiles.findOne({ user: userB });
     assertEquals(profileInDb?.displayName, "Bobby");
 
-    // updateBio
-    const bioUpdate = await userProfile.updateBio({
+    // updateLearningGoals
+    const goalsUpdate = await userProfile.updateLearningGoals({
       user: userB,
-      newBio: "Just a test bio",
+      newLearningGoals: "Dialing in barre chords",
     });
-    assert("success" in bioUpdate, "updateBio should succeed");
-    assertEquals(bioUpdate.success, true);
+    assert("success" in goalsUpdate, "updateLearningGoals should succeed");
+    assertEquals(goalsUpdate.success, true);
     profileInDb = await userProfile.profiles.findOne({ user: userB });
-    assertEquals(profileInDb?.bio, "Just a test bio");
+    assertEquals(profileInDb?.learningGoals, "Dialing in barre chords");
 
     // updateAvatar
     const avatarUpdate = await userProfile.updateAvatar({
@@ -164,14 +164,14 @@ Deno.test(
     });
 
     // Set optional fields first
-    const bioSet = await userProfile.updateBio({
+    const goalsSet = await userProfile.updateLearningGoals({
       user: userC,
-      newBio: "Bio to be removed",
+      newLearningGoals: "Goals to be removed",
     });
-    assert("success" in bioSet, "Setting bio should succeed");
-    assertEquals(bioSet.success, true);
+    assert("success" in goalsSet, "Setting learning goals should succeed");
+    assertEquals(goalsSet.success, true);
     let profileInDb = await userProfile.profiles.findOne({ user: userC });
-    assertEquals(profileInDb?.bio, "Bio to be removed");
+    assertEquals(profileInDb?.learningGoals, "Goals to be removed");
 
     const avatarSet = await userProfile.updateAvatar({
       user: userC,
@@ -214,15 +214,15 @@ Deno.test(
     profileInDb = await userProfile.profiles.findOne({ user: userC });
     assertEquals(profileInDb?.avatarUrl, "url_to_remove_again");
 
-    // Remove bio
-    const bioRemove = await userProfile.updateBio({
+    // Remove learning goals
+    const goalsRemove = await userProfile.updateLearningGoals({
       user: userC,
-      newBio: undefined,
+      newLearningGoals: undefined,
     });
-    assert("success" in bioRemove, "Removing bio should succeed");
-    assertEquals(bioRemove.success, true);
+    assert("success" in goalsRemove, "Removing learning goals should succeed");
+    assertEquals(goalsRemove.success, true);
     profileInDb = await userProfile.profiles.findOne({ user: userC });
-    assertEquals(profileInDb?.bio, undefined);
+    assertEquals(profileInDb?.learningGoals, undefined);
 
     // Remove avatar
     const avatarRemove = await userProfile.updateAvatar({
