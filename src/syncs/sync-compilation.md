@@ -11,9 +11,13 @@ Our Design:
 
 [@friendship.sync.ts](friendship.sync.ts)
 
+[@useracc.sync.ts](useracc.sync.ts)
+
 
 
 [@reaction.sync.ts](reaction.sync.ts)
+
+[@userprofile.sync.ts](userprofile.sync.ts)
 
 
 
@@ -23,6 +27,11 @@ Some Concepts:
 [@PostConcept.ts](../concepts/Post/PostConcept.ts)
 
 [@FriendshipConcept.ts](../concepts/Friendship/FriendshipConcept.ts)
+
+[@UserAccountConcept.ts](../concepts/UserAccount/UserAccountConcept.ts)
+
+[@UserProfileConcept.ts](../concepts/UserProfile/UserProfileConcept.ts)
+
 
 
 

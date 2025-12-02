@@ -333,32 +333,39 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Description:** Determines if a user account is marked as a kid account, a private account, or both.
 
+**Authentication:** Requires a valid `sessionId`. The requester must match the `user` being queried.
+
 **Requirements:**
-- A User exists with the given `user` ID.
+- A User exists with the given `user` ID and the session corresponds to that user.
 
 **Effects:**
-- Returns `true` as `isKidOrPrivate` if the user is a kid account or a private account (or both), `false` otherwise.
+- Returns `true` as `isKidOrPrivate` if the user is a kid account or a private account (or both), `false` otherwise. The HTTP response is wrapped in `{ "results": [...], "error": string | null }` to reflect authentication failures.
 
 **Request Body:**
 ```json
 {
+  "sessionId": "string",
   "user": "ID"
 }
 ```
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "isKidOrPrivate": true
-  }
-]
+{
+  "results": [
+    {
+      "isKidOrPrivate": true
+    }
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
-  "error": "string"
+  "results": [],
+  "error": "string" // e.g., "Invalid session" or "Unauthorized"
 }
 ```
 ---
@@ -713,40 +720,47 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ---
 ### POST /api/UserProfile/_getProfile
 
-**Description:** Retrieves all public profile information for a given user.
+**Description:** Retrieves all profile information for a given user.
+
+**Authentication:** Requires a valid `sessionId`. The session user must either match the requested `user` or already be accepted friends with that user.
 
 **Requirements:**
-- The `user` must exist.
+- The `user` must exist. The requester must be the same user or an accepted friend.
 
 **Effects:**
-- Returns an array containing a single profile object for the specified user. If the user or profile does not exist, an empty array is returned.
+- Returns an array containing a single profile object for the specified user (or an empty array when no profile exists) and wraps it in the `{ "results": [...], "error": string | null }` envelope used by authenticated queries.
 
 **Request Body:**
 ```json
 {
+  "sessionId": "string",
   "user": "string"
 }
 ```
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "profile": {
-      "displayName": "string",
-      "bio": "string",
-      "avatarUrl": "string",
-      "genrePreferences": ["string"],
-      "skillLevel": "string",
-      "targetSong": "string"
+{
+  "results": [
+    {
+      "profile": {
+        "displayName": "string",
+        "bio": "string",
+        "avatarUrl": "string",
+        "genrePreferences": ["string"],
+        "skillLevel": "string",
+        "targetSong": "string"
+      }
     }
-  }
-]
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
 ```
@@ -903,91 +917,55 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "error": "string"
 }
 ```
----
-### POST /api/Post/_getPostsForUser
 
-**Description:** Retrieves all posts authored by a specific user.
+### POST /api/Post/_getPostsViewableToUser
+
+**Description:** Retrieves the personalized feed for a single viewer. The synchronization layer gathers the viewer's accepted friends (plus the viewer) and queries per-user endpoints (private/public) to assemble the feed according to friendship rules.
+
+**Authentication:** Requires a valid `sessionId`. The session user must match the `user` provided in the request.
 
 **Requirements:**
-- The `user` must exist.
+- The `user` exists and matches the authenticated session.
+- Friendship data is used server-side; nothing extra is required from the client beyond the viewer's identity.
 
 **Effects:**
-- Returns an array of all posts authored by the specified `user`, ordered by creation date (newest first). If the user has no posts, an empty array is returned.
+- Returns all posts authored by the viewer or their accepted friends, ordered by creation date (newest first), wrapped in the `{ "results": [...], "error": string | null }` query envelope. Private posts only show up when authored by the viewer; friends contribute their public posts.
 
 **Request Body:**
 ```json
 {
+  "sessionId": "string",
   "user": "string"
 }
 ```
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "post": {
-      "_id": "string",
-      "author": "string",
-      "content": "string",
-      "items": ["string"],
-      "postType": "string",
-      "visibility": "string",
-      "createdAt": "string",
-      "editedAt": "string"
+{
+  "results": [
+    {
+      "post": {
+        "_id": "string",
+        "author": "string",
+        "content": "string",
+        "items": ["string"],
+        "postType": "string",
+        "visibility": "string",
+        "createdAt": "string",
+        "editedAt": "string"
+      }
     }
-  }
-]
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
-```
----
-### POST /api/Post/_getPostsForUsers
-
-**Description:** Retrieves all posts authored by any of the specified users. Useful for building feeds that show posts from multiple users.
-
-**Requirements:**
-- All `users` in the array must exist.
-
-**Effects:**
-- Returns an array of all posts authored by any of the specified `users`, ordered by creation date (newest first). If none of the users have posts, an empty array is returned.
-
-**Request Body:**
-```json
-{
-  "users": ["string"]
-}
-```
-
-**Success Response Body (Query):**
-```json
-[
-  {
-    "post": {
-      "_id": "string",
-      "author": "string",
-      "content": "string",
-      "items": ["string"],
-      "postType": "string",
-      "visibility": "string",
-      "createdAt": "string",
-      "editedAt": "string"
-    }
-  }
-]
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
-```
 ```
 
 ---
@@ -1028,48 +1006,6 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-### POST /api/Post/_getPublicPostsForUser
-
-**Description:** Retrieves all public posts authored by a specific user.
-
-**Requirements:**
-- The `user` must exist.
-
-**Effects:**
-- Returns an array of all posts authored by the specified `user` where `visibility` is `PUBLIC`, ordered by creation date (newest first). If the user has no public posts, an empty array is returned.
-
-**Request Body:**
-```json
-{
-  "user": "string"
-}
-```
-
-**Success Response Body (Query):**
-```json
-[
-  {
-    "post": {
-      "_id": "string",
-      "author": "string",
-      "content": "string",
-      "items": ["string"],
-      "postType": "string",
-      "visibility": "string",
-      "createdAt": "string",
-      "editedAt": "string"
-    }
-  }
-]
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
----
 
 ### POST /api/Post/_getPersonalPrivatePosts
 
@@ -1081,7 +1017,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The `sessionId` is valid and belongs to the same user provided in `user`.
 
 **Effects:**
-- Returns all `PRIVATE` posts authored by the authenticated user, ordered by creation date (newest first).
+- Returns all `PRIVATE` posts authored by the authenticated user, ordered by creation date (newest first), inside the `{ "results": [...], "error": string | null }` envelope so authentication failures can be surfaced consistently.
 
 **Request Body:**
 ```json
@@ -1093,25 +1029,29 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "post": {
-      "_id": "string",
-      "author": "string",
-      "content": "string",
-      "items": ["string"],
-      "postType": "string",
-      "visibility": "string",
-      "createdAt": "string",
-      "editedAt": "string"
+{
+  "results": [
+    {
+      "post": {
+        "_id": "string",
+        "author": "string",
+        "content": "string",
+        "items": ["string"],
+        "postType": "string",
+        "visibility": "string",
+        "createdAt": "string",
+        "editedAt": "string"
+      }
     }
-  }
-]
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
 ```
@@ -1127,7 +1067,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The `sessionId` belongs to the same user identified by `user`.
 
 **Effects:**
-- Returns all `PUBLIC` posts authored by the authenticated user, ordered by creation date (newest first).
+- Returns all `PUBLIC` posts authored by the authenticated user, ordered by creation date (newest first), wrapped in the `{ "results": [...], "error": string | null }` envelope.
 
 **Request Body:**
 ```json
@@ -1139,25 +1079,29 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "post": {
-      "_id": "string",
-      "author": "string",
-      "content": "string",
-      "items": ["string"],
-      "postType": "string",
-      "visibility": "string",
-      "createdAt": "string",
-      "editedAt": "string"
+{
+  "results": [
+    {
+      "post": {
+        "_id": "string",
+        "author": "string",
+        "content": "string",
+        "items": ["string"],
+        "postType": "string",
+        "visibility": "string",
+        "createdAt": "string",
+        "editedAt": "string"
+      }
     }
-  }
-]
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
 ```
@@ -1396,7 +1340,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The `post` must exist.
 
 **Effects:**
-- Returns a single-element array; the element contains a `comments` property holding the simplified comment objects (`{ content, author }`).
+- Returns a single-element array; the element contains a `comments` property holding the simplified comment objects (`{ commentId, content, author }`).
 
 **Request Body:**
 ```json
@@ -1411,6 +1355,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
   {
     "comments": [
       {
+        "commentId": "string",
         "content": "string",
         "author": "User"
       }
@@ -1875,31 +1820,38 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Description:** Retrieves a list of all users who are friends with the specified user.
 
+**Authentication:** Requires a valid `sessionId`. The session user must match the requested `user`.
+
 **Requirements:**
-- The user `user` exists.
+- The user `user` exists and matches the authenticated session.
 
 **Effects:**
-- Returns a set of all users `f` for whom a `Friendship` exists with `status` `ACCEPTED` between `user` and `f`.
+- Returns a set of all users `f` for whom a `Friendship` exists with `status` `ACCEPTED` between `user` and `f`, wrapped in the `{ "results": [...], "error": string | null }` response envelope used by authenticated queries.
 
 **Request Body:**
 ```json
 {
+  "sessionId": "string",
   "user": "string"
 }
 ```
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "friend": "string"
-  }
-]
+{
+  "results": [
+    {
+      "friend": "string"
+    }
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
 ```
@@ -1910,38 +1862,45 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Description:** Retrieves a list of all incoming friend requests that are pending for a specific user.
 
+**Authentication:** Requires a valid `sessionId`. The session user must match the requested `user`.
+
 **Requirements:**
-- The user `user` exists.
+- The user `user` exists and matches the authenticated session.
 
 **Effects:**
-- Returns a one-element array containing an object. This object has a single key `pendingFriendships` whose value is a set of all pending `Friendship` requests where the specified `user` is the `recipient`. Each entry in the set contains the `requester`.
+- Returns a one-element array (inside the `{ "results": [...], "error": string | null }` envelope) whose object has a single key `pendingFriendships` with all pending requests where the specified `user` is the `recipient`. Each entry in the set contains the `requester`.
 
 **Request Body:**
 ```json
 {
+  "sessionId": "string",
   "user": "string"
 }
 ```
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "pendingFriendships": [
-      {
-        "requester": "string"
-      }
-    ]
-  }
-]
+{
+  "results": [
+    {
+      "pendingFriendships": [
+        {
+          "requester": "string"
+        }
+      ]
+    }
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
-
+```
 ---
 
 # API Specification: JamGroup Concept

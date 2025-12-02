@@ -1,5 +1,5 @@
 import { actions, Frames, Sync } from "@engine";
-import { Requesting, Sessioning, UserProfile } from "@concepts";
+import { Friendship, Requesting, Sessioning, UserProfile } from "@concepts";
 
 const UNDEFINED_SENTINEL = "UNDEFINED";
 const normalizeOptionalString = (value: unknown): string | undefined =>
@@ -453,43 +453,104 @@ export const HandleSearchByDisplayNameRequest: Sync = (
 });
 /**
  * Handles a request to get the full profile for a specific user.
- * This is a public query.
+ * Requires authentication and only allows the session user to access their own profile.
+ */
+
+/**
+ * Handles a request to get the full profile for a specific user.
+ * Requires authentication and allows access if the session user is either the
+ * user whose profile is being requested, or is friends with that user.
  */
 export const HandleGetProfileRequest: Sync = (
-  { request, user, profile, results },
+  {
+    request,
+    sessionId,
+    user: targetUser,
+    sessionUser,
+    areFriendsResult,
+    profile,
+    results,
+    error,
+  },
 ) => ({
-  // Trigger when a request is made to the specific path with a `user` parameter.
   when: actions([
     Requesting.request,
-    { path: "/UserProfile/_getProfile", user },
+    {
+      path: "/UserProfile/_getProfile",
+      sessionId,
+      user: targetUser,
+    },
     { request },
   ]),
   where: async (frames) => {
-    // Preserve the original frame to keep the `request` binding.
     const originalFrame = frames[0];
 
-    // The `_getProfile` query returns an array like `[{ profile: {...} }]` or `[]`.
-    // The `query` helper will create a new frame for each item in the array.
-    // The output binding `{ profile }` extracts the value of the `profile` key from the result object.
-    frames = await frames.query(
-      UserProfile._getProfile,
-      { user }, // Input to the query
-      { profile }, // Output variable `profile` will be bound to the profile object.
-    );
+    // 1. Authenticate: Get the user from the session
+    const withSessionUser = await frames.query(Sessioning._getUser, {
+      sessionId,
+    }, {
+      user: sessionUser,
+    });
 
-    // If the query found no profile, frames will be empty. We must respond with an empty array.
-    if (frames.length === 0) {
-      const responseFrame = { ...originalFrame, [results]: [] };
-      return new Frames(responseFrame);
+    if (withSessionUser.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Invalid session",
+        [results]: [],
+      });
     }
 
-    // If a profile was found, `collectAs` will wrap the single result into an array,
-    // creating a `results` variable that holds `[{ profile: {...} }]`.
-    return frames.collectAs([profile], results);
+    // 2. Authorize: Check if the requester is viewing their own profile or a friend's profile
+    const authorizedFrames = new Frames();
+    for (const frame of withSessionUser) {
+      const isSelf = frame[sessionUser] === frame[targetUser];
+      if (isSelf) {
+        authorizedFrames.push(frame);
+        continue; // Authorized, move to next frame
+      }
+
+      // If not viewing self, check friendship status
+      const singleFrame = new Frames(frame);
+      const friendCheck = await singleFrame.query(
+        Friendship.areFriends,
+        { user1: sessionUser, user2: targetUser },
+        { isFriend: areFriendsResult },
+      );
+
+      const isFriend = friendCheck.some((resultFrame) =>
+        resultFrame[areFriendsResult] === true
+      );
+
+      if (isFriend) {
+        authorizedFrames.push(frame); // Authorized as a friend
+      }
+    }
+
+    if (authorizedFrames.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Unauthorized",
+        [results]: [],
+      });
+    }
+
+    // 3. Query Profile: If authorized, fetch the profile data for the target user
+    const profileFrames = await authorizedFrames.query(
+      UserProfile._getProfile,
+      { user: targetUser },
+      { profile },
+    );
+
+    // 4. Format Response: Handle case where profile may not exist (which is a valid success)
+    if (profileFrames.length === 0) {
+      return new Frames({ ...originalFrame, [results]: [], [error]: null });
+    }
+
+    const payload = profileFrames.map((frame) => ({ profile: frame[profile] }));
+    return new Frames({ ...originalFrame, [results]: payload, [error]: null });
   },
-  // Respond to the original request with the collected results array.
   then: actions([
     Requesting.respond,
-    { request, results },
+    { request, results, error },
   ]),
 });

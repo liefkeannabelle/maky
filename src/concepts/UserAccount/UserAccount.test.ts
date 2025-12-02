@@ -328,7 +328,7 @@ Deno.test(
 );
 
 Deno.test(
-  "UserAccountConcept - setIsPrivateAccountStatus",
+  "UserAccountConcept - setPrivateAccountStatus",
   { sanitizeOps: false, sanitizeResources: false },
   async () => {
     const [db, client] = await testDb();
@@ -343,7 +343,7 @@ Deno.test(
       isPrivateAccount: false,
     });
 
-    const setResult = await userAccount.setIsPrivateAccountStatus({
+    const setResult = await userAccount.setPrivateAccountStatus({
       user: userId,
       status: true,
     });
@@ -353,7 +353,7 @@ Deno.test(
     let userDoc = await userAccount.users.findOne({ _id: userId });
     assertEquals(userDoc?.isPrivateAccount, true);
 
-    const unsetResult = await userAccount.setIsPrivateAccountStatus({
+    const unsetResult = await userAccount.setPrivateAccountStatus({
       user: userId,
       status: false,
     });
@@ -363,7 +363,7 @@ Deno.test(
     userDoc = await userAccount.users.findOne({ _id: userId });
     assertEquals(userDoc?.isPrivateAccount, false);
 
-    const failResult = await userAccount.setIsPrivateAccountStatus({
+    const failResult = await userAccount.setPrivateAccountStatus({
       user: "nonexistent" as ID,
       status: true,
     });

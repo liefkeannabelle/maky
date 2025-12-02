@@ -181,7 +181,7 @@ export const RespondToRemoveAllCommentsFromPostError: Sync = (
  * This is a public query and does not require authentication.
  */
 export const HandleGetCommentsForPostRequest: Sync = (
-  { request, post, commentsBundle, results },
+  { request, post, comments, results },
 ) => ({
   when: actions([
     Requesting.request,
@@ -192,23 +192,21 @@ export const HandleGetCommentsForPostRequest: Sync = (
     // Preserve the original frame to keep the `request` binding, especially for the case of no results.
     const originalFrame = frames[0];
 
-    // `_getCommentsForPostId` now returns a single-element array like `[{ comments: [...] }]`.
     frames = await frames.query(
       Comment._getCommentsForPostId,
       { post },
-      { comments: commentsBundle },
+      { comments },
     );
 
-    // If something goes wrong and no frame is returned, respond with an empty array to avoid a timeout.
+    // If something goes wrong and no frame is returned, respond with a single-element
+    // array that contains an empty `comments` list. This aligns with the concept spec
+    // and avoids request timeouts.
     if (frames.length === 0) {
-      const responseFrame = { ...originalFrame, [results]: [] };
+      const responseFrame = { ...originalFrame, [results]: [{ comments: [] }] };
       return new Frames(responseFrame);
     }
 
-    const firstFrame = frames[0];
-    const comments = (firstFrame[commentsBundle] as unknown[]) ?? [];
-    const responseFrame = { ...firstFrame, [results]: comments };
-    return new Frames(responseFrame);
+    return frames.collectAs([comments], results);
   },
   then: actions([
     Requesting.respond,

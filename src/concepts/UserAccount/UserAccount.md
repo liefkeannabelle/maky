@@ -44,7 +44,7 @@ setKidAccountStatus (user: User, status: Boolean): (success: Boolean)
 *   **requires** The `user` exists.
 *   **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
 
-setIsPrivateAccountStatus (user: User, status: Boolean): (success: Boolean)
+setPrivateAccountStatus (user: User, status: Boolean): (success: Boolean)
 
 *   **requires** The `user` exists.
 *   **effects** Sets the `isPrivateAccount` status for the given `user` to the provided `status`; returns `true` as `success`.

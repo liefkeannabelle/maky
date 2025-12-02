@@ -1,5 +1,12 @@
 import { actions, Frames, Sync } from "@engine";
-import { Comment, Post, Reaction, Requesting, Sessioning } from "@concepts";
+import {
+  Comment,
+  Friendship,
+  Post,
+  Reaction,
+  Requesting,
+  Sessioning,
+} from "@concepts";
 import { ID } from "@utils/types.ts";
 
 /**
@@ -239,90 +246,144 @@ export const RespondToEditPostVisibilityError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
-// --- Get Posts For User (Public Query) ---
+// (removed public multi-user handler; feed composition is handled by the
+// authenticated `_getPostsViewableToUser` sync which queries per-user endpoints)
 
-/**
- * Handles a public request to get all posts for a specific user.
- */
-export const HandleGetPostsForUserRequest: Sync = (
-  { request, user, post, results },
-) => ({
-  when: actions([
-    Requesting.request,
-    { path: "/Post/_getPostsForUser", user },
-    { request },
-  ]),
-  where: async (frames) => {
-    const originalFrame = frames[0];
-    // Query the Post concept for all posts by the given user.
-    // This will create a new frame for each post returned by the query.
-    frames = await frames.query(Post._getPostsForUser, { user }, { post });
-
-    // If the query returns no posts, we must explicitly handle this case to avoid a timeout.
-    if (frames.length === 0) {
-      const responseFrame = { ...originalFrame, [results]: [] };
-      return new Frames(responseFrame);
-    }
-
-    // Collect all the individual post frames into a single frame with a `results` array.
-    return frames.collectAs([post], results);
+// --- Get Posts Viewable To User (Authenticated Query) ---
+export const HandleGetPostsViewableToUserRequest: Sync = (
+  {
+    request,
+    sessionId,
+    user,
+    viewer,
+    friend,
+    usersList,
+    post,
+    results,
+    error,
   },
-  then: actions([Requesting.respond, { request, results }]),
-});
-
-// --- Get Posts For Users (Public Query) ---
-
-/**
- * Handles a public request to get all posts for a list of users.
- */
-export const HandleGetPostsForUsersRequest: Sync = (
-  { request, users, post, results },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/Post/_getPostsForUsers", users },
+    { path: "/Post/_getPostsViewableToUser", sessionId, user },
     { request },
   ]),
   where: async (frames) => {
     const originalFrame = frames[0];
-    frames = await frames.query(Post._getPostsForUsers, { users }, { post });
-
-    if (frames.length === 0) {
-      const responseFrame = { ...originalFrame, [results]: [] };
-      return new Frames(responseFrame);
-    }
-
-    return frames.collectAs([post], results);
-  },
-  then: actions([Requesting.respond, { request, results }]),
-});
-
-// --- Get Public Posts For User (Public Query) ---
-
-export const HandleGetPublicPostsForUserRequest: Sync = (
-  { request, user, post, results },
-) => ({
-  when: actions([
-    Requesting.request,
-    { path: "/Post/_getPublicPostsForUser", user },
-    { request },
-  ]),
-  where: async (frames) => {
-    const originalFrame = frames[0];
-    frames = await frames.query(Post._getPublicPostsForUser, { user }, {
-      post,
+    // Authenticate session -> viewer
+    const withViewer = await frames.query(Sessioning._getUser, { sessionId }, {
+      user: viewer,
     });
 
-    if (frames.length === 0) {
-      const responseFrame = { ...originalFrame, [results]: [] };
-      return new Frames(responseFrame);
+    if (withViewer.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Invalid session",
+        [results]: [],
+      });
     }
 
-    return frames.collectAs([post], results);
-  },
-  then: actions([Requesting.respond, { request, results }]),
-});
+    // Ensure the session user matches requested user
+    const authorized = withViewer.filter((frame) =>
+      frame[viewer] === frame[user]
+    );
+    if (authorized.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Unauthorized",
+        [results]: [],
+      });
+    }
 
+    // Get accepted friends for the user
+    const friendFrames = await authorized.query(Friendship._getFriends, {
+      user,
+    }, { friend });
+
+    // Build a list of friend IDs (exclude duplicates)
+    const friendIds: ID[] = [];
+    for (const f of friendFrames) {
+      const id = f[friend] as ID | undefined;
+      if (id && !friendIds.includes(id)) {
+        friendIds.push(id);
+      }
+    }
+
+    // Collect posts: viewer's private posts + viewer's public posts + each friend's public posts
+    const collectedPosts: Array<{ post: unknown }> = [];
+
+    // Viewer private posts
+    const privateQueried = await authorized.query(
+      Post._getPrivatePostsForUser,
+      { user },
+      { post },
+    );
+    for (const f of privateQueried) {
+      collectedPosts.push({ post: f[post] });
+    }
+
+    // Viewer public posts
+    const viewerFrames = authorized.map((frame) => ({
+      ...frame,
+      [usersList]: [frame[user]],
+    }));
+    if (viewerFrames.length > 0) {
+      const framesForViewerPublic = new Frames(...viewerFrames);
+      const viewerPublic = await framesForViewerPublic.query(
+        Post._getPublicPostsForUsers,
+        { users: usersList },
+        { post },
+      );
+      for (const f of viewerPublic) collectedPosts.push({ post: f[post] });
+    }
+
+    // Friends' public posts (bulk query per-friend via a single query by mapping each friend into a frame)
+    if (friendIds.length > 0) {
+      const framesForFriendsQuery = friendFrames.map((frame) => ({
+        ...frame,
+        [usersList]: [frame[friend]],
+      }));
+      const framesForFriends = new Frames(...framesForFriendsQuery);
+      const friendsPublic = await framesForFriends.query(
+        Post._getPublicPostsForUsers,
+        { users: usersList },
+        { post },
+      );
+      for (const f of friendsPublic) collectedPosts.push({ post: f[post] });
+    }
+
+    // Deduplicate by _id (in case of overlap) and sort newest-first by createdAt
+    const byId = new Map<string, Record<string, unknown>>();
+    for (const entry of collectedPosts) {
+      const p = entry.post as Record<string, unknown> | undefined;
+      if (p && p["_id"]) byId.set(String(p["_id"]), p);
+    }
+
+    const merged = Array.from(byId.values()).sort(
+      (a: Record<string, unknown>, b: Record<string, unknown>) => {
+        const aCreated = a["createdAt"];
+        const bCreated = b["createdAt"];
+        const ta = typeof aCreated === "string"
+          ? Date.parse(aCreated)
+          : (aCreated instanceof Date ? aCreated.getTime() : 0);
+        const tb = typeof bCreated === "string"
+          ? Date.parse(bCreated)
+          : (bCreated instanceof Date ? bCreated.getTime() : 0);
+        return tb - ta;
+      },
+    );
+
+    const resultPosts = merged.map((p) => ({ post: p }));
+
+    const responseFrame = {
+      ...originalFrame,
+      [results]: resultPosts,
+      [error]: null,
+    };
+    return new Frames(responseFrame);
+  },
+  then: actions([Requesting.respond, { request, results, error }]),
+});
 // --- Get Private Posts For User (Private Data Query) ---
 
 export const HandleGetPrivatePostsForUserRequest: Sync = (
@@ -376,110 +437,161 @@ const requireViewerMatchesUser = async (
 };
 
 export const HandleGetPersonalPrivatePostsRequest: Sync = (
-  { request, sessionId, user, post, results, viewer },
+  { request, sessionId, user: targetUser, post, results, viewer, error },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/Post/_getPersonalPrivatePosts", sessionId, user },
+    { path: "/Post/_getPersonalPrivatePosts", sessionId, user: targetUser },
     { request },
   ]),
   where: async (frames) => {
-    const authorized = await requireViewerMatchesUser(
-      frames,
-      sessionId,
-      user,
-      viewer,
-    );
-
-    if (authorized.length === 0) {
-      return authorized;
-    }
-
-    const queried = await authorized.query(
-      Post._getPrivatePostsForUser,
-      { user },
-      { post },
-    );
-
-    if (queried.length === 0) {
-      const responseFrame = { ...authorized[0], [results]: [] };
-      return new Frames(responseFrame);
-    }
-
-    return queried.collectAs([post], results);
-  },
-  then: actions([Requesting.respond, { request, results }]),
-});
-
-export const HandleGetPersonalPublicPostsRequest: Sync = (
-  { request, sessionId, user, post, results, viewer },
-) => ({
-  when: actions([
-    Requesting.request,
-    { path: "/Post/_getPersonalPublicPosts", sessionId, user },
-    { request },
-  ]),
-  where: async (frames) => {
-    const authorized = await requireViewerMatchesUser(
-      frames,
-      sessionId,
-      user,
-      viewer,
-    );
-
-    if (authorized.length === 0) {
-      return authorized;
-    }
-
-    const queried = await authorized.query(
-      Post._getPublicPostsForUser,
-      { user },
-      { post },
-    );
-
-    if (queried.length === 0) {
-      const responseFrame = { ...authorized[0], [results]: [] };
-      return new Frames(responseFrame);
-    }
-
-    return queried.collectAs([post], results);
-  },
-  then: actions([Requesting.respond, { request, results }]),
-});
-
-// --- Get Public Posts Of Users With Session (future follower checks) ---
-
-export const HandleGetPublicPostsOfUsersRequest: Sync = (
-  { request, sessionId, users, viewer, post, results },
-) => ({
-  when: actions([
-    Requesting.request,
-    { path: "/Post/_getPublicPostsOfUsers", sessionId, users },
-    { request },
-  ]),
-  where: async (frames) => {
-    // Authenticate the requesting user; future work will validate follower/friend relationship.
+    const originalFrame = frames[0];
+    // Step 1: Authenticate session
     const withViewer = await frames.query(Sessioning._getUser, { sessionId }, {
       user: viewer,
     });
 
     if (withViewer.length === 0) {
-      return new Frames();
+      return new Frames({
+        ...originalFrame,
+        [error]: "Invalid session",
+        [results]: [],
+      });
     }
 
-    const originalFrame = withViewer[0];
-    const queried = await withViewer.query(
-      Post._getPublicPostsForUsers,
-      { users },
+    // Step 2: Authorize (viewer must be the user they are requesting posts for)
+    const authorized = withViewer.filter((frame) =>
+      frame[viewer] === frame[targetUser]
+    );
+
+    if (authorized.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Unauthorized",
+        [results]: [],
+      });
+    }
+
+    // Step 3: Success path - perform the actual query
+    const queried = await authorized.query(
+      Post._getPrivatePostsForUser,
+      { user: targetUser },
       { post },
     );
 
-    if (queried.length === 0) {
-      const responseFrame = { ...originalFrame, [results]: [] };
-      return new Frames(responseFrame);
+    // Handle case where user has no private posts (still a success)
+    const posts = queried.map((frame) => ({ post: frame[post] }));
+    const responseFrame = {
+      ...originalFrame,
+      [results]: posts,
+      [error]: null,
+    };
+    return new Frames(responseFrame);
+  },
+  then: actions([Requesting.respond, { request, results, error }]),
+});
+
+export const HandleGetPersonalPublicPostsRequest: Sync = (
+  {
+    request,
+    sessionId,
+    user: targetUser,
+    post,
+    results,
+    viewer,
+    usersList,
+    error,
+  },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Post/_getPersonalPublicPosts", sessionId, user: targetUser },
+    { request },
+  ]),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    // Step 1: Authenticate session
+    const withViewer = await frames.query(Sessioning._getUser, { sessionId }, {
+      user: viewer,
+    });
+
+    if (withViewer.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Invalid session",
+        [results]: [],
+      });
     }
 
-    return queried.collectAs([post], results);
+    // Step 2: Authorize (viewer must match the requested user)
+    const authorized = withViewer.filter((frame) =>
+      frame[viewer] === frame[targetUser]
+    );
+
+    if (authorized.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Unauthorized",
+        [results]: [],
+      });
+    }
+
+    // Step 3: Success path - prepare and perform query
+    const framesWithUsers = authorized.map((frame) => ({
+      ...frame,
+      [usersList]: [frame[targetUser]],
+    }));
+
+    const framesForQuery = new Frames(...framesWithUsers);
+    const queried = await framesForQuery.query(
+      Post._getPublicPostsForUsers,
+      { users: usersList },
+      { post },
+    );
+
+    const posts = queried.map((frame) => ({ post: frame[post] }));
+    const responseFrame = {
+      ...originalFrame,
+      [results]: posts,
+      [error]: null,
+    };
+    return new Frames(responseFrame);
   },
-  then: actions([Requesting.respond, { request, results }]),
+  then: actions([Requesting.respond, { request, results, error }]),
 });
+// // --- Get Public Posts Of Users With Session (future follower checks) ---
+
+// export const HandleGetPublicPostsOfUsersRequest: Sync = (
+//   { request, sessionId, users, viewer, post, results },
+// ) => ({
+//   when: actions([
+//     Requesting.request,
+//     { path: "/Post/_getPublicPostsOfUsers", sessionId, users },
+//     { request },
+//   ]),
+//   where: async (frames) => {
+//     // Authenticate the requesting user; future work will validate follower/friend relationship.
+//     const withViewer = await frames.query(Sessioning._getUser, { sessionId }, {
+//       user: viewer,
+//     });
+
+//     if (withViewer.length === 0) {
+//       return new Frames();
+//     }
+
+//     const originalFrame = withViewer[0];
+//     const queried = await withViewer.query(
+//       Post._getPublicPostsForUsers,
+//       { users },
+//       { post },
+//     );
+
+//     if (queried.length === 0) {
+//       const responseFrame = { ...originalFrame, [results]: [] };
+//       return new Frames(responseFrame);
+//     }
+
+//     return queried.collectAs([post], results);
+//   },
+//   then: actions([Requesting.respond, { request, results }]),
+// });

@@ -296,91 +296,152 @@ export const RespondToAreFriendsQueryError: Sync = (
   then: actions([Requesting.respond, { request, error }]),
 });
 /**
- * Handles an authenticated request to retrieve the current user's friend list.
- * This sync demonstrates a common authenticated query pattern:
- * 1. A request is made with a `sessionId`.
- * 2. The `where` clause uses `Sessioning._getUser` to validate the session and get the user ID.
- * 3. The user ID is then used to query the target concept (`Friendship._getFriends`).
- * 4. The results are collected and returned in the response.
+ * Handles an authenticated request to retrieve a user's friend list.
+ * Requires that the `user` in the request body matches the authenticated session user.
  */
-
 export const HandleGetFriendsRequest: Sync = (
-  { request, sessionId, user, friend, friends },
+  {
+    request,
+    sessionId,
+    user: targetUser,
+    sessionUser, // CORRECTED: Use a distinct variable for the session user.
+    friend,
+    results,
+    error,
+  },
 ) => ({
-  // WHEN: A request is made to get the friends list, providing a session ID for authentication.
   when: actions([
     Requesting.request,
-    { path: "/Friendship/_getFriends", sessionId },
+    {
+      path: "/Friendship/_getFriends",
+      sessionId,
+      user: targetUser,
+    },
     { request },
   ]),
 
-  // WHERE: We authenticate the user and fetch the data.
   where: async (frames: Frames) => {
     const originalFrame = frames[0];
-    // Step 1: Get the user from the session. If the session is invalid, `frames` will become empty,
-    // and this sync will not proceed to the `then` clause.
+    // CORRECTED: Use `sessionUser` for the query result.
     frames = await frames.query(Sessioning._getUser, { sessionId }, {
-      user,
+      user: sessionUser,
     });
 
-    // Step 2: Get the list of friends for that user. This query returns one frame per friend.
-    frames = await frames.query(Friendship._getFriends, { user }, { friend });
-
     if (frames.length === 0) {
-      const responseFrame = { ...originalFrame, [friends]: [] };
-      return new Frames(responseFrame);
+      return new Frames({
+        ...originalFrame,
+        [error]: "Invalid session",
+        [results]: [],
+      });
     }
 
-    // Step 3: Collect all the individual `friend` frames into a single `friends` array.
-    // This gracefully handles the case of having zero friends (resulting in an empty array).
-    return frames.collectAs([friend], friends);
+    // CORRECTED: Compare the values of the two symbols within the frame.
+    frames = frames.filter(($) => $[sessionUser] === $[targetUser]);
+
+    if (frames.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Unauthorized",
+        [results]: [],
+      });
+    }
+
+    // CORRECTED: Use `targetUser` for the main query.
+    frames = await frames.query(Friendship._getFriends, { user: targetUser }, {
+      friend,
+    });
+
+    if (frames.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [results]: [],
+        [error]: null,
+      });
+    }
+
+    const collectedFrames = frames.collectAs([friend], results);
+
+    return collectedFrames.map((frame) => ({ ...frame, [error]: null }));
   },
 
-  // THEN: Respond to the original request with the collected list of friends.
   then: actions([
     Requesting.respond,
-    // The final JSON response will be an object like: { friends: [{ friend: "..." }, ...] }
-    { request, friends },
+    { request, results, error },
   ]),
 });
+
 /**
  * Handles a request to get all pending friend requests for a specific user.
- * This is a public query; it does not require a session as it fetches data based on the provided user ID.
+ * Requires authentication and ensures the requested user matches the session user.
  */
 export const HandleGetPendingFriendshipsRequest: Sync = (
-  { request, user, pendingFriendships, results },
+  {
+    request,
+    sessionId,
+    user: targetUser,
+    sessionUser, // CORRECTED: Use a distinct variable for the session user.
+    pendingFriendships,
+    results,
+    error,
+  },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/Friendship/_getPendingFriendships", user },
+    {
+      path: "/Friendship/_getPendingFriendships",
+      sessionId,
+      user: targetUser,
+    },
     { request },
   ]),
   where: async (frames) => {
-    // Keep the original frame to preserve the `request` binding, especially for the zero-match case.
     const originalFrame = frames[0];
 
-    // The Friendship._getPendingFriendships query returns an array with a single object: `[{ pendingFriendships: [...] }]`.
-    // The output pattern `{ pendingFriendships }` extracts the inner array `[...]` and binds it to the `pendingFriendships` variable.
-    frames = await frames.query(
-      Friendship._getPendingFriendships,
-      { user }, // input to the query
-      { pendingFriendships }, // output variable binding
-    );
+    // CORRECTED: Use `sessionUser` for the query result.
+    frames = await frames.query(Sessioning._getUser, { sessionId }, {
+      user: sessionUser,
+    });
 
-    // If the query returns an empty array (e.g., if the user ID does not exist),
-    // we must respond explicitly with an empty result to avoid a request timeout.
     if (frames.length === 0) {
-      const responseFrame = { ...originalFrame, [results]: [] };
-      return new Frames(responseFrame);
+      return new Frames({
+        ...originalFrame,
+        [error]: "Invalid session",
+        [results]: [],
+      });
     }
 
-    // The `collectAs` helper is used to format the final response.
-    // It will create a `results` variable containing an array with a single object: `[{ pendingFriendships: [...] }]`.
-    // This matches the response format convention used by other query synchronizations.
-    return frames.collectAs([pendingFriendships], results);
+    // CORRECTED: Compare the values of the two symbols within the frame.
+    frames = frames.filter(($) => $[sessionUser] === $[targetUser]);
+
+    if (frames.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Unauthorized",
+        [results]: [],
+      });
+    }
+
+    // CORRECTED: Use `targetUser` for the main query.
+    frames = await frames.query(
+      Friendship._getPendingFriendships,
+      { user: targetUser },
+      { pendingFriendships },
+    );
+
+    if (frames.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [results]: [],
+        [error]: null,
+      });
+    }
+
+    const collectedFrames = frames.collectAs([pendingFriendships], results);
+
+    return collectedFrames.map((frame) => ({ ...frame, [error]: null }));
   },
   then: actions([
     Requesting.respond,
-    { request, results },
+    { request, results, error },
   ]),
 });

@@ -221,12 +221,12 @@ export default class UserAccountConcept {
   }
 
   /**
-   * setIsPrivateAccountStatus (user: User, status: Boolean): (success: Boolean)
+   * setPrivateAccountStatus (user: User, status: Boolean): (success: Boolean)
    *
    * **requires** The `user` exists.
    * **effects** Sets the `isPrivateAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
    */
-  async setIsPrivateAccountStatus(
+  async setPrivateAccountStatus(
     { user: userId, status }: { user: User; status: boolean },
   ): Promise<{ success: true } | { error: string }> {
     const result = await this.users.updateOne(

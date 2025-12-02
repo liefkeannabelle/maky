@@ -90,8 +90,7 @@ export const exclusions: Array<string> = [
   "/api/Post/deletePost",
   "/api/Post/editPost",
   "/api/Post/removeAllPostsForUser",
-  "/api/Post/_getPostsForUser",
-  "/api/Post/_getPostsForUsers",
+  "/api/Post/_getPostsViewableToUser",
   "/api/Reaction/addReactionToPost",
   "/api/Reaction/changeReactionType",
   "/api/Reaction/removeReactionFromPost",
@@ -145,6 +144,9 @@ export const exclusions: Array<string> = [
   "/api/UserProfile/_getProfile",
   "/api/Reaction/_getReactionOnPostFromUser",
   "/api/Post/editPostVisibility",
+  "/api/Post/_getPublicPostsForUsers",
+  "/api/Post/_getPrivatePostsForUser",
+  "/api/Post/_getPublicPostsForUsers",
 
   "/api/UserAccount/setPrivateAccountStatus",
 ];

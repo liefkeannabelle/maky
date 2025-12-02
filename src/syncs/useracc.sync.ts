@@ -2,7 +2,6 @@ import { actions, Frames, Sync } from "@engine";
 import {
   ChordLibrary,
   Comment,
-  Following,
   Friendship,
   Post,
   Reaction,
@@ -357,7 +356,7 @@ export const HandleSetPrivateStatusRequest: Sync = (
   where: (frames) =>
     frames.query(Sessioning._getUser, { sessionId: sessionId }, { user }),
   then: actions(
-    [UserAccount.setIsPrivateAccountStatus, { user, status }],
+    [UserAccount.setPrivateAccountStatus, { user, status }],
   ),
 });
 
@@ -373,7 +372,7 @@ export const RespondToSetPrivateStatusSuccess: Sync = (
       { path: "/UserAccount/setPrivateAccountStatus" },
       { request },
     ],
-    [UserAccount.setIsPrivateAccountStatus, {}, { success }],
+    [UserAccount.setPrivateAccountStatus, {}, { success }],
   ),
   then: actions([Requesting.respond, { request, success }]),
 });
@@ -388,7 +387,7 @@ export const RespondToSetPrivateStatusError: Sync = ({ request, error }) => ({
       { path: "/UserAccount/setPrivateAccountStatus" },
       { request },
     ],
-    [UserAccount.setIsPrivateAccountStatus, {}, { error }],
+    [UserAccount.setPrivateAccountStatus, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
 });
@@ -421,38 +420,76 @@ export const RespondToSetPrivateStatusInvalidSession: Sync = (
     { request, error: "Invalid session" },
   ]),
 });
-
 /**
  * Handles a request to determine whether a user is a kid account or a private account.
- * This is treated as a public query.
+ * Requires an authenticated session that matches the requested user.
  */
 export const HandleIsKidOrPrivateAccountRequest: Sync = (
-  { request, user, isKidOrPrivate, results },
+  {
+    request,
+    sessionId,
+    user: targetUser,
+    sessionUser,
+    isKidOrPrivate,
+    results,
+    error,
+  },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/UserAccount/_isKidOrPrivateAccount", user },
+    {
+      path: "/UserAccount/_isKidOrPrivateAccount",
+      sessionId,
+      user: targetUser,
+    },
     { request },
   ]),
   where: async (frames: Frames) => {
     const originalFrame = frames[0];
-
     frames = await frames.query(
-      UserAccount._isKidOrPrivateAccount,
-      { user },
-      { isKidOrPrivate },
+      Sessioning._getUser,
+      { sessionId },
+      { user: sessionUser },
     );
 
     if (frames.length === 0) {
-      const responseFrame = { ...originalFrame, [results]: [] };
-      return new Frames(responseFrame);
+      return new Frames({
+        ...originalFrame,
+        [error]: "Invalid session",
+        [results]: [],
+      });
     }
 
-    return frames.collectAs([isKidOrPrivate], results);
+    // CORRECTED: Compare the values of the two symbols within the frame.
+    frames = frames.filter(($) => $[sessionUser] === $[targetUser]);
+
+    if (frames.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Unauthorized",
+        [results]: [],
+      });
+    }
+
+    frames = await frames.query(
+      UserAccount._isKidOrPrivateAccount,
+      { user: targetUser },
+      { isKidOrPrivate },
+    );
+
+    const values = frames.map((frame) => ({
+      isKidOrPrivate: frame[isKidOrPrivate],
+    }));
+
+    return new Frames({
+      ...originalFrame,
+      [results]: values,
+      [error]: null,
+    });
   },
   then: actions([
     Requesting.respond,
-    { request, results },
+    { request, results, error },
   ]),
 });
 
