@@ -33,6 +33,7 @@ export const inclusions: Record<string, string> = {
   "/api/Song/deleteSong": "Admin action",
   "/api/Chord/createChord": "Admin action",
   "/api/Chord/deleteChord": "Admin action",
+  "/api/Chord/_getChordVocabulary": "Public reference query - returns all possible chord symbols",
   "/api/RecommendationEngine/_getRecommendation":
     "Public query for recommendation details",
 };

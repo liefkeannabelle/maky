@@ -1,7 +1,13 @@
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
-import { listChordSymbols, normalizeChordSymbol } from "../../theory/chords.ts";
+import { 
+  listChordSymbols, 
+  normalizeChordSymbol,
+  generateChordVocabulary,
+  CANONICAL_ROOTS,
+  COMMON_CHORD_SUFFIXES,
+} from "../../theory/chords.ts";
 import { 
   getChordDiagram, 
   getAvailableChordDiagrams, 
@@ -146,5 +152,37 @@ export default class ChordConcept {
    */
   async _hasChordDiagram(params: { name: string }): Promise<{ exists: boolean }> {
     return { exists: hasChordDiagram(params.name.trim()) };
+  }
+
+  // ============ CHORD VOCABULARY QUERIES ============
+
+  /**
+   * _getChordVocabulary (includeSlashChords?: boolean): chord vocabulary info
+   *
+   * Returns all possible chord symbols that the system recognizes.
+   * This is generated from the theory module (12 roots × 53 suffixes).
+   * 
+   * Use this to build a "chord dictionary" or reference page.
+   */
+  async _getChordVocabulary(params: { 
+    includeSlashChords?: boolean 
+  } = {}): Promise<{
+    chords: string[];
+    roots: string[];
+    suffixes: string[];
+    totalCount: number;
+    chordsWithDiagrams: string[];
+  }> {
+    const includeSlash = params.includeSlashChords ?? false;
+    const chords = generateChordVocabulary({ includeSlashChords: includeSlash });
+    const chordsWithDiagrams = getAvailableChordDiagrams();
+    
+    return {
+      chords,
+      roots: [...CANONICAL_ROOTS],
+      suffixes: [...COMMON_CHORD_SUFFIXES],
+      totalCount: chords.length,
+      chordsWithDiagrams,
+    };
   }
 }

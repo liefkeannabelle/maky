@@ -3484,6 +3484,57 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
+### POST /api/Chord/_getChordVocabulary
+
+**Description:** Returns all possible chord symbols that the system recognizes. Generated from the theory module (12 roots × 53 suffixes). Use this to build a chord dictionary or reference page.
+
+**Authentication:** None required (public query).
+
+**Requirements:**
+
+*   None.
+
+**Effects:**
+
+*   Returns the complete chord vocabulary with metadata about roots, suffixes, and which chords have diagrams available.
+
+**Request Body:**
+
+```json
+{
+  "includeSlashChords": false  // optional, default false. If true, includes slash chords like "C/E", "Am/G"
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+{
+  "chords": ["A", "A#", "A#11", "A#13", "A#13sus4", "...", "Gsus4"],
+  "roots": ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"],
+  "suffixes": ["", "m", "sus2", "sus4", "add2", "add9", "add4", "..."],
+  "totalCount": 636,
+  "chordsWithDiagrams": ["A", "A#", "A#m", "A5", "A7", "Ab", "..."]
+}
+```
+
+**Notes:**
+
+- `includeSlashChords: false` returns 636 basic chords
+- `includeSlashChords: true` returns 900 chords (includes inversions)
+- `chordsWithDiagrams` lists chords that have guitar fingering diagrams available
+- Use `roots` and `suffixes` to build filtering/grouping UI
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
 # API Specification: Song Concept
 
 **Purpose:** Manage the global catalog of songs.
