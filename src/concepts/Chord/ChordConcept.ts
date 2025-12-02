@@ -2,6 +2,12 @@ import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 import { listChordSymbols, normalizeChordSymbol } from "../../theory/chords.ts";
+import { 
+  getChordDiagram, 
+  getAvailableChordDiagrams, 
+  hasChordDiagram,
+  ChordDiagram 
+} from "../../theory/chordDiagrams.ts";
 
 
 const PREFIX = "Chord.";
@@ -92,5 +98,53 @@ export default class ChordConcept {
   async _getAllChords(): Promise<{ chords: Chord[] }> {
     const chords = await this.chords.find({}).sort({ name: 1 }).toArray();
     return { chords };
+  }
+
+  // ============ CHORD DIAGRAM QUERIES ============
+
+  /**
+   * _getChordDiagram (name: String): (diagrams: ChordDiagram[] | null)
+   *
+   * Get guitar fingering diagram(s) for a chord.
+   * Returns multiple voicings if available, or null if no diagram exists.
+   */
+  async _getChordDiagram(params: { name: string }): Promise<{ diagrams: ChordDiagram[] | null }> {
+    const diagrams = getChordDiagram(params.name.trim());
+    return { diagrams };
+  }
+
+  /**
+   * _getChordDiagrams (names: String[]): (diagrams: Record<string, ChordDiagram[]>)
+   *
+   * Get guitar fingering diagrams for multiple chords at once.
+   * Returns a map of chord name -> diagrams (empty array if not found).
+   */
+  async _getChordDiagrams(params: { names: string[] }): Promise<{ diagrams: Record<string, ChordDiagram[]> }> {
+    const result: Record<string, ChordDiagram[]> = {};
+    
+    for (const name of params.names) {
+      const diagrams = getChordDiagram(name.trim());
+      result[name] = diagrams || [];
+    }
+    
+    return { diagrams: result };
+  }
+
+  /**
+   * _getAvailableChordDiagrams (): (chords: string[])
+   *
+   * Get list of all chord names that have diagrams available.
+   */
+  async _getAvailableChordDiagrams(): Promise<{ chords: string[] }> {
+    return { chords: getAvailableChordDiagrams() };
+  }
+
+  /**
+   * _hasChordDiagram (name: String): (exists: boolean)
+   *
+   * Check if a diagram exists for a given chord.
+   */
+  async _hasChordDiagram(params: { name: string }): Promise<{ exists: boolean }> {
+    return { exists: hasChordDiagram(params.name.trim()) };
   }
 }

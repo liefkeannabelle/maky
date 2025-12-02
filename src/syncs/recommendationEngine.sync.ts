@@ -1,5 +1,6 @@
 import { actions, Frames, Sync } from "@engine";
 import {
+  Chord,
   ChordLibrary,
   RecommendationEngine,
   Requesting,
@@ -42,7 +43,7 @@ export const TriggerChordRecommendation: Sync = (
       const knownChordsObjs = await ChordLibrary._getKnownChords({
         user: currentUser,
       });
-      const knownChordsList = knownChordsObjs.map((c: any) => c.chord);
+      const knownChordsList = knownChordsObjs.map((c) => c.chord);
 
       // Get All Songs (optimized projection)
       const allSongsList = await Song._getAllSongsForRecommendation({});
@@ -86,7 +87,7 @@ export const SendChordRecommendationResponse: Sync = (
     }, { recommendation });
 
     const newFrames = frames.map((frame) => {
-      const rec = frame[recommendation] as any;
+      const rec = frame[recommendation] as unknown as { user: ID; recommendedChord: string; unlockedSongs: ID[] } | null;
       let payloadVal;
       if (!rec || !rec.recommendedChord) {
         payloadVal = {
@@ -109,7 +110,16 @@ export const SendChordRecommendationResponse: Sync = (
   ),
 });
 
-export const HandleRequestChordRecommendation: Sync = ({ request, knownChords, recommendedChord }) => ({
+/**
+ * Sync: HandleRequestChordRecommendation
+ *
+ * When a request for chord recommendation comes in:
+ * 1. Get all songs for recommendation
+ * 2. Calculate the recommended chord
+ * 3. Fetch the chord diagram for the recommendation
+ * 4. Respond with both the chord and its diagram
+ */
+export const HandleRequestChordRecommendation: Sync = ({ request, knownChords, recommendedChord, diagram }) => ({
   when: actions(
     [Requesting.request, { path: "/RecommendationEngine/requestChordRecommendation", knownChords }, { request }]
   ),
@@ -126,12 +136,24 @@ export const HandleRequestChordRecommendation: Sync = ({ request, knownChords, r
       });
       // result is Array<{ recommendedChord: string }>
       const rec = result.length > 0 ? result[0].recommendedChord : null;
-      newFrames.push({ ...frame, [recommendedChord]: rec });
+      
+      // Fetch diagram for the recommended chord
+      let diagramResult = null;
+      if (rec) {
+        const diagrams = await Chord._getChordDiagram({ name: rec });
+        diagramResult = diagrams.diagrams;
+      }
+      
+      newFrames.push({ 
+        ...frame, 
+        [recommendedChord]: rec,
+        [diagram]: diagramResult
+      });
     }
     return new Frames(...newFrames);
   },
   then: actions(
-    [Requesting.respond, { request, recommendedChord }]
+    [Requesting.respond, { request, recommendedChord, diagram }]
   )
 });
 
@@ -168,51 +190,49 @@ export const HandleRequestPersonalizedSongRecommendation: Sync = ({ request, ses
     [Requesting.request, { path: "/RecommendationEngine/requestPersonalizedSongRecommendation", sessionId }, { request }]
   ),
   where: async (frames) => {
-    console.log("DEBUG: HandleRequestPersonalizedSongRecommendation started");
-    try {
-      frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
-      console.log("DEBUG: User resolved");
+    frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
 
-      const allSongsList = await Song._getAllSongsForRecommendation({});
-      console.log(`DEBUG: Fetched ${allSongsList.length} songs`);
+    const allSongsList = await Song._getAllSongsForRecommendation({});
 
-      const newFrames = [];
-      for (const frame of frames) {
-        const currentUser = frame[user] as ID;
-        console.log(`DEBUG: Processing for user ${currentUser}`);
-        
-        // Get Known Chords
-        const knownChordsObjs = await ChordLibrary._getKnownChords({ user: currentUser });
-        const knownChordsList = knownChordsObjs.map((c) => c.chord);
-        console.log(`DEBUG: Known chords: ${knownChordsList.length}`);
+    const newFrames = [];
+    for (const frame of frames) {
+      const currentUser = frame[user] as ID;
+      
+      // Get Known Chords
+      const knownChordsObjs = await ChordLibrary._getKnownChords({ user: currentUser });
+      const knownChordsList = knownChordsObjs.map((c) => c.chord);
 
-        // Get User Profile for Genre Preferences
-        const profileObjs = await UserProfile._getProfile({ user: currentUser });
-        const genrePreferences = profileObjs.length > 0 ? profileObjs[0].profile.genrePreferences : [];
-        console.log(`DEBUG: Genre prefs: ${genrePreferences}`);
+      // Get User Profile for Genre Preferences
+      const profileObjs = await UserProfile._getProfile({ user: currentUser });
+      const genrePreferences = profileObjs.length > 0 ? profileObjs[0].profile.genrePreferences : [];
 
-        const result = await RecommendationEngine.requestPersonalizedSongRecommendation({
-          knownChords: knownChordsList,
-          allSongs: allSongsList,
-          genrePreferences
-        });
-        console.log("DEBUG: Recommendation calculated");
-        
-        const recs = result.length > 0 ? result[0].recommendedSongs : [];
-        newFrames.push({ ...frame, [recommendedSongs]: recs });
-      }
-      return new Frames(...newFrames);
-    } catch (e) {
-      console.error("DEBUG: Error in HandleRequestPersonalizedSongRecommendation", e);
-      throw e;
+      const result = await RecommendationEngine.requestPersonalizedSongRecommendation({
+        knownChords: knownChordsList,
+        allSongs: allSongsList,
+        genrePreferences
+      });
+      
+      const recs = result.length > 0 ? result[0].recommendedSongs : [];
+      newFrames.push({ ...frame, [recommendedSongs]: recs });
     }
+    return new Frames(...newFrames);
   },
   then: actions(
     [Requesting.respond, { request, recommendedSongs }]
   )
 });
 
-export const HandleRecommendNextChordsForTargetSong: Sync = ({ request, sessionId, targetSong, user, recommendedPath }) => ({
+/**
+ * Sync: HandleRecommendNextChordsForTargetSong
+ *
+ * When a request for learning path comes in:
+ * 1. Resolve user from session
+ * 2. Get user's known chords
+ * 3. Calculate learning path to target song
+ * 4. Fetch diagrams for all chords in the path
+ * 5. Respond with path and diagrams
+ */
+export const HandleRecommendNextChordsForTargetSong: Sync = ({ request, sessionId, targetSong, user, recommendedPath, pathDiagrams }) => ({
   when: actions(
     [Requesting.request, { path: "/RecommendationEngine/recommendNextChordsForTargetSong", sessionId, targetSong }, { request }]
   ),
@@ -234,7 +254,7 @@ export const HandleRecommendNextChordsForTargetSong: Sync = ({ request, sessionI
       const targetSongObj = allSongsObjs.find(s => s._id === targetSongId);
       
       if (!targetSongObj) {
-          newFrames.push({ ...frame, [recommendedPath]: [] }); // Or error
+          newFrames.push({ ...frame, [recommendedPath]: [], [pathDiagrams]: {} });
           continue;
       }
 
@@ -250,12 +270,24 @@ export const HandleRecommendNextChordsForTargetSong: Sync = ({ request, sessionI
       });
       
       const path = result.length > 0 ? result[0].recommendedPath : [];
-      newFrames.push({ ...frame, [recommendedPath]: path });
+      
+      // Fetch diagrams for all chords in the path
+      let diagrams: Record<string, unknown> = {};
+      if (path.length > 0) {
+        const diagramsResult = await Chord._getChordDiagrams({ names: path });
+        diagrams = diagramsResult.diagrams;
+      }
+      
+      newFrames.push({ 
+        ...frame, 
+        [recommendedPath]: path,
+        [pathDiagrams]: diagrams
+      });
     }
     return new Frames(...newFrames);
   },
   then: actions(
-    [Requesting.respond, { request, recommendedPath }]
+    [Requesting.respond, { request, recommendedPath, pathDiagrams }]
   )
 });
 

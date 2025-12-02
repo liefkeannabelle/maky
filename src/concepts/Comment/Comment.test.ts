@@ -473,16 +473,25 @@ Deno.test(
     await commentConcept.comments.deleteMany({});
 
     // Setup: add comments
-    await commentConcept.addCommentToPost({
+    const firstCommentResult = await commentConcept.addCommentToPost({
       post: post1,
       author: userA,
       content: "First",
     });
-    await commentConcept.addCommentToPost({
+    if ("error" in firstCommentResult) {
+      throw new Error("Expected first comment creation to succeed");
+    }
+    const firstCommentId = firstCommentResult.comment;
+
+    const secondCommentResult = await commentConcept.addCommentToPost({
       post: post1,
       author: userB,
       content: "Second",
     });
+    if ("error" in secondCommentResult) {
+      throw new Error("Expected second comment creation to succeed");
+    }
+    const secondCommentId = secondCommentResult.comment;
     await commentConcept.addCommentToPost({
       post: post2,
       author: userA,
@@ -495,8 +504,16 @@ Deno.test(
     });
 
     assertEquals(comments.length, 2);
-    assertEquals(comments[0], { content: "First", author: userA });
-    assertEquals(comments[1], { content: "Second", author: userB });
+    assertEquals(comments[0], {
+      commentId: firstCommentId,
+      content: "First",
+      author: userA,
+    });
+    assertEquals(comments[1], {
+      commentId: secondCommentId,
+      content: "Second",
+      author: userB,
+    });
 
     // Check that it doesn't have other fields
     assert(

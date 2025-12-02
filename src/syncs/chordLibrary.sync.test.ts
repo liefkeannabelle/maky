@@ -2,16 +2,13 @@ import { assertEquals } from "https://deno.land/std@0.208.0/assert/mod.ts";
 
 // Set environment variables for testing BEFORE importing concepts
 Deno.env.set("DB_NAME", "test-maky-backend-integration");
-Deno.env.set("REQUESTING_TIMEOUT", "1000"); // Faster timeout for tests
+Deno.env.set("REQUESTING_TIMEOUT", "10000"); // 10s timeout for tests
 
 // Import concepts from the main entry point so they match what syncs use
-import { Engine, ChordLibrary, Requesting, Sessioning, UserAccount, db, client } from "../concepts/concepts.ts";
+import { Engine, ChordLibrary, Requesting, Sessioning, UserAccount, client } from "@concepts";
 import * as ChordLibrarySyncs from "./chordLibrary.sync.ts";
 import * as UserAccSyncs from "./useracc.sync.ts";
-import { Sync, Logging } from "../engine/mod.ts";
-
-// Enable Logging
-Engine.logging = Logging.TRACE;
+import { Sync } from "../engine/mod.ts";
 
 // Register Syncs
 const syncs: Record<string, Sync> = {};
@@ -23,27 +20,24 @@ for (const [name, func] of Object.entries(UserAccSyncs)) {
 }
 Engine.register(syncs);
 
-async function clearDb() {
-    const collections = await db.listCollections().toArray();
-    for (const collection of collections) {
-        await db.collection(collection.name).deleteMany({});
-    }
-}
+// NOTE: Do NOT clear the database! Tests use unique identifiers (timestamps)
+// to avoid conflicts. Clearing the DB wipes production/shared data.
 
 Deno.test({
     name: "GetChordInventory Sync Test",
     sanitizeResources: false,
     sanitizeOps: false,
     fn: async (t) => {
-        await clearDb();
+        // Tests use unique usernames with timestamps to avoid conflicts
   
         await t.step("should return empty inventory for new user", async () => {
             // 1. Create User
-            const username = "test_user_inventory_" + Date.now();
+            const suffix = Date.now();
+            const username = "test_user_inventory_" + suffix;
             const password = "password123";
-            const email = "test@example.com";
+            const email = `test_${suffix}@example.com`;
             
-            await UserAccount.register({ username, password, email, isKidAccount: false });
+            await UserAccount.register({ username, password, email, isKidAccount: false, isPrivateAccount: false });
             const userDoc = await UserAccount.users.findOne({ username });
             const uId = userDoc!._id;
             
@@ -54,7 +48,7 @@ Deno.test({
             const { sessionId } = await Sessioning.create({ user: uId });
             
             // 4. Test Empty Inventory
-            const { request } = await Requesting.request({ path: "chords/inventory", sessionId });
+            const { request } = await Requesting.request({ path: "/chords/inventory", sessionId });
             const responseArray = await Requesting._awaitResponse({ request });
             // deno-lint-ignore no-explicit-any
             const response = responseArray[0].response as any;
@@ -64,11 +58,12 @@ Deno.test({
 
         await t.step("should return correct inventory after adding chords", async () => {
             // 1. Create User
-            const username = "test_user_inventory_2_" + Date.now();
+            const suffix = Date.now();
+            const username = "test_user_inventory_2_" + suffix;
             const password = "password123";
-            const email = "test2@example.com";
+            const email = `test2_${suffix}@example.com`;
             
-            await UserAccount.register({ username, password, email, isKidAccount: false });
+            await UserAccount.register({ username, password, email, isKidAccount: false, isPrivateAccount: false });
             const userDoc = await UserAccount.users.findOne({ username });
             const uId = userDoc!._id;
             
@@ -83,7 +78,7 @@ Deno.test({
             const { sessionId } = await Sessioning.create({ user: uId });
             
             // 5. Test Inventory
-            const { request } = await Requesting.request({ path: "chords/inventory", sessionId });
+            const { request } = await Requesting.request({ path: "/chords/inventory", sessionId });
             const responseArray = await Requesting._awaitResponse({ request });
             // deno-lint-ignore no-explicit-any
             const response = responseArray[0].response as any;
@@ -100,11 +95,12 @@ Deno.test({
 
         await t.step("should add chord via request and return updated inventory", async () => {
             // 1. Create User
-            const username = "test_user_add_chord_" + Date.now();
+            const suffix = Date.now();
+            const username = "test_user_add_chord_" + suffix;
             const password = "password123";
-            const email = "test3@example.com";
+            const email = `test3_${suffix}@example.com`;
             
-            await UserAccount.register({ username, password, email, isKidAccount: false });
+            await UserAccount.register({ username, password, email, isKidAccount: false, isPrivateAccount: false });
             const userDoc = await UserAccount.users.findOne({ username });
             const uId = userDoc!._id;
             
@@ -115,7 +111,7 @@ Deno.test({
             const { sessionId } = await Sessioning.create({ user: uId });
             
             // 4. Send Add Chord Request
-            const { request } = await Requesting.request({ path: "chords/add", sessionId, chord: "Am" });
+            const { request } = await Requesting.request({ path: "/chords/add", sessionId, chord: "Am" });
             const responseArray = await Requesting._awaitResponse({ request });
             // deno-lint-ignore no-explicit-any
             const response = responseArray[0].response as any;

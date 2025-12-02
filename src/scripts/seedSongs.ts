@@ -18,6 +18,7 @@ type RawSong = {
   id: string;
   title: string;
   artist: string;
+  genre?: string | null;  // Primary genre from Spotify
   key?: string | null;
   tempo?: number | null;
   chords: string[];
@@ -48,14 +49,14 @@ async function main() {
     console.log(`[debug] rawSongs[${idx}].id =`, s.id);
 
     // Filter out placeholder songs
-    if (s.title.startsWith("Chordonomicon Song") || 
-        s.artist.startsWith("Artist ") || 
-        s.artist === "Unknown Artist" ||
-        s.artist.includes("Unknown")) {
-      console.log(`[${idx}] Skipping invalid metadata: "${s.title}" – ${s.artist}`);
-      skipped_invalid++;
-      continue;
-    }
+    // if (s.title.startsWith("Chordonomicon Song") || 
+    //     s.artist.startsWith("Artist ") || 
+    //     s.artist === "Unknown Artist" ||
+    //     s.artist.includes("Unknown")) {
+    //   console.log(`[${idx}] Skipping invalid metadata: "${s.title}" – ${s.artist}`);
+    //   skipped_invalid++;
+    //   continue;
+    // }
 
     try {
       await songConcept.createSong({
@@ -63,8 +64,8 @@ async function main() {
         title: s.title,
         artist: s.artist ?? "Unknown",
         chords: s.chords,
-        // genre is optional; you can derive it from tags if you want
-        genre: undefined,
+        // Use genre from JSON if available, otherwise undefined
+        genre: s.genre ?? undefined,
         key: s.key ?? undefined,
         tempo: s.tempo ?? undefined,
         simplifiedChords: s.simplifiedChords,

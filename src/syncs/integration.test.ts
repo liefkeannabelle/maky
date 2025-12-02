@@ -22,7 +22,7 @@ Deno.test("Integration: Auto-Add Chords", testOptions, async () => {
   // 1. Setup
   const suffix = Math.floor(Math.random() * 100000);
   const user = `user:test-integration-${suffix}` as ID;
-  
+
   // Initialize libraries for user
   await SongLibrary.addUser({ user });
   await ChordLibrary.addUser({ user });
@@ -83,59 +83,66 @@ Deno.test("Integration: Search Sync", testOptions, async () => {
   assertEquals(response.results[0].title, title);
 });
 
-Deno.test("Integration: Chord Addition & Recommendation", testOptions, async () => {
-  // 1. Setup
-  const suffix = Math.floor(Math.random() * 100000);
-  const user = `user:chord-adder-${suffix}` as ID;
-  await ChordLibrary.addUser({ user });
-  
-  // Create session
-  const sessionRes = await Sessioning.create({ user });
-  const sessionId = sessionRes.sessionId;
+Deno.test(
+  "Integration: Chord Addition & Recommendation",
+  testOptions,
+  async () => {
+    // 1. Setup
+    const suffix = Math.floor(Math.random() * 100000);
+    const user = `user:chord-adder-${suffix}` as ID;
+    await ChordLibrary.addUser({ user });
 
-  // Create some songs to recommend
-  await Song.createSong({
-    title: `Rec Song ${suffix}`,
-    artist: "Rec",
-    chords: ["C", "Am"], // Needs C and Am
-  });
-  
-  // 2. Action: Add Chord 'C'
-  // This triggers HandleChordAdditionRequest -> RespondToChordAddition
-  const reqRes = await Requesting.request({
-    path: "/chords/add",
-    sessionId,
-    chord: "C",
-  });
-  const requestId = reqRes.request;
+    // Create session
+    const sessionRes = await Sessioning.create({ user });
+    const sessionId = sessionRes.sessionId;
 
-  // 3. Wait for Response
-  const responses = await Requesting._awaitResponse({ request: requestId });
-  const responseWrapper = responses[0].response as {
-    response: {
-      success: boolean;
-      normalizedChord: string;
-      inventory: string[];
-      recommendation: { recommendedChord: string | null };
+    // Create some songs to recommend
+    await Song.createSong({
+      title: `Rec Song ${suffix}`,
+      artist: "Rec",
+      chords: ["C", "Am"], // Needs C and Am
+    });
+
+    // 2. Action: Add Chord 'C'
+    // This triggers HandleChordAdditionRequest -> RespondToChordAddition
+    const reqRes = await Requesting.request({
+      path: "/chords/add",
+      sessionId,
+      chord: "C",
+    });
+    const requestId = reqRes.request;
+
+    // 3. Wait for Response
+    const responses = await Requesting._awaitResponse({ request: requestId });
+    const responseWrapper = responses[0].response as {
+      response: {
+        success: boolean;
+        normalizedChord: string;
+        inventory: string[];
+        recommendation: { recommendedChord: string | null };
+      };
     };
-  };
-  const response = responseWrapper.response;
+    const response = responseWrapper.response;
 
-  // 4. Verify
-  // Response should contain: success, inventory, playableSongs, recommendation
-  assertEquals(response.success, true);
-  assertEquals(response.normalizedChord, "C");
-  
-  // Inventory should have C
-  assertEquals(response.inventory.includes("C"), true);
-  
-  // Recommendation should suggest something
-  if (response.recommendation && response.recommendation.recommendedChord) {
-      console.log("Recommended chord:", response.recommendation.recommendedChord);
+    // 4. Verify
+    // Response should contain: success, inventory, playableSongs, recommendation
+    assertEquals(response.success, true);
+    assertEquals(response.normalizedChord, "C");
+
+    // Inventory should have C
+    assertEquals(response.inventory.includes("C"), true);
+
+    // Recommendation should suggest something
+    if (response.recommendation && response.recommendation.recommendedChord) {
+      console.log(
+        "Recommended chord:",
+        response.recommendation.recommendedChord,
+      );
       // We accept any recommendation as valid for this integration test
       // since the DB has many songs influencing the algorithm.
       assertEquals(typeof response.recommendation.recommendedChord, "string");
-  } else {
+    } else {
       console.log("No recommendation returned.");
-  }
-});
+    }
+  },
+);

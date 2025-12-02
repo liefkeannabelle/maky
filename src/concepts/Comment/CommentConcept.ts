@@ -164,25 +164,33 @@ export default class CommentConcept {
     return { success: true };
   }
   /**
-   * _getCommentsForPostId (post: Post): ([{ comments: {content: String, author: User}[] }])
+   * _getCommentsForPostId (post: Post): ([{ comments: {commentId: Comment, content: String, author: User}[] }])
    *
    * **requires** The `post` exists.
    * **effects** Returns a single-element array, where the first element wraps the list of
-   * simplified comment objects (`{ content, author }`) for the given `post`.
+   * simplified comment objects (`{ commentId, content, author }`) for the given `post`.
    */
   async _getCommentsForPostId(
     { post }: { post: Post },
-  ): Promise<Array<{ comments: { content: string; author: User }[] }>> {
+  ): Promise<
+    Array<{ comments: { commentId: Comment; content: string; author: User }[] }>
+  > {
     const comments = await this.comments
       .find({ post })
-      .project<{ content: string; author: User }>({
-        _id: 0,
+      .project<{ _id: Comment; content: string; author: User }>({
+        _id: 1,
         content: 1,
         author: 1,
       })
       .sort({ createdAt: 1 })
       .toArray();
 
-    return [{ comments }];
+    const simplified = comments.map(({ _id, content, author }) => ({
+      commentId: _id,
+      content,
+      author,
+    }));
+
+    return [{ comments: simplified }];
   }
 }

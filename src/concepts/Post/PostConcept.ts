@@ -235,35 +235,28 @@ export default class PostConcept {
     return { success: true };
   }
 
-  /**
-   * _getPostsForUser (user: User): (post: PostDoc)
-   *
-   * **requires** The `user` exists.
-   * **effects** Returns all posts authored by the given `user`, ordered by creation date (newest first).
-   */
-  async _getPostsForUser(
-    { user }: { user: User },
-  ): Promise<{ post: PostDoc }[]> {
-    const posts = await this.posts.find({ author: user })
-      .sort({ createdAt: -1 })
-      .toArray();
-    return posts.map((post) => ({ post }));
-  }
+  // NOTE: `_getPostsForUser` is currently disabled while we consolidate feed queries under
+  // `_getPostsViewableToUser`. Keeping the implementation commented preserves historical
+  // behavior if we need to restore it quickly.
+  // async _getPostsForUser(
+  //   { user }: { user: User },
+  // ): Promise<{ post: PostDoc }[]> {
+  //   const posts = await this.posts.find({ author: user })
+  //     .sort({ createdAt: -1 })
+  //     .toArray();
+  //   return posts.map((post) => ({ post }));
+  // }
 
-  /**
-   * _getPublicPostsForUser (user: User): (post: PostDoc)
-   *
-   * **requires** The `user` exists.
-   * **effects** Returns all `PUBLIC` posts authored by the given `user`, ordered by creation date (newest first).
-   */
-  async _getPublicPostsForUser(
-    { user }: { user: User },
-  ): Promise<{ post: PostDoc }[]> {
-    const posts = await this.posts.find({ author: user, visibility: "PUBLIC" })
-      .sort({ createdAt: -1 })
-      .toArray();
-    return posts.map((post) => ({ post }));
-  }
+  // NOTE: `_getPublicPostsForUser` is also disabled; `_getPostsViewableToUser` now governs
+  // how public/friend content is fetched for a viewer.
+  // async _getPublicPostsForUser(
+  //   { user }: { user: User },
+  // ): Promise<{ post: PostDoc }[]> {
+  //   const posts = await this.posts.find({ author: user, visibility: "PUBLIC" })
+  //     .sort({ createdAt: -1 })
+  //     .toArray();
+  //   return posts.map((post) => ({ post }));
+  // }
 
   /**
    * _getPrivatePostsForUser (user: User): (post: PostDoc)
@@ -281,22 +274,34 @@ export default class PostConcept {
   }
 
   /**
-   * _getPostsForUsers (users: set of User): (post: PostDoc)
+   * _getPostAuthor (post: Post): (author: User)
+   *
+   * **requires** The `post` exists.
+   * **effects** Returns the author for the specified post so callers can enforce authorization.
+   */
+  async _getPostAuthor(
+    { post }: { post: ID },
+  ): Promise<{ author: User }[]> {
+    const found = await this.posts.findOne(
+      { _id: post },
+      { projection: { author: 1 } },
+    );
+
+    if (!found) {
+      return [];
+    }
+
+    return [{ author: found.author }];
+  }
+
+  /**
+   * _getPostsViewableToUsers (users: set of User): (post: PostDoc)
    *
    * **requires** All `users` exist.
    * **effects** Returns all posts authored by any of the given `users`, ordered by creation date (newest first).
    */
-  async _getPostsForUsers(
-    { users }: { users: User[] },
-  ): Promise<{ post: PostDoc }[]> {
-    if (!users || users.length === 0) {
-      return [];
-    }
-    const posts = await this.posts.find({ author: { $in: users } })
-      .sort({ createdAt: -1 })
-      .toArray();
-    return posts.map((post) => ({ post }));
-  }
+  // `_getPostsViewableToUsers` removed: feed composition is handled by per-user
+  // private/public queries and synchronization logic in `post.sync.ts`.
 
   /**
    * _getPublicPostsForUsers (users: set of User): (post: PostDoc)

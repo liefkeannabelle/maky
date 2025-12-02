@@ -1,8 +1,7 @@
-import { actions, Sync } from "@engine";
+import { actions, Frames, Sync } from "@engine";
 import {
   ChordLibrary,
   Comment,
-  Following,
   Friendship,
   Post,
   Reaction,
@@ -19,7 +18,7 @@ import {
  * This is a public endpoint and does not require a session.
  */
 export const HandleRegisterRequest: Sync = (
-  { request, username, email, password, isKidAccount },
+  { request, username, email, password, isKidAccount, isPrivateAccount },
 ) => ({
   when: actions(
     [
@@ -30,12 +29,19 @@ export const HandleRegisterRequest: Sync = (
         email,
         password,
         isKidAccount,
+        isPrivateAccount,
       },
       { request },
     ],
   ),
   then: actions(
-    [UserAccount.register, { username, email, password, isKidAccount }],
+    [UserAccount.register, {
+      username,
+      email,
+      password,
+      isKidAccount,
+      isPrivateAccount,
+    }],
   ),
 });
 
@@ -334,6 +340,159 @@ export const RespondToSetKidStatusError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
+/**
+ * Handles a request to set the 'isPrivateAccount' status, authenticating via session.
+ */
+export const HandleSetPrivateStatusRequest: Sync = (
+  { request, sessionId, status, user },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/UserAccount/setPrivateAccountStatus", sessionId, status },
+      { request },
+    ],
+  ),
+  where: (frames) =>
+    frames.query(Sessioning._getUser, { sessionId: sessionId }, { user }),
+  then: actions(
+    [UserAccount.setPrivateAccountStatus, { user, status }],
+  ),
+});
+
+/**
+ * Responds to a successful 'isPrivateAccount' status update.
+ */
+export const RespondToSetPrivateStatusSuccess: Sync = (
+  { request, success },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/UserAccount/setPrivateAccountStatus" },
+      { request },
+    ],
+    [UserAccount.setPrivateAccountStatus, {}, { success }],
+  ),
+  then: actions([Requesting.respond, { request, success }]),
+});
+
+/**
+ * Responds to a failed 'isPrivateAccount' status update.
+ */
+export const RespondToSetPrivateStatusError: Sync = ({ request, error }) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/UserAccount/setPrivateAccountStatus" },
+      { request },
+    ],
+    [UserAccount.setPrivateAccountStatus, {}, { error }],
+  ),
+  then: actions([Requesting.respond, { request, error }]),
+});
+
+/**
+ * Responds when a private-status update is attempted with an invalid session.
+ */
+export const RespondToSetPrivateStatusInvalidSession: Sync = (
+  { request, sessionId, _user },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/UserAccount/setPrivateAccountStatus", sessionId },
+    { request },
+  ]),
+  where: async (frames: Frames) => {
+    const originalFrame = frames[0];
+    const sessionFrames = await frames.query(
+      Sessioning._getUser,
+      { sessionId },
+      { user: _user },
+    );
+    if (sessionFrames.length === 0) {
+      return new Frames({ ...originalFrame });
+    }
+    return sessionFrames.filter(() => false);
+  },
+  then: actions([
+    Requesting.respond,
+    { request, error: "Invalid session" },
+  ]),
+});
+/**
+ * Handles a request to determine whether a user is a kid account or a private account.
+ * Requires an authenticated session that matches the requested user.
+ */
+export const HandleIsKidOrPrivateAccountRequest: Sync = (
+  {
+    request,
+    sessionId,
+    user: targetUser,
+    sessionUser,
+    isKidOrPrivate,
+    results,
+    error,
+  },
+) => ({
+  when: actions([
+    Requesting.request,
+    {
+      path: "/UserAccount/_isKidOrPrivateAccount",
+      sessionId,
+      user: targetUser,
+    },
+    { request },
+  ]),
+  where: async (frames: Frames) => {
+    const originalFrame = frames[0];
+    frames = await frames.query(
+      Sessioning._getUser,
+      { sessionId },
+      { user: sessionUser },
+    );
+
+    if (frames.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Invalid session",
+        [results]: [],
+      });
+    }
+
+    // CORRECTED: Compare the values of the two symbols within the frame.
+    frames = frames.filter(($) => $[sessionUser] === $[targetUser]);
+
+    if (frames.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Unauthorized",
+        [results]: [],
+      });
+    }
+
+    frames = await frames.query(
+      UserAccount._isKidOrPrivateAccount,
+      { user: targetUser },
+      { isKidOrPrivate },
+    );
+
+    const values = frames.map((frame) => ({
+      isKidOrPrivate: frame[isKidOrPrivate],
+    }));
+
+    return new Frames({
+      ...originalFrame,
+      [results]: values,
+      [error]: null,
+    });
+  },
+  then: actions([
+    Requesting.respond,
+    { request, results, error },
+  ]),
+});
+
 // --- Delete Account (Authenticated) ---
 
 /**
@@ -399,8 +558,6 @@ export const OnDeleteAccount: Sync = ({ user }) => ({
     [ChordLibrary.removeUser, { user }],
     [SongLibrary.removeUser, { user }],
     [Friendship.removeAllFriendshipsForUser, { user }],
-    [Following.removeUserFollowing, { user }], // Removes user's outbound follows
-    [Following.removeUserAsFollower, { user }], // Removes user's inbound follows
     [Post.removeAllPostsForUser, { user }], // Removes all posts by the user
     [Comment.removeAllCommentsForUser, { user }], // Removes all comments by the user
     [Reaction.removeAllReactionsForUser, { user }], // Removes all reactions by the user

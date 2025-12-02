@@ -23,6 +23,7 @@ type User = ID;
  *  an email String
  *  a passwordHash String
  *  a isKidAccount Boolean
+ *  a isPrivateAccount Boolean
  */
 interface UserDoc {
   _id: User;
@@ -30,6 +31,7 @@ interface UserDoc {
   email: string;
   passwordHash: string;
   isKidAccount: boolean;
+  isPrivateAccount: boolean;
 }
 
 /**
@@ -47,17 +49,18 @@ export default class UserAccountConcept {
   }
 
   /**
-   * register (username: String, email: String, password: String, isKidAccount: Boolean): (user: User)
+   * register (username: String, email: String, password: String, isKidAccount: Boolean, isPrivateAccount: Boolean): (user: User)
    *
    * **requires** No User exists with the given `username` or `email`.
-   * **effects** Creates a new User; sets its `username`, `email`, `isKidAccount` status, and a hash of the `password`; returns the new user.
+   * **effects** Creates a new User; sets its `username`, `email`, `isKidAccount` status, `isPrivateAccount` status, and a hash of the `password`; returns the new user.
    */
   async register(
-    { username, email, password, isKidAccount }: {
+    { username, email, password, isKidAccount, isPrivateAccount }: {
       username: string;
       email: string;
       password: string;
       isKidAccount: boolean;
+      isPrivateAccount: boolean;
     },
   ): Promise<{ user: User } | { error: string }> {
     try {
@@ -76,6 +79,7 @@ export default class UserAccountConcept {
         email,
         passwordHash,
         isKidAccount,
+        isPrivateAccount,
       };
 
       await this.users.insertOne(newUser);
@@ -217,6 +221,27 @@ export default class UserAccountConcept {
   }
 
   /**
+   * setPrivateAccountStatus (user: User, status: Boolean): (success: Boolean)
+   *
+   * **requires** The `user` exists.
+   * **effects** Sets the `isPrivateAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
+   */
+  async setPrivateAccountStatus(
+    { user: userId, status }: { user: User; status: boolean },
+  ): Promise<{ success: true } | { error: string }> {
+    const result = await this.users.updateOne(
+      { _id: userId },
+      { $set: { isPrivateAccount: status } },
+    );
+
+    if (result.matchedCount === 0) {
+      return { error: "User not found" };
+    }
+
+    return { success: true };
+  }
+
+  /**
    * deleteAccount (user: User, password: String): (success: Boolean)
    *
    * **requires** The `user` exists and the provided `password` matches their `passwordHash`.
@@ -267,5 +292,21 @@ export default class UserAccountConcept {
   ): Promise<{ result: boolean }[]> {
     const count = await this.users.countDocuments({ _id: userId });
     return [{ result: count > 0 }];
+  }
+
+  /**
+   * _isKidOrPrivateAccount (user: User): (isKidOrPrivate: Boolean)
+   *
+   * **requires**: a User with the given `user` id exists.
+   * **effects**: returns `true` as `isKidOrPrivate` if the user is a kid account or a private account, `false` otherwise.
+   */
+  async _isKidOrPrivateAccount(
+    { user: userId }: { user: User },
+  ): Promise<{ isKidOrPrivate: boolean }[]> {
+    const user = await this.users.findOne({ _id: userId });
+    if (user) {
+      return [{ isKidOrPrivate: user.isKidAccount || user.isPrivateAccount }];
+    }
+    return [{ isKidOrPrivate: false }];
   }
 }

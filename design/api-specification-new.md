@@ -60,7 +60,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - No User exists with the given `username` or `email`.
 
 **Effects:**
-- Creates a new User; sets its `username`, `email`, `isKidAccount` status, and a hash of the `password`; returns the new user.
+- Creates a new User; sets its `username`, `email`, `isKidAccount` status, `isPrivateAccount` status, and a hash of the `password`; returns the new user.
 
 **Request Body:**
 ```json
@@ -68,7 +68,8 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "username": "string",
   "email": "string",
   "password": "string",
-  "isKidAccount": "boolean"
+  "isKidAccount": "boolean",
+  "isPrivateAccount": "boolean"
 }
 ```
 
@@ -227,6 +228,40 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
+### POST /api/UserAccount/setPrivateAccountStatus
+
+**Description:** Sets the 'isPrivateAccount' status for a given user.
+
+**Authentication:** Requires a valid `sessionId`. The user is automatically extracted from the session.
+
+**Requirements:**
+- The user associated with `sessionId` exists.
+
+**Effects:**
+- Sets the `isPrivateAccount` status for the authenticated user to the provided `status`; returns `true` as `success`.
+
+**Request Body:**
+```json
+{
+  "sessionId": "string",
+  "status": "boolean"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "success": "boolean"
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
 ### POST /api/UserAccount/deleteAccount
 
 **Description:** Deletes a user's account after verifying their password.
@@ -291,6 +326,46 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ```json
 {
   "error": "string"
+}
+```
+---
+### POST /api/UserAccount/_isKidOrPrivateAccount
+
+**Description:** Determines if a user account is marked as a kid account, a private account, or both.
+
+**Authentication:** Requires a valid `sessionId`. The requester must match the `user` being queried.
+
+**Requirements:**
+- A User exists with the given `user` ID and the session corresponds to that user.
+
+**Effects:**
+- Returns `true` as `isKidOrPrivate` if the user is a kid account or a private account (or both), `false` otherwise. The HTTP response is wrapped in `{ "results": [...], "error": string | null }` to reflect authentication failures.
+
+**Request Body:**
+```json
+{
+  "sessionId": "string",
+  "user": "ID"
+}
+```
+
+**Success Response Body (Query):**
+```json
+{
+  "results": [
+    {
+      "isKidOrPrivate": true
+    }
+  ],
+  "error": null
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "results": [],
+  "error": "string" // e.g., "Invalid session" or "Unauthorized"
 }
 ```
 ---
@@ -645,40 +720,47 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ---
 ### POST /api/UserProfile/_getProfile
 
-**Description:** Retrieves all public profile information for a given user.
+**Description:** Retrieves all profile information for a given user.
+
+**Authentication:** Requires a valid `sessionId`. The session user must either match the requested `user` or already be accepted friends with that user.    
 
 **Requirements:**
-- The `user` must exist.
+- The `user` must exist. The requester must be the same user or an accepted friend.
 
 **Effects:**
-- Returns an array containing a single profile object for the specified user. If the user or profile does not exist, an empty array is returned.
+- Returns an array containing a single profile object for the specified user (or an empty array when no profile exists) and wraps it in the `{ "results": [...], "error": string | null }` envelope used by authenticated queries.
 
 **Request Body:**
 ```json
 {
+  "sessionId": "string",
   "user": "string"
 }
 ```
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "profile": {
-      "displayName": "string",
-      "bio": "string",
-      "avatarUrl": "string",
-      "genrePreferences": ["string"],
-      "skillLevel": "string",
-      "targetSong": "string"
+{
+  "results": [
+    {
+      "profile": {
+        "displayName": "string",
+        "bio": "string",
+        "avatarUrl": "string",
+        "genrePreferences": ["string"],
+        "skillLevel": "string",
+        "targetSong": "string"
+      }
     }
-  }
-]
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
 ```
@@ -835,91 +917,55 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "error": "string"
 }
 ```
----
-### POST /api/Post/_getPostsForUser
 
-**Description:** Retrieves all posts authored by a specific user.
+### POST /api/Post/_getPostsViewableToUser
+
+**Description:** Retrieves the personalized feed for a single viewer. The synchronization layer gathers the viewer's accepted friends (plus the viewer) and queries per-user endpoints (private/public) to assemble the feed according to friendship rules.
+
+**Authentication:** Requires a valid `sessionId`. The session user must match the `user` provided in the request.
 
 **Requirements:**
-- The `user` must exist.
+- The `user` exists and matches the authenticated session.
+- Friendship data is used server-side; nothing extra is required from the client beyond the viewer's identity.
 
 **Effects:**
-- Returns an array of all posts authored by the specified `user`, ordered by creation date (newest first). If the user has no posts, an empty array is returned.
+- Returns all posts authored by the viewer or their accepted friends, ordered by creation date (newest first), wrapped in the `{ "results": [...], "error": string | null }` query envelope. Private posts only show up when authored by the viewer; friends contribute their public posts.
 
 **Request Body:**
 ```json
 {
+  "sessionId": "string",
   "user": "string"
 }
 ```
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "post": {
-      "_id": "string",
-      "author": "string",
-      "content": "string",
-      "items": ["string"],
-      "postType": "string",
-      "visibility": "string",
-      "createdAt": "string",
-      "editedAt": "string"
+{
+  "results": [
+    {
+      "post": {
+        "_id": "string",
+        "author": "string",
+        "content": "string",
+        "items": ["string"],
+        "postType": "string",
+        "visibility": "string",
+        "createdAt": "string",
+        "editedAt": "string"
+      }
     }
-  }
-]
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
-```
----
-### POST /api/Post/_getPostsForUsers
-
-**Description:** Retrieves all posts authored by any of the specified users. Useful for building feeds that show posts from multiple users.
-
-**Requirements:**
-- All `users` in the array must exist.
-
-**Effects:**
-- Returns an array of all posts authored by any of the specified `users`, ordered by creation date (newest first). If none of the users have posts, an empty array is returned.
-
-**Request Body:**
-```json
-{
-  "users": ["string"]
-}
-```
-
-**Success Response Body (Query):**
-```json
-[
-  {
-    "post": {
-      "_id": "string",
-      "author": "string",
-      "content": "string",
-      "items": ["string"],
-      "postType": "string",
-      "visibility": "string",
-      "createdAt": "string",
-      "editedAt": "string"
-    }
-  }
-]
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
-```
 ```
 
 ---
@@ -960,48 +1006,6 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 
-### POST /api/Post/_getPublicPostsForUser
-
-**Description:** Retrieves all public posts authored by a specific user.
-
-**Requirements:**
-- The `user` must exist.
-
-**Effects:**
-- Returns an array of all posts authored by the specified `user` where `visibility` is `PUBLIC`, ordered by creation date (newest first). If the user has no public posts, an empty array is returned.
-
-**Request Body:**
-```json
-{
-  "user": "string"
-}
-```
-
-**Success Response Body (Query):**
-```json
-[
-  {
-    "post": {
-      "_id": "string",
-      "author": "string",
-      "content": "string",
-      "items": ["string"],
-      "postType": "string",
-      "visibility": "string",
-      "createdAt": "string",
-      "editedAt": "string"
-    }
-  }
-]
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
----
 
 ### POST /api/Post/_getPersonalPrivatePosts
 
@@ -1013,7 +1017,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The `sessionId` is valid and belongs to the same user provided in `user`.
 
 **Effects:**
-- Returns all `PRIVATE` posts authored by the authenticated user, ordered by creation date (newest first).
+- Returns all `PRIVATE` posts authored by the authenticated user, ordered by creation date (newest first), inside the `{ "results": [...], "error": string | null }` envelope so authentication failures can be surfaced consistently.
 
 **Request Body:**
 ```json
@@ -1025,25 +1029,29 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "post": {
-      "_id": "string",
-      "author": "string",
-      "content": "string",
-      "items": ["string"],
-      "postType": "string",
-      "visibility": "string",
-      "createdAt": "string",
-      "editedAt": "string"
+{
+  "results": [
+    {
+      "post": {
+        "_id": "string",
+        "author": "string",
+        "content": "string",
+        "items": ["string"],
+        "postType": "string",
+        "visibility": "string",
+        "createdAt": "string",
+        "editedAt": "string"
+      }
     }
-  }
-]
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
 ```
@@ -1059,7 +1067,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The `sessionId` belongs to the same user identified by `user`.
 
 **Effects:**
-- Returns all `PUBLIC` posts authored by the authenticated user, ordered by creation date (newest first).
+- Returns all `PUBLIC` posts authored by the authenticated user, ordered by creation date (newest first), wrapped in the `{ "results": [...], "error": string | null }` envelope.
 
 **Request Body:**
 ```json
@@ -1071,25 +1079,29 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "post": {
-      "_id": "string",
-      "author": "string",
-      "content": "string",
-      "items": ["string"],
-      "postType": "string",
-      "visibility": "string",
-      "createdAt": "string",
-      "editedAt": "string"
+{
+  "results": [
+    {
+      "post": {
+        "_id": "string",
+        "author": "string",
+        "content": "string",
+        "items": ["string"],
+        "postType": "string",
+        "visibility": "string",
+        "createdAt": "string",
+        "editedAt": "string"
+      }
     }
-  }
-]
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
 ```
@@ -1322,38 +1334,46 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ### POST /api/Comment/_getCommentsForPostId
 
-**Description:** Retrieves a simplified list of comments for a specific post. The response is a single-element array whose first object exposes the `comments` array.
+**Description:** Retrieves a simplified list of comments for a specific post. Requires authentication so only the post author or their accepted friends can view the thread.
+
+**Authentication:** Requires a valid `sessionId` belonging to either the post author or an accepted friend of the author.
 
 **Requirements:**
 - The `post` must exist.
 
 **Effects:**
-- Returns a single-element array; the element contains a `comments` property holding the simplified comment objects (`{ content, author }`).
+- Returns a single-element array; the element contains a `comments` property holding the simplified comment objects (`{ commentId, content, author }`), wrapped in the `{ "results": [...], "error": string | null }` envelope.
 
 **Request Body:**
 ```json
 {
-  "post": "Post"
+  "sessionId": "string",
+  "post": "string"
 }
 ```
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "comments": [
-      {
-        "content": "string",
-        "author": "User"
-      }
-    ]
-  }
-]
+{
+  "results": [
+    {
+      "comments": [
+        {
+          "commentId": "string",
+          "content": "string",
+          "author": "string"
+        }
+      ]
+    }
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
 ```
@@ -1536,43 +1556,49 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ---
 
 ### POST /api/Reaction/_getReactionsForPostId
-**Description:** Retrieves a summary of reaction counts, grouped by type, for a specific post.
+**Description:** Retrieves a summary of reaction counts, grouped by type, for a specific post. Requires authentication so only the post author or their accepted friends can view aggregate reactions.
+
+**Authentication:** Requires a valid `sessionId` that belongs to the post author or an accepted friend of the author.
 
 **Requirements:**
-
--   The `post` exists.
+- The `post` exists.
 
 **Effects:**
-- Returns an array of objects, each containing a reaction `type` and its total `count` for the given `post`. Includes types with a count of 0.
+- Returns an array of objects, each containing a reaction `type` and its total `count` for the given `post` (including types with a count of 0), wrapped in the `{ "results": [...], "error": string | null }` envelope.
 
 **Request Body:**
 ```json
 {
+  "sessionId": "string",
   "post": "string"
 }
 ```
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "type": "LIKE",
-    "count": 5
-  },
-  {
-    "type": "LOVE",
-    "count": 2
-  },
-  {
-    "type": "CELEBRATE",
-    "count": 0
-  }
-]
+{
+  "results": [
+    {
+      "type": "LIKE",
+      "count": 5
+    },
+    {
+      "type": "LOVE",
+      "count": 2
+    },
+    {
+      "type": "CELEBRATE",
+      "count": 0
+    }
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
 ```
@@ -1807,31 +1833,38 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Description:** Retrieves a list of all users who are friends with the specified user.
 
+**Authentication:** Requires a valid `sessionId`. The session user must match the requested `user`.
+
 **Requirements:**
-- The user `user` exists.
+- The user `user` exists and matches the authenticated session.
 
 **Effects:**
-- Returns a set of all users `f` for whom a `Friendship` exists with `status` `ACCEPTED` between `user` and `f`.
+- Returns a set of all users `f` for whom a `Friendship` exists with `status` `ACCEPTED` between `user` and `f`, wrapped in the `{ "results": [...], "error": string | null }` response envelope used by authenticated queries.
 
 **Request Body:**
 ```json
 {
+  "sessionId": "string",
   "user": "string"
 }
 ```
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "friend": "string"
-  }
-]
+{
+  "results": [
+    {
+      "friend": "string"
+    }
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
 ```
@@ -1842,38 +1875,45 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Description:** Retrieves a list of all incoming friend requests that are pending for a specific user.
 
+**Authentication:** Requires a valid `sessionId`. The session user must match the requested `user`.
+
 **Requirements:**
-- The user `user` exists.
+- The user `user` exists and matches the authenticated session.
 
 **Effects:**
-- Returns a one-element array containing an object. This object has a single key `pendingFriendships` whose value is a set of all pending `Friendship` requests where the specified `user` is the `recipient`. Each entry in the set contains the `requester`.
+- Returns a one-element array (inside the `{ "results": [...], "error": string | null }` envelope) whose object has a single key `pendingFriendships` with all pending requests where the specified `user` is the `recipient`. Each entry in the set contains the `requester`.
 
 **Request Body:**
 ```json
 {
+  "sessionId": "string",
   "user": "string"
 }
 ```
 
 **Success Response Body (Query):**
 ```json
-[
-  {
-    "pendingFriendships": [
-      {
-        "requester": "string"
-      }
-    ]
-  }
-]
+{
+  "results": [
+    {
+      "pendingFriendships": [
+        {
+          "requester": "string"
+        }
+      ]
+    }
+  ],
+  "error": null
+}
 ```
 
 **Error Response Body:**
 ```json
 {
+  "results": [],
   "error": "string"
 }
-
+```
 ---
 
 # API Specification: JamGroup Concept
@@ -2210,80 +2250,6 @@ After a user logs in, all authenticated API requests should include a `sessionId
 {
   "sessionId": "string",
   "session": "string"
-}
-```
-
-**Success Response Body (Action):**
-```json
-{}
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
----
-# API Specification: Following Concept
-
-**Purpose:** To allow users to subscribe to content and updates from other users.
-
----
-
-## API Endpoints
-
-### POST /api/Following/followUser
-
-**Description:** Allows a user to follow another user.
-
-**Authentication:** Requires a valid `sessionId`. The follower is automatically extracted from the session.
-
-**Requirements:**
-- The user associated with `sessionId` and `followed` are distinct Users. The authenticated user is not currently following the `followed` user.
-
-**Effects:**
-- Creates a new `Follow` object; sets `follower` to the authenticated user and `followed`; sets `followedAt` to the current time; returns the new `follow` object.
-
-**Request Body:**
-```json
-{
-  "sessionId": "string",
-  "followed": "string"
-}
-```
-
-**Success Response Body (Action):**
-```json
-{
-  "follow": "string"
-}
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
----
-### POST /api/Following/unfollowUser
-
-**Description:** Allows a user to unfollow another user.
-
-**Authentication:** Requires a valid `sessionId`. The follower is automatically extracted from the session.
-
-**Requirements:**
-- A `Follow` object exists where the user associated with `sessionId` is the follower and `followed` is the followed user.
-
-**Effects:**
-- Removes the matching `Follow` object from the state.
-
-**Request Body:**
-```json
-{
-  "sessionId": "string",
-  "followed": "string"
 }
 ```
 
@@ -2791,7 +2757,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Effects:**
 
-*   Normalizes the chord symbol and creates a new `KnownChord` entry.
+*   Normalizes the chord symbol and creates a new `KnownChord` entry. Additionally, through the `/chords/add` sync, returns updated inventory, playable songs, and a next chord recommendation with diagram.
 
 **Request Body:**
 
@@ -2806,8 +2772,39 @@ After a user logs in, all authenticated API requests should include a `sessionId
 **Success Response Body (Action):**
 
 ```json
-{}
+{
+  "success": true,
+  "normalizedChord": "string",
+  "inventory": ["string"],
+  "playableSongs": [
+    {
+      "id": "string",
+      "title": "string",
+      "artist": "string",
+      "source": "string",
+      "difficulty": "number"
+    }
+  ],
+  "recommendation": {
+    "recommendedChord": "string | null",
+    "recommendedChordDiagram": [
+      {
+        "frets": ["number"],
+        "fingers": ["number"],
+        "baseFret": "number",
+        "barres": ["number"],
+        "name": "string"
+      }
+    ],
+    "unlockedSongIds": ["string"]
+  }
+}
 ```
+
+**Note:** When adding a chord via the `/chords/add` sync (handled internally), the response is enriched with:
+- Updated `inventory`: All known chords after adding the new chord
+- `playableSongs`: Songs that can now be played with the updated chord inventory
+- `recommendation`: Next chord to learn, including its diagram and which songs it would unlock
 
 **Error Response Body:**
 
@@ -3059,6 +3056,67 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ```
 ---
 
+### POST /api/ChordLibrary/_getOverlappingChords
+
+**Description:** Finds chords that all specified users have in common. Designed for jam groups to identify shared musical vocabulary.
+
+**Authentication:** Requires a valid `sessionId`.
+
+**Requirements:**
+
+*   At least two user IDs are provided.
+*   All specified users exist in ChordLibrary.
+
+**Effects:**
+
+*   Returns the set of chords that ALL specified users have in common, sorted by minimum mastery level (highest first).
+*   For each overlapping chord, includes the minimum mastery level across users (the "weakest link" for group playing).
+*   Also returns the total chord count for each user.
+
+**Request Body:**
+
+```json
+{
+  "sessionId": "string",
+  "userIds": ["string", "string"]
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+{
+  "overlappingChords": [
+    {
+      "chord": "string",
+      "minMastery": "not started" | "in progress" | "proficient" | "mastered",
+      "userMasteries": [
+        {
+          "userId": "string",
+          "mastery": "not started" | "in progress" | "proficient" | "mastered"
+        }
+      ]
+    }
+  ],
+  "userChordCounts": [
+    {
+      "userId": "string",
+      "chordCount": 4
+    }
+  ]
+}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
 
 # API Specification: Chord Concept
 
@@ -3229,6 +3287,191 @@ After a user logs in, all authenticated API requests should include a `sessionId
     ]
   }
 ]
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/Chord/_getChordDiagram
+
+**Description:** Get guitar fingering diagram(s) for a specific chord name. Returns multiple voicings if available, or null if no diagram exists for this chord.
+
+**Requirements:**
+
+*   None.
+
+**Effects:**
+
+*   Returns an array of chord diagrams (different voicings) for the requested chord, or null if not found.
+
+**Request Body:**
+
+```json
+{
+  "name": "string" // e.g., "C", "Am", "Gmaj7"
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+{
+  "diagrams": [
+    {
+      "frets": [0, 3, 2, 0, 1, 0],
+      "fingers": [0, 3, 2, 0, 1, 0],
+      "baseFret": 1,
+      "barres": []
+    }
+  ]
+}
+```
+
+**Note:** `diagrams` will be `null` if no diagram exists for the chord.
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/Chord/_getChordDiagrams
+
+**Description:** Get guitar fingering diagrams for multiple chords at once. Efficient for fetching diagrams for an entire song's chord progression.
+
+**Requirements:**
+
+*   None.
+
+**Effects:**
+
+*   Returns a map object where keys are chord names and values are arrays of diagrams. If a chord has no diagram, its value will be an empty array.
+
+**Request Body:**
+
+```json
+{
+  "names": ["string"] // e.g., ["C", "Am", "F", "G"]
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+{
+  "diagrams": {
+    "C": [
+      {
+        "frets": [0, 3, 2, 0, 1, 0],
+        "fingers": [0, 3, 2, 0, 1, 0],
+        "baseFret": 1,
+        "barres": []
+      }
+    ],
+    "Am": [
+      {
+        "frets": [0, 0, 2, 2, 1, 0],
+        "fingers": [0, 0, 2, 3, 1, 0],
+        "baseFret": 1,
+        "barres": []
+      }
+    ],
+    "F": [],
+    "G": [
+      {
+        "frets": [3, 2, 0, 0, 0, 3],
+        "fingers": [2, 1, 0, 0, 0, 3],
+        "baseFret": 1,
+        "barres": []
+      }
+    ]
+  }
+}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/Chord/_getAvailableChordDiagrams
+
+**Description:** Get a list of all chord names that have guitar diagrams available in the system. Useful for checking which chords can be visualized.
+
+**Requirements:**
+
+*   None.
+
+**Effects:**
+
+*   Returns an array of chord name strings.
+
+**Request Body:**
+
+```json
+{}
+```
+
+**Success Response Body (Query):**
+
+```json
+{
+  "chords": ["C", "Cm", "C7", "Cmaj7", "D", "Dm", "D7", "Dmaj7", "E", "Em", "E7", "F", "Fm", "G", "Gm", "G7", "A", "Am", "A7", "B", "Bm", "B7"]
+}
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
+### POST /api/Chord/_hasChordDiagram
+
+**Description:** Check if a diagram exists for a given chord name without fetching the full diagram data.
+
+**Requirements:**
+
+*   None.
+
+**Effects:**
+
+*   Returns a boolean indicating whether a diagram is available.
+
+**Request Body:**
+
+```json
+{
+  "name": "string" // e.g., "C"
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+{
+  "exists": true
+}
 ```
 
 **Error Response Body:**
@@ -3553,9 +3796,27 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ```json
 {
-  "recommendedChord": "string"
+  "recommendedChord": "string",
+  "diagram": [
+    {
+      "frets": ["number", "number", "number", "number", "number", "number"],
+      "fingers": ["number", "number", "number", "number", "number", "number"],
+      "baseFret": "number",
+      "barres": ["number"],
+      "capo": "boolean",
+      "name": "string"
+    }
+  ]
 }
 ```
+
+**Note:** The `diagram` field contains an array of chord diagram voicings for the recommended chord. Each diagram includes:
+- `frets`: Array of 6 numbers (one per string, -1 means not played, 0 means open)
+- `fingers`: Array of 6 numbers (finger positions, 0 means open/not played)
+- `baseFret`: Starting fret position (1 for open position)
+- `barres`: Optional array of fret numbers where barres occur
+- `capo`: Optional boolean indicating if this is a capo position
+- `name`: Display name for this voicing
 
 **Error Response Body:**
 
@@ -3625,9 +3886,23 @@ After a user logs in, all authenticated API requests should include a `sessionId
 **Success Response Body (Action):**
 ```json
 {
-  "recommendedPath": "string[]"
+  "recommendedPath": "string[]",
+  "pathDiagrams": {
+    "chordName": [
+      {
+        "frets": ["number", "number", "number", "number", "number", "number"],
+        "fingers": ["number", "number", "number", "number", "number", "number"],
+        "baseFret": "number",
+        "barres": ["number"],
+        "capo": "boolean",
+        "name": "string"
+      }
+    ]
+  }
 }
 ```
+
+**Note:** The `pathDiagrams` field is a map from chord name to an array of diagram voicings. Each chord in `recommendedPath` will have a corresponding entry in `pathDiagrams` with fingering diagrams to help users learn the chord.
 
 **Error Response Body:**
 ```json

@@ -9,13 +9,14 @@
 > > a username String\
 > > an email String\
 > > a passwordHash String\
-> > a isKidAccount Boolean
+> > a isKidAccount Boolean\
+> > a isPrivateAccount Boolean
 
 **actions** \
-register (username: String, email: String, password: String, isKidAccount: Boolean): (user: User)
+register (username: String, email: String, password: String, isKidAccount: Boolean, isPrivateAccount: Boolean): (user: User)
 
 *   **requires** No User exists with the given `username` or `email`.
-*   **effects** Creates a new User; sets its `username`, `email`, `isKidAccount` status, and a hash of the `password`; returns the new user.
+*   **effects** Creates a new User; sets its `username`, `email`, `isKidAccount` status, `isPrivateAccount` status, and a hash of the `password`; returns the new user.
 
 login (username: String, password: String): (user: User)
 
@@ -44,6 +45,11 @@ setKidAccountStatus (user: User, status: Boolean): (success: Boolean)
 *   **requires** The `user` exists.
 *   **effects** Sets the `isKidAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
 
+setPrivateAccountStatus (user: User, status: Boolean): (success: Boolean)
+
+*   **requires** The `user` exists.
+*   **effects** Sets the `isPrivateAccount` status for the given `user` to the provided `status`; returns `true` as `success`.
+
 deleteAccount (user: User, password: String): (success: Boolean)
 
 *   **requires** The `user` exists and the provided `password` matches their `passwordHash`.
@@ -61,10 +67,16 @@ deleteAccount (user: User, password: String): (success: Boolean)
 *   **requires**: true
 *   **effects**: returns `true` as `result` if a user with the given id exists, `false` otherwise.
 
+\_isKidOrPrivateAccount (user: User): (isKidOrPrivate: Boolean)
+
+*   **requires**: a User with the given `user` id exists.
+*   **effects**: returns `true` as `isKidOrPrivate` if the user is a kid account or a private account, `false` otherwise.
+
 
 **notes**
 - The user account will store the core authentification details for a given user as they would appear on functionally any such app. The app-specific preferences are stored instead in UserProfile. 
 - The isKidAccount flag will serve to enforce limited social functionality for users marked as children.
+- The isPrivateAccount flag limits visibility and interactions for users who prefer tighter privacy controls.
 ---
 **concept** UserProfile [User] \
 **purpose** to allow users to personalize their in-app identity and preferences \
@@ -174,17 +186,9 @@ removeAllPostsForUser (user: User): (success: Boolean, postIds: List<Post>)
 *   **effects** Removes all `Post`s authored by the given `user` from the state; returns `success: true` and `postIds` array containing the IDs of all deleted posts.
 
 **queries** \
-_getPostsForUser (user: User): (post: Post)
-*   **requires** The `user` exists.
-*   **effects** Returns all posts authored by the given `user`, ordered by creation date (newest first).
-
-_getPostsForUsers (users: set of User): (post: Post)
-*   **requires** All `users` exist.
-*   **effects** Returns all posts authored by any of the given `users`, ordered by creation date (newest first).
-
-_getPublicPostsForUser (user: User): (post: Post)
-*   **requires** The `user` exists.
-*   **effects** Returns all `PUBLIC` posts authored by the given `user`, ordered by creation date (newest first).
+// Note: multi-user feed aggregation is composed by sync logic using per-user
+// queries (`_getPrivatePostsForUser` and `_getPublicPostsForUsers`). The
+// `_getPostsViewableToUsers` helper was removed to avoid ambiguity in visibility rules.
 
 _getPrivatePostsForUser (user: User): (post: Post)
 *   **requires** The `user` exists.
@@ -199,46 +203,58 @@ _getPublicPostsForUsers (users: set of User): (post: Post)
 - postType will be used to capture the general content a post is focused on: "I mastered this song!", "Just practicing!", or a general update 
 ---
 
-**concept** Comment [User, Item] \
-**purpose** to allow users to interact with items \
-**principle** Users can add textual comments to existing items, which are publicly visible to others. Comments can be edited or deleted by their author.
+**concept** Comment [User, Post] \
+**purpose** to let users respond to posts with short messages and conversations \
+**principle** Users attach textual comments to posts created by themselves or others. Comments can later be edited or deleted by their author, and are included whenever a post is displayed.
 
 **state**
 > a set of Comments with
 >
 > > a commentId String \
-> > a item Item \
+> > a post Post \
 > > an author User \
 > > a content String \
 > > a createdAt DateTime \
-> > an optional lastEditedAt DateTime 
->
-> a set of Items each with
-> > a set of Comments
+> > an optional lastEditedAt DateTime
 
 **actions** \
-addCommentToItem (item: Item, author: User, content: String): (comment: Comment)
-*   **requires** The `item` exists and the `author` exists.
-*   **effects** Creates a new `Comment` with a unique `commentId`, links it to the `item` and `author`, sets its `content` and `createdAt` timestamp; adds it to the comments set of `item`; returns the new `comment`.
+addCommentToPost (post: Post, author: User, content: String): (comment: Comment)
+*   **requires** The `post` exists and the `author` exists.
+*   **effects** Creates a new `Comment` with a unique `commentId`, links it to the `post` and `author`, sets its `content` and `createdAt` timestamp, and returns the new `comment`.
 
 deleteComment (comment: Comment, author: User)
 *   **requires** The `comment` exists and its `author` matches the provided `author`.
-*   **effects** Removes the `comment` from the set of `Comments` and from the `comments` set of `comment.item`.
+*   **effects** Removes the `comment` from the state.
 
 editComment (comment: Comment, author: User, newContent: String)
 *   **requires** The `comment` exists and its `author` matches the provided `author`.
 *   **effects** Updates the `content` of the `comment` to `newContent`, sets `lastEditedAt` to the current timestamp, and returns `success: true`.
 
-removeAllCommentsFromItem (item: Item)
-*   **requires** The `item` exists.
-  *   **effects** Removes all `Comment`s associated with the given `item` from the state and from the `comments` set of `items`; returns `success: true` on completion.
+removeAllCommentsFromPost (post: Post)
+*   **requires** The `post` exists.
+*   **effects** Removes all `Comment`s associated with the given `post` from the state; returns `success: true`.
 
 removeAllCommentsForUser (user: User)
 *   **requires** The `user` exists.
 *   **effects** Removes all `Comment`s authored by the given `user` from the state; returns `success: true`.
 
+**queries**
+
+_getCommentsForPost (post: Post): (comments: CommentDoc[])
+*   **requires** The `post` exists.
+*   **effects** Returns the full comment documents for the given `post`, ordered by creation date.
+
+_getCommentById (comment: Comment): (comment: CommentDoc | null)
+*   **requires** The `comment` exists.
+*   **effects** Returns the comment document with the specified `commentId`, or `null` if missing.
+
+_getCommentsForPostId (post: Post): ([{ comments: { commentId: Comment, content: String, author: User }[] }])
+*   **requires** The `post` exists.
+*   **effects** Returns a single-element array whose object contains a `comments` array of simplified comment objects with `commentId`, `content`, and `author` fields. This is the optimized query used by the sync and API response.
+
 **notes**
-- lastEditedAt will be used to track if/when a comment was edited
+- `lastEditedAt` tracks whether a comment has been edited after creation.
+- The simplified `_getCommentsForPostId` query maps directly to the public API response shape (`[{ "comments": [...] }]`).
 ---
 
 **concept** Reaction [User, Item] \
@@ -346,42 +362,6 @@ _getFriends (user: User): (friend: User)
 **notes**
 - Friendship will represent a mutual relationship between two users. 
 - A declined friend request does not prevent a user from sending another (i.e. blocking). Our app does not currently have any such functionality.
----
-**concept** Following [User] \
-**purpose** to allow users to subscribe to content and updates from other users \
-**principle** A user can unilaterally follow another user to see their activity. This relationship is directional and does not require approval from the user being followed. The follower can subsequently unfollow the user at any time. \
-
-**state** 
-> a set of Follows with
->
-> > a follower User
-> > a followed User
-> > a followedAt DateTime
-
-**actions**
-
-followUser (follower: User, followed: User): (follow: Follow)
-
-*   **requires** The `follower` and `followed` are distinct Users. The `follower` is not currently following the `followed` (no `Follow` object exists for this pair).
-*   **effects** Creates a new `Follow` object; sets `follower` and `followed`; sets `followedAt` to the current time; returns the new `follow` object.
-
-unfollowUser (follower: User, followed: User)
-
-*   **requires** A `Follow` object exists where `follower` is the follower and `followed` is the followed user.
-*   **effects** Removes the matching `Follow` object from the state and returns `success: true`.
-
-removeUserAsFollower (user: User)
-
-* **requires** The `user` exists.
-* **effects** Removes all `Follow` objects from the state where `followed` is the given `user`. This action is typically used when `user`'s account is deleted to clean up all their inbound follow relationships (i.e., remove all their followers).
-
-removeUserFollowing (user: User)
-
-* **requires** The `user` exists.
-* **effects** Removes all `Follow` objects from the state where the `follower` is the given `user`. This action is typically used when `user`'s account is deleted to clean up all their outbound follow relationships.
-
-**notes**
-- Following is the non-mutual, one-directional relationship between two users
 ---
 **concept** JamGroup [User] \
 **purpose** to allow users to create and manage private groups for collaborative jamming \

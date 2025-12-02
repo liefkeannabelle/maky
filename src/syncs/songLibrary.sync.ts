@@ -1,5 +1,5 @@
 import { actions, Frames, Sync } from "@engine";
-import { ChordLibrary, Requesting, Sessioning, Song, SongLibrary } from "@concepts";
+import { ChordLibrary, Requesting, Sessioning, Song, SongLibrary, Chord } from "@concepts";
 import { ID } from "@utils/types.ts";
 
 /**
@@ -303,4 +303,82 @@ export const HandleSearchSongs: Sync = ({ request, query, songs }) => ({
   then: actions(
     [Requesting.respond, { request, songs }]
   )
+});
+
+/**
+ * Sync: HandleGetSuggestedSongs
+ *
+ * Returns songs that the user is "close" to being able to play.
+ * Useful for users with 1-2 chords who can't play any songs yet but
+ * could with just a few more chords learned.
+ */
+export const HandleGetSuggestedSongs: Sync = ({
+  request,
+  sessionId,
+  user,
+  limit,
+  suggestedSongs,
+}) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Song/_getSuggestedSongs", sessionId, limit },
+    { request },
+  ]),
+  where: async (frames) => {
+    frames = await frames.query(Sessioning._getUser, { sessionId }, { user });
+
+    const newFrames = [];
+    for (const frame of frames) {
+      const currentUser = frame[user] as ID;
+
+      // Get user's known chords
+      const knownChordsObjs = await ChordLibrary._getKnownChords({
+        user: currentUser,
+      });
+      const knownChordsList = knownChordsObjs.map((c) => c.chord);
+
+      // Get suggested songs
+      const limitValue = (frame[limit] as number) || 10;
+      const result = await Song._getSuggestedSongs({
+        knownChords: knownChordsList,
+        limit: limitValue,
+      });
+
+      newFrames.push({
+        ...frame,
+        [suggestedSongs]: result,
+      });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions([Requesting.respond, { request, suggestedSongs }]),
+});
+
+/**
+ * Sync: AutoComputeChordDiagramsOnCreate
+ *
+ * When a Song is created, compute available chord diagrams for its chords
+ * and store them on the Song document as `availableChordDiagrams`.
+ */
+export const AutoComputeChordDiagramsOnCreate: Sync = ({ song, diagrams }) => ({
+  when: actions(
+    [Song.createSong, {}, { song }],
+  ),
+  where: async (frames) => {
+    const newFrames = [];
+    for (const frame of frames) {
+      const created = frame[song] as { song: any };
+      if (!created || !created.song) continue;
+      const songObj = created.song;
+      const chordNames: string[] = songObj.chords || [];
+      if (chordNames.length === 0) continue;
+
+      const result = await Chord._getChordDiagrams({ names: chordNames });
+      newFrames.push({ ...frame, [diagrams]: result.diagrams });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions(
+    [Song.updateSong, { song, updates: { availableChordDiagrams: diagrams } }],
+  ),
 });

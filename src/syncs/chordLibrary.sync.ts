@@ -143,8 +143,9 @@ export const RespondToChordAddition: Sync = (
 
       let recommendation: {
         recommendedChord: string | null;
+        recommendedChordDiagram: unknown;
         unlockedSongIds: ID[];
-      } = { recommendedChord: null, unlockedSongIds: [] };
+      } = { recommendedChord: null, recommendedChordDiagram: null, unlockedSongIds: [] };
       if (recs.length > 0) {
         const recChord = recs[0].recommendedChord;
         const unlocks = await RecommendationEngine
@@ -153,8 +154,13 @@ export const RespondToChordAddition: Sync = (
             potentialChord: recChord,
             allSongs: allSongsList,
           });
+        
+        // Fetch diagram for recommended chord
+        const diagramResult = await Chord._getChordDiagram({ name: recChord });
+        
         recommendation = {
           recommendedChord: recChord,
+          recommendedChordDiagram: diagramResult.diagrams,
           unlockedSongIds: unlocks.length > 0 ? unlocks[0].unlockedSongs : [],
         };
       }
@@ -500,4 +506,44 @@ export const HandleGetChordByName: Sync = ({ request, name, chord }) => ({
   then: actions(
     [Requesting.respond, { request, chord }]
   )
+});
+
+/**
+ * Sync: HandleGetOverlappingChords
+ *
+ * Handles requests to get overlapping chords between multiple users.
+ * Designed for jam groups to find shared musical vocabulary.
+ */
+export const HandleGetOverlappingChords: Sync = ({
+  request,
+  sessionId,
+  userIds,
+  overlappingChords,
+  userChordCounts,
+}) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/ChordLibrary/_getOverlappingChords", sessionId, userIds },
+    { request },
+  ]),
+  where: async (frames) => {
+    // Verify session is valid
+    frames = await frames.query(Sessioning._getUser, { sessionId }, {});
+
+    const newFrames = [];
+    for (const frame of frames) {
+      const ids = frame[userIds] as ID[];
+      const result = await ChordLibrary._getOverlappingChords({ userIds: ids });
+      newFrames.push({
+        ...frame,
+        [overlappingChords]: result.overlappingChords,
+        [userChordCounts]: result.userChordCounts,
+      });
+    }
+    return new Frames(...newFrames);
+  },
+  then: actions([
+    Requesting.respond,
+    { request, overlappingChords, userChordCounts },
+  ]),
 });
