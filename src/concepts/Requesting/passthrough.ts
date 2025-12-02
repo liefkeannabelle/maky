@@ -112,6 +112,7 @@ export const exclusions: Array<string> = [
   "/api/Song/updateSong",
   "/api/Song/_getSongCount",
   "/api/Song/_getAllSongsForRecommendation",
+  "/api/Song/_getSuggestedSongs",
   "/api/Chord/_getAllChords",
   "/api/Chord/_getChordByName",
   "/api/Chord/_getChordDiagram",
