@@ -1,13 +1,13 @@
 **concept** UserProfile [User] \
 **purpose** to allow users to personalize their in-app identity and preferences \
-**principle** A user maintains a personal profile, separate from their core account credentials, which includes a display name, an optional bio and avatar, and their musical preferences and skill level.
+**principle** A user maintains a personal profile, separate from their core account credentials, which includes a display name, an optional learning-goals blurb and avatar, and their musical preferences and skill level.
 
 **state**
 > a set of Profiles with
 >
 > > a user User \
 > > a displayName String \
-> > an optional bio String \
+> > an optional learningGoals String \
 > > an optional avatarUrl String \
 > > a set of genrePreferences String \
 > > a skillLevel of BEGINNER or INTERMEDIATE or ADVANCED \
@@ -23,9 +23,9 @@ updateDisplayName (user: User, newDisplayName: String): (success: Boolean)
 *   **requires** The `user` exists and has an associated `Profile`.
 *   **effects** Updates the `displayName` in the `user`'s `Profile` to `newDisplayName`; returns `true` as `success`.
 
-updateBio (user: User, newBio: String or undefined): (success: Boolean)
-*   **requires** The `user` exists and has an associated `Profile`. Callers must always provide the `newBio` argument; pass `undefined` to remove the bio.
-*   **effects** Updates the `bio` in the `user`'s `Profile` to `newBio` (removing the field when it is `undefined`); returns `true` as `success`.
+updateLearningGoals (user: User, newLearningGoals: String or undefined): (success: Boolean)
+*   **requires** The `user` exists and has an associated `Profile`. Callers must always provide the `newLearningGoals` argument; pass `undefined` to remove the entry.
+*   **effects** Updates the `learningGoals` in the `user`'s `Profile` to `newLearningGoals` (removing the field when it is `undefined`); returns `true` as `success`.
 
 updateAvatar (user: User, newAvatarUrl: String or undefined): (success: Boolean)
 *   **requires** The `user` exists and has an associated `Profile`. Callers must always provide the `newAvatarUrl` argument; pass `undefined` (or the literal string `"UNDEFINED"` when `undefined` cannot be expressed) to remove the avatar.
@@ -57,7 +57,7 @@ _searchByDisplayName (query: String): (user: User, displayName: String)
 * **requires** true
 * **effects** Returns a set of users and their display names that partially match the query string.
 ```
-_getProfile (user: User): (profile: { displayName: String, bio: optional String, avatarUrl: optional String, genrePreferences: set of String, skillLevel: SkillLevel, targetSong: optional String })
+_getProfile (user: User): (profile: { displayName: String, learningGoals: optional String, avatarUrl: optional String, genrePreferences: set of String, skillLevel: SkillLevel, targetSong: optional String })
 
 * **requires** The `user` exists.
 * **effects** Returns the full profile details for the given user if a profile exists.

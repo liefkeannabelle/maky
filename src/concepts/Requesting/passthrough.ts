@@ -126,7 +126,7 @@ export const exclusions: Array<string> = [
   "/api/RecommendationEngine/calculateRecommendation",
   "/api/UserProfile/createProfile",
   "/api/UserProfile/updateDisplayName",
-  "/api/UserProfile/updateBio",
+  "/api/UserProfile/updateLearningGoals",
   "/api/UserProfile/updateAvatar",
   "/api/UserProfile/setGenrePreferences",
   "/api/UserProfile/changeSkillLevel",

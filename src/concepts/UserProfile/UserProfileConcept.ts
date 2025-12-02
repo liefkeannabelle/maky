@@ -19,7 +19,7 @@ type SkillLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
  * a set of Profiles with
  *  a user User
  *  a displayName String
- *  an optional bio String
+ *  an optional learningGoals String
  *  an optional avatarUrl String
  *  a set of genrePreferences String
  *  a skillLevel of BEGINNER or INTERMEDIATE or ADVANCED
@@ -29,7 +29,7 @@ interface ProfileDoc {
   _id: Profile;
   user: User;
   displayName: string;
-  bio?: string;
+  learningGoals?: string;
   avatarUrl?: string;
   genrePreferences: string[];
   skillLevel: SkillLevel;
@@ -111,17 +111,25 @@ export default class UserProfileConcept {
   }
 
   /**
-   * updateBio (user: User, newBio: String or undefined)
+   * updateLearningGoals (user: User, newLearningGoals: String or undefined)
    *
-   * **requires** The `user` exists and has an associated `Profile`. Callers must always provide `newBio`; pass `undefined` to remove the bio.
-   * **effects** Updates the `bio` in the `user`'s `Profile` to `newBio`, clearing it when `newBio` is `undefined`.
+   * **requires** The `user` exists and has an associated `Profile`. Callers must always provide `newLearningGoals`; pass `undefined` to clear the entry.
+   * **effects** Updates the `learningGoals` field in the `user`'s `Profile` to `newLearningGoals`, removing it entirely when `undefined` is provided.
    */
-  async updateBio(
-    { user, newBio }: { user: User; newBio: string | undefined },
+  async updateLearningGoals(
+    { user, newLearningGoals }: {
+      user: User;
+      newLearningGoals: string | undefined;
+    },
   ): Promise<{ success: true } | { error: string }> {
-    const updateOp: UpdateFilter<ProfileDoc> = newBio === undefined
-      ? { $unset: { bio: "" } }
-      : { $set: { bio: newBio } };
+    // Always drop the legacy `bio` field so the persisted shape converges on `learningGoals`.
+    const updateOp =
+      (newLearningGoals === undefined
+        ? { $unset: { learningGoals: "", bio: "" } }
+        : {
+          $set: { learningGoals: newLearningGoals },
+          $unset: { bio: "" },
+        }) as UpdateFilter<ProfileDoc>;
     const result = await this.profiles.updateOne({ user }, updateOp);
     if (result.matchedCount === 0) {
       return { error: "Profile not found for this user" };
@@ -262,7 +270,7 @@ export default class UserProfileConcept {
     return results.map((p) => ({ user: p.user, displayName: p.displayName }));
   }
   /**
-   * _getProfile (user: User): (profile: { displayName: String, bio: optional String, avatarUrl: optional String, genrePreferences: set of String, skillLevel: SkillLevel, targetSong: optional String })
+   * _getProfile (user: User): (profile: { displayName: String, learningGoals: optional String, avatarUrl: optional String, genrePreferences: set of String, skillLevel: SkillLevel, targetSong: optional String })
    *
    * **requires** The `user` exists.
    * **effects** Returns the full profile details for the given user if a profile exists, otherwise returns an empty array.
@@ -273,7 +281,7 @@ export default class UserProfileConcept {
     Array<{
       profile: {
         displayName: string;
-        bio?: string;
+        learningGoals?: string;
         avatarUrl?: string;
         genrePreferences: string[];
         skillLevel: SkillLevel;
@@ -289,6 +297,21 @@ export default class UserProfileConcept {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { _id, user: _, ...profileData } = profileDoc;
 
-    return [{ profile: profileData }];
+    // Backwards compatibility: if legacy `bio` exists but `learningGoals` does not,
+    // surface it under the new field name so older data is still readable.
+    const legacyDoc = profileDoc as ProfileDoc & { bio?: string };
+    const profilePayload = profileData as typeof profileData & {
+      learningGoals?: string;
+      bio?: string;
+    };
+    if (
+      profilePayload.learningGoals === undefined &&
+      legacyDoc.bio !== undefined
+    ) {
+      profilePayload.learningGoals = legacyDoc.bio;
+      delete profilePayload.bio;
+    }
+
+    return [{ profile: profilePayload }];
   }
 }
