@@ -153,6 +153,27 @@ export const exclusions: Array<string> = [
   "/api/Post/_getPublicPostsForUsers",
 
   "/api/UserAccount/setPrivateAccountStatus",
+
+  // JamGroup routes - all require authentication and authorization
+  "/api/JamGroup/createJamGroup",
+  "/api/JamGroup/addMember",
+  "/api/JamGroup/removeUserFromJamGroup",
+  "/api/JamGroup/disbandJamGroup",
+  "/api/JamGroup/_getJamGroupsForUser",
+  "/api/JamGroup/_getJamGroupById",
+  "/api/JamGroup/_getCommonChordsForGroup",
+  "/api/JamGroup/_getPlayableSongsForGroup",
+
+  // JamSession routes - all require authentication
+  "/api/JamSession/scheduleJamSession",
+  "/api/JamSession/startJamSession",
+  "/api/JamSession/joinSession",
+  "/api/JamSession/shareSongInSession",
+  "/api/JamSession/updateSharedSongStatus",
+  "/api/JamSession/endJamSession",
+  "/api/JamSession/_getJamSessionsForGroup",
+  "/api/JamSession/_getJamSessionById",
+  "/api/JamSession/_getActiveSessionForGroup",
 ];
 
 /** */

@@ -1,5 +1,11 @@
 import { actions, Frames, Sync } from "@engine";
-import { ChordLibrary, JamGroup, Requesting, Sessioning, SongLibrary } from "@concepts";
+import {
+  ChordLibrary,
+  JamGroup,
+  Requesting,
+  Sessioning,
+  Song,
+} from "@concepts";
 import { ID } from "@utils/types.ts";
 
 // --- Get Jam Groups for User (Authenticated) ---
@@ -165,9 +171,12 @@ export const HandleGetCommonChordsForGroup: Sync = (
 
       const chordSet = new Set<string>();
       for (const cf of chordFrames) {
-        const chordData = cf[memberChords] as { chord: string } | undefined;
-        if (chordData?.chord) {
-          chordSet.add(chordData.chord);
+        const chordData = cf[memberChords] as unknown;
+        if (
+          chordData && typeof chordData === "object" && "chord" in chordData
+        ) {
+          const chord = (chordData as { chord: string }).chord;
+          chordSet.add(chord);
         }
       }
       allMemberChords.push(chordSet);
@@ -277,9 +286,12 @@ export const HandleGetPlayableSongsForGroup: Sync = (
 
       const chordSet = new Set<string>();
       for (const cf of chordFrames) {
-        const chordData = cf[memberChords] as { chord: string } | undefined;
-        if (chordData?.chord) {
-          chordSet.add(chordData.chord);
+        const chordData = cf[memberChords] as unknown;
+        if (
+          chordData && typeof chordData === "object" && "chord" in chordData
+        ) {
+          const chord = (chordData as { chord: string }).chord;
+          chordSet.add(chord);
         }
       }
       allMemberChords.push(chordSet);
@@ -309,7 +321,7 @@ export const HandleGetPlayableSongsForGroup: Sync = (
     });
 
     const playableSongs = await songsFrames.query(
-      SongLibrary._getPlayableSongs,
+      Song._getPlayableSongs,
       { knownChords: commonChords },
       { song },
     );
@@ -325,4 +337,3 @@ export const HandleGetPlayableSongsForGroup: Sync = (
   },
   then: actions([Requesting.respond, { request, results }]),
 });
-
