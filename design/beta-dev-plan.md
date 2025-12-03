@@ -10,3 +10,7 @@
 
 ## Overview
 Overall, we've been able to stick to our original plan pretty well. At this point, each of our core features are implemented and usable on the frontend. We have tackled the key issues we identified coming out of the alpha submission. At this point, the biggest thing that remains to be done is reworking the visual design components to make the app more cohesive and visually appealing. We will also be further stress testing it to identify any persisting bugs and solve as necessary.
+
+### Design Changes 
+Kept a record of some design-changes here [@design-changes](design-changes.md)
+
