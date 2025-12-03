@@ -2,7 +2,6 @@ import { actions, Frames, Sync } from "@engine";
 import {
   Friendship,
   JamGroup,
-  JamSession,
   Requesting,
   Sessioning,
   UserAccount,
@@ -71,8 +70,6 @@ export const HandleAddMemberToJamGroup: Sync = (
     requester,
     isFriend,
     isKidOrPrivate,
-    friendResult,
-    kidResult,
   },
 ) => ({
   when: actions([
@@ -90,41 +87,21 @@ export const HandleAddMemberToJamGroup: Sync = (
     frames = await frames.query(
       Friendship.areFriends,
       { user1: requester, user2: newMember },
-      { queryResult: friendResult },
+      { isFriend },
     );
 
-    // Extract the boolean from the array result
-    frames = frames.map(($) => {
-      const rawResult = $[friendResult];
-      const arrayResult = Array.isArray(rawResult) ? rawResult : [];
-      const result = typeof arrayResult[0]?.isFriend === "boolean"
-        ? arrayResult[0]!.isFriend
-        : false;
-      return { ...$, [isFriend]: result };
-    });
-
     // Filter: only proceed if they are friends
-    frames = frames.filter(($) => $[isFriend]);
+    frames = frames.filter(($) => $[isFriend] === true);
 
     // Step 3: Check if newMember is a kid or private account
     frames = await frames.query(
       UserAccount._isKidOrPrivateAccount,
       { user: newMember },
-      { queryResult: kidResult },
+      { isKidOrPrivate },
     );
 
-    // Extract the boolean from the array result
-    frames = frames.map(($) => {
-      const rawResult = $[kidResult];
-      const arrayResult = Array.isArray(rawResult) ? rawResult : [];
-      const result = typeof arrayResult[0]?.isKidOrPrivate === "boolean"
-        ? arrayResult[0]!.isKidOrPrivate
-        : false;
-      return { ...$, [isKidOrPrivate]: result };
-    });
-
     // Filter: only proceed if NOT a kid or private account
-    return frames.filter(($) => !$[isKidOrPrivate]);
+    return frames.filter(($) => $[isKidOrPrivate] === false);
   },
   then: actions([JamGroup.addMember, { group, newMember }]),
 });
