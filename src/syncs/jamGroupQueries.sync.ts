@@ -8,6 +8,21 @@ import {
 } from "@concepts";
 import { ID } from "@utils/types.ts";
 
+// Helpers to wrap concept queries with structured outputs so sync bindings receive data.
+const wrapGetJamGroupsForUser = async (
+  { user }: { user: ID },
+): Promise<Array<{ group: unknown }>> => {
+  const groups = await JamGroup._getJamGroupsForUser({ user });
+  return groups.map((group) => ({ group }));
+};
+
+const wrapGetJamGroupById = async (
+  { group }: { group: ID },
+): Promise<Array<{ groupData: unknown }>> => {
+  const groups = await JamGroup._getJamGroupById({ group });
+  return groups.map((groupData) => ({ groupData }));
+};
+
 // --- Get Jam Groups for User (Authenticated) ---
 
 /**
@@ -35,7 +50,7 @@ export const HandleGetJamGroupsForUser: Sync = (
     }
 
     // Query for all groups where user is a member
-    frames = await frames.query(JamGroup._getJamGroupsForUser, { user }, {
+    frames = await frames.query(wrapGetJamGroupsForUser, { user }, {
       group,
     });
 
@@ -79,7 +94,7 @@ export const HandleGetJamGroupById: Sync = (
 
     // Query for the specific group
     frames = await frames.query(
-      JamGroup._getJamGroupById,
+      wrapGetJamGroupById,
       { group: groupId },
       { groupData },
     );
@@ -134,7 +149,7 @@ export const HandleGetCommonChordsForGroup: Sync = (
 
     // Get the group details to access members
     frames = await frames.query(
-      JamGroup._getJamGroupById,
+      wrapGetJamGroupById,
       { group: groupId },
       { groupData },
     );
@@ -249,7 +264,7 @@ export const HandleGetPlayableSongsForGroup: Sync = (
 
     // Get the group details to access members
     frames = await frames.query(
-      JamGroup._getJamGroupById,
+      wrapGetJamGroupById,
       { group: groupId },
       { groupData },
     );
