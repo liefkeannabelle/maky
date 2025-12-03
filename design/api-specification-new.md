@@ -1966,7 +1966,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 **Authentication:** Requires a valid `sessionId`. The requester is automatically extracted from the session.
 
 **Requirements:**
-- The `group` exists, and `newMember` exists. The `newMember` is not already in the `members` set and is a friend of one of the members in the group.
+- The `group` exists, and `newMember` exists. The `newMember` is not already in the `members` set and is a friend of the requester. The `newMember` must not be a kid account or private account.
 
 **Effects:**
 - Adds `newMember` to the `members` set of the `group`.
@@ -1982,7 +1982,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": true
+}
 ```
 
 **Error Response Body:**
@@ -1994,27 +1996,30 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ---
 ### POST /api/JamGroup/removeUserFromJamGroup
 
-**Description:** Removes a user from a jam group.
+**Description:** Removes a specified user from a jam group.
 
-**Authentication:** Requires a valid `sessionId`. The user to remove is automatically extracted from the session.
+**Authentication:** Requires a valid `sessionId`. The requester is automatically extracted from the session.
 
 **Requirements:**
-- The `group` exists and the user associated with `sessionId` is currently in the `members` set.
+- The `group` exists and the specified `user` is currently in the `members` set.
 
 **Effects:**
-- Removes the authenticated user from the `members` set of the `group`.
+- Removes the specified `user` from the `members` set of the `group`.
 
 **Request Body:**
 ```json
 {
   "sessionId": "string",
-  "group": "string"
+  "group": "string",
+  "user": "string"
 }
 ```
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": true
+}
 ```
 
 **Error Response Body:**
@@ -2046,7 +2051,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": true
+}
 ```
 
 **Error Response Body:**
@@ -2155,7 +2162,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": true
+}
 ```
 
 **Error Response Body:**
@@ -2189,7 +2198,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": true
+}
 ```
 
 **Error Response Body:**
@@ -2223,7 +2234,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": true
+}
 ```
 
 **Error Response Body:**
@@ -2240,7 +2253,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 **Authentication:** Requires a valid `sessionId`. The user is automatically extracted from the session.
 
 **Requirements:**
-- The `session` exists and is `ACTIVE`. The user associated with `sessionId` is a member of the associated `JamGroup`.
+- The `session` exists and is `ACTIVE`.
 
 **Effects:**
 - Updates the `status` to `COMPLETED` and sets `endTime` to the current time.
@@ -2255,7 +2268,9 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Success Response Body (Action):**
 ```json
-{}
+{
+  "success": true
+}
 ```
 
 **Error Response Body:**

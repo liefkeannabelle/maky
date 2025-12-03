@@ -170,3 +170,107 @@ JamGroup.removeUserFromAllGroups(user)
         recommendedChord: rec.recommendedChord,
         unlockedSongIds: rec.unlockedSongs
     })
+
+---
+
+**sync** HandleCreateJamGroup \
+**when**
+    Requesting.request (path: "/JamGroup/createJamGroup", sessionId, name, description) \
+**where**
+    in Sessioning: user of session sessionId is creator \
+**then**
+    JamGroup.createJamGroup (creator, name, description)
+
+**notes**
+- Authenticates the user before creating a jam group
+- Creator is automatically added as the first member
+
+---
+
+**sync** HandleAddMemberToJamGroup \
+**when**
+    Requesting.request (path: "/JamGroup/addMember", sessionId, group, newMember) \
+**where**
+    in Sessioning: user of session sessionId is requester \
+    in Friendship: friendship between requester and newMember has status ACCEPTED \
+    in UserAccount: user newMember has isKidAccount false and isPrivateAccount false \
+**then**
+    JamGroup.addMember (group, newMember)
+
+**notes**
+- Enforces that new members must be friends with the requester
+- Blocks kid accounts and private accounts from joining jam groups
+- Ensures social safety and appropriate group composition
+
+---
+
+**sync** HandleStartJamSession \
+**when**
+    Requesting.request (path: "/JamSession/startJamSession", sessionId, group) \
+**where**
+    in Sessioning: user of session sessionId is creator \
+**then**
+    JamSession.startJamSession (group, creator)
+
+**notes**
+- Authenticates the user before starting a session
+- Creator is automatically added as the first participant
+- Group membership verification should be handled by sync if needed
+
+---
+
+**sync** HandleJoinSession \
+**when**
+    Requesting.request (path: "/JamSession/joinSession", sessionId, session) \
+**where**
+    in Sessioning: user of session sessionId is user \
+**then**
+    JamSession.joinSession (session, user)
+
+**notes**
+- Authenticates the user before joining a session
+- Session must be ACTIVE for join to succeed (enforced by concept)
+
+---
+
+**sync** HandleShareSongInSession \
+**when**
+    Requesting.request (path: "/JamSession/shareSongInSession", sessionId, session, song, currentStatus) \
+**where**
+    in Sessioning: user of session sessionId is participant \
+**then**
+    JamSession.shareSongInSession (session, participant, song, currentStatus)
+
+**notes**
+- Authenticates the user before sharing a song
+- Participant must be in the session (enforced by concept)
+- Enables real-time coordination of what each person is practicing
+
+---
+
+**sync** HandleUpdateSharedSongStatus \
+**when**
+    Requesting.request (path: "/JamSession/updateSharedSongStatus", sessionId, session, song, newStatus) \
+**where**
+    in Sessioning: user of session sessionId is participant \
+**then**
+    JamSession.updateSharedSongStatus (session, participant, song, newStatus)
+
+**notes**
+- Authenticates the user before updating status
+- Allows participants to update what they're working on (e.g., "soloing", "practicing verse")
+
+---
+
+**sync** HandleEndJamSession \
+**when**
+    Requesting.request (path: "/JamSession/endJamSession", sessionId, session) \
+**where**
+    in Sessioning: user of session sessionId is user \
+**then**
+    JamSession.endJamSession (session)
+
+**notes**
+- Authenticates the user before ending a session
+- Any participant can end the session
+- Sets status to COMPLETED and records endTime
