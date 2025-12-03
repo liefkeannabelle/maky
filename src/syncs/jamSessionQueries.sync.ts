@@ -1,5 +1,28 @@
 import { actions, Frames, Sync } from "@engine";
 import { JamSession, Requesting, Sessioning } from "@concepts";
+import { ID } from "@utils/types.ts";
+
+// Helpers to wrap concept query outputs so frames receive structured bindings.
+const wrapGetJamSessionsForGroup = async (
+  { group }: { group: ID },
+) => {
+  const sessions = await JamSession._getJamSessionsForGroup({ group });
+  return sessions.map((session) => ({ session }));
+};
+
+const wrapGetJamSessionById = async (
+  { session }: { session: ID },
+) => {
+  const data = await JamSession._getJamSessionById({ session });
+  return data.map((sessionData) => ({ sessionData }));
+};
+
+const wrapGetActiveSessionForGroup = async (
+  { group }: { group: ID },
+) => {
+  const sessions = await JamSession._getActiveSessionForGroup({ group });
+  return sessions.map((session) => ({ session }));
+};
 
 // --- Get Jam Sessions for Group (Authenticated) ---
 
@@ -29,7 +52,7 @@ export const HandleGetJamSessionsForGroup: Sync = (
 
     // Query for all sessions for the group
     frames = await frames.query(
-      JamSession._getJamSessionsForGroup,
+      wrapGetJamSessionsForGroup,
       { group },
       { session },
     );
@@ -78,7 +101,7 @@ export const HandleGetJamSessionById: Sync = (
 
     // Query for the specific session
     frames = await frames.query(
-      JamSession._getJamSessionById,
+      wrapGetJamSessionById,
       { session: sessionIdParam },
       { sessionData },
     );
@@ -123,7 +146,7 @@ export const HandleGetActiveSessionForGroup: Sync = (
 
     // Query for the active session for the group
     frames = await frames.query(
-      JamSession._getActiveSessionForGroup,
+      wrapGetActiveSessionForGroup,
       { group },
       { session },
     );
@@ -139,4 +162,3 @@ export const HandleGetActiveSessionForGroup: Sync = (
   },
   then: actions([Requesting.respond, { request, results }]),
 });
-
