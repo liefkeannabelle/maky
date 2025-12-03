@@ -143,4 +143,32 @@ export default class JamGroupConcept {
 
     return { success: true };
   }
+
+  /**
+   * _getJamGroupsForUser (user: User): (group: JamGroupDoc)
+   *
+   * **requires** The `user` exists.
+   * **effects** Returns all jam groups where the user is a member.
+   */
+  async _getJamGroupsForUser(
+    { user }: { user: User },
+  ): Promise<JamGroupDoc[]> {
+    const groups = await this.jamGroups.find({ members: user }).sort({
+      createdAt: -1,
+    }).toArray();
+    return groups;
+  }
+
+  /**
+   * _getJamGroupById (group: JamGroup): (group: JamGroupDoc)
+   *
+   * **requires** true
+   * **effects** Returns the jam group with the given id, or an empty array if not found.
+   */
+  async _getJamGroupById(
+    { group }: { group: JamGroup },
+  ): Promise<JamGroupDoc[]> {
+    const foundGroup = await this.jamGroups.findOne({ _id: group });
+    return foundGroup ? [foundGroup] : [];
+  }
 }

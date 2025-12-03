@@ -445,3 +445,105 @@ Deno.test(
     await client.close();
   },
 );
+
+Deno.test(
+  "JamGroupConcept - Query: _getJamGroupsForUser",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const jamGroupConcept = new JamGroupConcept(db);
+    await jamGroupConcept.jamGroups.deleteMany({});
+
+    // Setup: Create multiple groups with different memberships
+    const group1Result = await jamGroupConcept.createJamGroup({
+      creator: userA,
+      name: "Alice's Group",
+      description: "Group 1",
+    });
+    assert("group" in group1Result);
+    const _group1Id = group1Result.group;
+
+    const group2Result = await jamGroupConcept.createJamGroup({
+      creator: userB,
+      name: "Bob's Group",
+      description: "Group 2",
+    });
+    assert("group" in group2Result);
+    const group2Id = group2Result.group;
+
+    // Add Alice to Bob's group
+    await jamGroupConcept.addMember({ group: group2Id, newMember: userA });
+
+    // Test: Get groups for Alice (should return 2 groups)
+    const aliceGroups = await jamGroupConcept._getJamGroupsForUser({
+      user: userA,
+    });
+    assertEquals(
+      aliceGroups.length,
+      2,
+      "Alice should be a member of 2 groups.",
+    );
+
+    // Test: Get groups for Bob (should return 1 group)
+    const bobGroups = await jamGroupConcept._getJamGroupsForUser({
+      user: userB,
+    });
+    assertEquals(bobGroups.length, 1, "Bob should be a member of 1 group.");
+    assertEquals(bobGroups[0]._id, group2Id);
+
+    // Test: Get groups for Charlie (should return 0 groups)
+    const charlieGroups = await jamGroupConcept._getJamGroupsForUser({
+      user: userC,
+    });
+    assertEquals(
+      charlieGroups.length,
+      0,
+      "Charlie should not be a member of any groups.",
+    );
+
+    await client.close();
+  },
+);
+
+Deno.test(
+  "JamGroupConcept - Query: _getJamGroupById",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const jamGroupConcept = new JamGroupConcept(db);
+    await jamGroupConcept.jamGroups.deleteMany({});
+
+    // Setup: Create a group
+    const createResult = await jamGroupConcept.createJamGroup({
+      creator: userA,
+      name: "Test Group",
+      description: "Test description",
+    });
+    assert("group" in createResult);
+    const groupId = createResult.group;
+
+    // Test: Get existing group
+    const foundGroups = await jamGroupConcept._getJamGroupById({
+      group: groupId,
+    });
+    assertEquals(foundGroups.length, 1, "Should return one group.");
+    assertEquals(foundGroups[0]._id, groupId);
+    assertEquals(foundGroups[0].name, "Test Group");
+    assertEquals(foundGroups[0].description, "Test description");
+    assertEquals(foundGroups[0].creator, userA);
+    assertExists(foundGroups[0].members);
+
+    // Test: Get non-existent group
+    const nonExistentId = "group:nonexistent" as ID;
+    const notFoundGroups = await jamGroupConcept._getJamGroupById({
+      group: nonExistentId,
+    });
+    assertEquals(
+      notFoundGroups.length,
+      0,
+      "Should return empty array for non-existent group.",
+    );
+
+    await client.close();
+  },
+);

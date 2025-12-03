@@ -552,3 +552,160 @@ Deno.test(
   },
 );
 
+Deno.test(
+  "JamSessionConcept - Query: _getJamSessionsForGroup",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const jamSessionConcept = new JamSessionConcept(db);
+    await jamSessionConcept.jamSessions.deleteMany({});
+
+    // Setup: Create multiple sessions for different groups
+    const session1Result = await jamSessionConcept.startJamSession({
+      group: group1,
+      creator: userA,
+    });
+    assert("session" in session1Result);
+
+    await new Promise((r) => setTimeout(r, 10)); // Ensure different timestamps
+
+    const session2Result = await jamSessionConcept.startJamSession({
+      group: group1,
+      creator: userB,
+    });
+    assert("session" in session2Result);
+
+    const session3Result = await jamSessionConcept.startJamSession({
+      group: group2,
+      creator: userC,
+    });
+    assert("session" in session3Result);
+
+    // Test: Get sessions for group1 (should return 2)
+    const group1Sessions = await jamSessionConcept._getJamSessionsForGroup({
+      group: group1,
+    });
+    assertEquals(
+      group1Sessions.length,
+      2,
+      "Group1 should have 2 sessions.",
+    );
+    // Verify they're sorted by startTime (newest first)
+    assert(
+      group1Sessions[0].startTime >= group1Sessions[1].startTime,
+      "Sessions should be sorted by startTime descending.",
+    );
+
+    // Test: Get sessions for group2 (should return 1)
+    const group2Sessions = await jamSessionConcept._getJamSessionsForGroup({
+      group: group2,
+    });
+    assertEquals(group2Sessions.length, 1, "Group2 should have 1 session.");
+
+    // Test: Get sessions for non-existent group (should return 0)
+    const nonExistentGroup = "group:nonexistent" as ID;
+    const noSessions = await jamSessionConcept._getJamSessionsForGroup({
+      group: nonExistentGroup,
+    });
+    assertEquals(
+      noSessions.length,
+      0,
+      "Non-existent group should have no sessions.",
+    );
+
+    await client.close();
+  },
+);
+
+Deno.test(
+  "JamSessionConcept - Query: _getJamSessionById",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const jamSessionConcept = new JamSessionConcept(db);
+    await jamSessionConcept.jamSessions.deleteMany({});
+
+    // Setup: Create a session
+    const createResult = await jamSessionConcept.startJamSession({
+      group: group1,
+      creator: userA,
+    });
+    assert("session" in createResult);
+    const sessionId = createResult.session;
+
+    // Test: Get existing session
+    const foundSessions = await jamSessionConcept._getJamSessionById({
+      session: sessionId,
+    });
+    assertEquals(foundSessions.length, 1, "Should return one session.");
+    assertEquals(foundSessions[0]._id, sessionId);
+    assertEquals(foundSessions[0].jamGroup, group1);
+    assertEquals(foundSessions[0].status, "ACTIVE");
+    assertExists(foundSessions[0].participants);
+
+    // Test: Get non-existent session
+    const nonExistentId = "session:nonexistent" as ID;
+    const notFoundSessions = await jamSessionConcept._getJamSessionById({
+      session: nonExistentId,
+    });
+    assertEquals(
+      notFoundSessions.length,
+      0,
+      "Should return empty array for non-existent session.",
+    );
+
+    await client.close();
+  },
+);
+
+Deno.test(
+  "JamSessionConcept - Query: _getActiveSessionForGroup",
+  { sanitizeOps: false, sanitizeResources: false },
+  async () => {
+    const [db, client] = await testDb();
+    const jamSessionConcept = new JamSessionConcept(db);
+    await jamSessionConcept.jamSessions.deleteMany({});
+
+    // Test: No active session initially
+    const noActiveSessions = await jamSessionConcept._getActiveSessionForGroup({
+      group: group1,
+    });
+    assertEquals(
+      noActiveSessions.length,
+      0,
+      "Should return empty array when no active session.",
+    );
+
+    // Setup: Create an active session
+    const createResult = await jamSessionConcept.startJamSession({
+      group: group1,
+      creator: userA,
+    });
+    assert("session" in createResult);
+    const sessionId = createResult.session;
+
+    // Test: Get active session
+    const activeSessions = await jamSessionConcept._getActiveSessionForGroup({
+      group: group1,
+    });
+    assertEquals(activeSessions.length, 1, "Should return one active session.");
+    assertEquals(activeSessions[0]._id, sessionId);
+    assertEquals(activeSessions[0].status, "ACTIVE");
+
+    // End the session
+    await jamSessionConcept.endJamSession({ session: sessionId });
+
+    // Test: No active session after ending
+    const noActiveAfterEnd = await jamSessionConcept._getActiveSessionForGroup({
+      group: group1,
+    });
+    assertEquals(
+      noActiveAfterEnd.length,
+      0,
+      "Should return empty array after session is ended.",
+    );
+
+    await client.close();
+  },
+);
+

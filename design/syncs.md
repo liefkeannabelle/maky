@@ -274,3 +274,115 @@ JamGroup.removeUserFromAllGroups(user)
 - Authenticates the user before ending a session
 - Any participant can end the session
 - Sets status to COMPLETED and records endTime
+
+---
+
+**sync** HandleGetJamGroupsForUser \
+**when**
+    Requesting.request (path: "/JamGroup/_getJamGroupsForUser", sessionId) \
+**where**
+    in Sessioning: user of session sessionId is user \
+**then**
+    JamGroup._getJamGroupsForUser (user)
+
+**notes**
+- Returns all groups where the authenticated user is a member
+- Ordered by creation date (newest first)
+
+---
+
+**sync** HandleGetJamGroupById \
+**when**
+    Requesting.request (path: "/JamGroup/_getJamGroupById", sessionId, group) \
+**where**
+    in Sessioning: user of session sessionId is user \
+**then**
+    JamGroup._getJamGroupById (group)
+
+**notes**
+- Returns full details of a specific jam group
+- Returns empty array if group not found
+
+---
+
+**sync** HandleGetCommonChordsForGroup \
+**when**
+    Requesting.request (path: "/JamGroup/_getCommonChordsForGroup", sessionId, group) \
+**where**
+    in Sessioning: user of session sessionId is user \
+    in JamGroup: group has members m[] \
+    for each member in m[]: in ChordLibrary: _getKnownChords(member) returns chords \
+**then**
+    compute intersection of all members' chords \
+    respond with commonChords
+
+**notes**
+- CRITICAL for jam feature
+- Computes the intersection of all members' known chords
+- These are the chords the entire group can play together
+- Used to determine playable songs for the group
+
+---
+
+**sync** HandleGetPlayableSongsForGroup \
+**when**
+    Requesting.request (path: "/JamGroup/_getPlayableSongsForGroup", sessionId, group) \
+**where**
+    in Sessioning: user of session sessionId is user \
+    in JamGroup: group has members m[] \
+    for each member in m[]: in ChordLibrary: _getKnownChords(member) returns chords \
+    compute commonChords as intersection of all chords \
+    in SongLibrary: _getPlayableSongs(commonChords) returns songs \
+**then**
+    respond with songs
+
+**notes**
+- CRITICAL for jam feature
+- Returns songs that can be played by the entire group
+- Based on the intersection of all members' known chords
+- Essential for song recommendations during jam sessions
+
+---
+
+**sync** HandleGetJamSessionsForGroup \
+**when**
+    Requesting.request (path: "/JamSession/_getJamSessionsForGroup", sessionId, group) \
+**where**
+    in Sessioning: user of session sessionId is user \
+**then**
+    JamSession._getJamSessionsForGroup (group)
+
+**notes**
+- Returns all sessions (past and present) for a group
+- Ordered by start time (newest first)
+- Includes ACTIVE, COMPLETED, and SCHEDULED sessions
+
+---
+
+**sync** HandleGetJamSessionById \
+**when**
+    Requesting.request (path: "/JamSession/_getJamSessionById", sessionId, session) \
+**where**
+    in Sessioning: user of session sessionId is user \
+**then**
+    JamSession._getJamSessionById (session)
+
+**notes**
+- Returns full details of a specific session
+- Includes all participants and shared songs
+- Returns empty array if session not found
+
+---
+
+**sync** HandleGetActiveSessionForGroup \
+**when**
+    Requesting.request (path: "/JamSession/_getActiveSessionForGroup", sessionId, group) \
+**where**
+    in Sessioning: user of session sessionId is user \
+**then**
+    JamSession._getActiveSessionForGroup (group)
+
+**notes**
+- Returns the currently active session for a group
+- Returns empty array if no active session
+- Useful for checking if a group is currently jamming

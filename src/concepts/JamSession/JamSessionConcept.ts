@@ -288,5 +288,49 @@ export default class JamSessionConcept {
 
     return { success: true };
   }
+
+  /**
+   * _getJamSessionsForGroup (group: Group): (session: JamSessionDoc)
+   *
+   * **requires** The `group` exists.
+   * **effects** Returns all jam sessions for the given group, ordered by start time (newest first).
+   */
+  async _getJamSessionsForGroup(
+    { group }: { group: Group },
+  ): Promise<JamSessionDoc[]> {
+    const sessions = await this.jamSessions.find({ jamGroup: group }).sort({
+      startTime: -1,
+    }).toArray();
+    return sessions;
+  }
+
+  /**
+   * _getJamSessionById (session: JamSession): (session: JamSessionDoc)
+   *
+   * **requires** true
+   * **effects** Returns the jam session with the given id, or an empty array if not found.
+   */
+  async _getJamSessionById(
+    { session }: { session: JamSession },
+  ): Promise<JamSessionDoc[]> {
+    const foundSession = await this.jamSessions.findOne({ _id: session });
+    return foundSession ? [foundSession] : [];
+  }
+
+  /**
+   * _getActiveSessionForGroup (group: Group): (session: JamSessionDoc)
+   *
+   * **requires** The `group` exists.
+   * **effects** Returns the active jam session for the given group, or an empty array if none is active.
+   */
+  async _getActiveSessionForGroup(
+    { group }: { group: Group },
+  ): Promise<JamSessionDoc[]> {
+    const activeSession = await this.jamSessions.findOne({
+      jamGroup: group,
+      status: "ACTIVE",
+    });
+    return activeSession ? [activeSession] : [];
+  }
 }
 
