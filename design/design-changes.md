@@ -1,5 +1,31 @@
 # Design changes
 
+
+## Beta Checkpoint
+
+### Spec Changes
+
+- Removed the Following concept, and only keeping the Friendship concept. 
+  - Because they were fairly similar in nature, only one socializing concept was kept.
+  - The friendship concepts seems more inline with how we want users to be interacting with the app (striving for more one-on-one connections than influecing opportunities)
+
+- UserAccount has a Private status as well.
+  - For visibility, this is treated the same as the Kid Account status (it functions to hid the "Feed" Page, and subsequent socializing components for the app)
+
+- Posts have visibility statuses now
+  - The user has a Journal entry with private posts, and a public posts entry in the Feed page. 
+
+### Sync changes
+
+- The following actions and querries are now requiring authenticationremoveAllCommentsFromPost (and other remove functions)
+  - _getFriends
+  - _getPendingFriendships
+  - _getPostsViewableToUser
+  - _getProfile
+  - _getCommentsForPostId
+  - _getReactionsForPostId
+
+
 ## What you need to update when adding/changing an action:
 - concept implementation
 - concept spec
