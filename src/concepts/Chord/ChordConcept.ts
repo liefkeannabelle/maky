@@ -10,7 +10,7 @@ import {
 } from "../../theory/chords.ts";
 import { 
   getChordDiagram, 
-  getAvailableChordDiagrams, 
+  getAllAvailableChordDiagrams, 
   hasChordDiagram,
   ChordDiagram 
 } from "../../theory/chordDiagrams.ts";
@@ -140,9 +140,10 @@ export default class ChordConcept {
    * _getAvailableChordDiagrams (): (chords: string[])
    *
    * Get list of all chord names that have diagrams available.
+   * Includes both hand-crafted and algorithmically generated diagrams.
    */
   async _getAvailableChordDiagrams(): Promise<{ chords: string[] }> {
-    return { chords: getAvailableChordDiagrams() };
+    return { chords: getAllAvailableChordDiagrams() };
   }
 
   /**
@@ -175,7 +176,7 @@ export default class ChordConcept {
   }> {
     const includeSlash = params.includeSlashChords ?? false;
     const chords = generateChordVocabulary({ includeSlashChords: includeSlash });
-    const chordsWithDiagrams = getAvailableChordDiagrams();
+    const chordsWithDiagrams = getAllAvailableChordDiagrams();
     
     return {
       chords,

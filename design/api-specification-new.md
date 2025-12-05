@@ -722,10 +722,10 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Description:** Retrieves all profile information for a given user.
 
-**Authentication:** Requires a valid `sessionId`. The session user must either match the requested `user` or already be accepted friends with that user.    
+**Authentication:** Requires a valid `sessionId`. The session user must either match the requested `user`, already be accepted friends with that user, or have an incoming pending friend request from that user.    
 
 **Requirements:**
-- The `user` must exist. The requester must be the same user or an accepted friend.
+- The `user` must exist. The requester must be the same user, an accepted friend, or currently have a pending friend request sent by the requested user.
 
 **Effects:**
 - Returns an array containing a single profile object for the specified user (or an empty array when no profile exists) and wraps it in the `{ "results": [...], "error": string | null }` envelope used by authenticated queries. Each profile highlights the user's display name, optional `learningGoals` blurb (a short note about what they're practicing toward), avatar, genre preferences, skill level, and target song.

@@ -483,6 +483,7 @@ export const HandleGetProfileRequest: Sync = (
     user: targetUser,
     sessionUser,
     areFriendsResult,
+    pendingRequestsForSession,
     profile,
     results,
     error,
@@ -538,6 +539,27 @@ export const HandleGetProfileRequest: Sync = (
 
       if (isFriend) {
         authorizedFrames.push(frame); // Authorized as a friend
+        continue;
+      }
+
+      // Check pending friendship where session user is the recipient
+      const pendingForSession = await singleFrame.query(
+        Friendship._getPendingFriendships,
+        { user: sessionUser },
+        { pendingFriendships: pendingRequestsForSession },
+      );
+
+      const hasIncomingPending = pendingForSession.some((pendingFrame) => {
+        const pending = pendingFrame[pendingRequestsForSession];
+        if (!Array.isArray(pending)) return false;
+        const pendingList = pending as Array<{ requester?: unknown }>;
+        return pendingList.some((entry) =>
+          !!entry && entry.requester === frame[targetUser]
+        );
+      });
+
+      if (hasIncomingPending) {
+        authorizedFrames.push(frame);
       }
     }
 
