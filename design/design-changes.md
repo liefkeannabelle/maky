@@ -158,3 +158,12 @@
   - Fixed `removeUserFromJamGroup` to accept `user` parameter (not just self-removal)
   - Documented authentication requirements and request/response formats
   - Added critical common chords and playable songs endpoints for frontend integration
+
+- Fixed `_getOverlappingChords` to support single-user groups
+  - Purpose: To enable single-user jam groups to function properly (solo practice mode)
+  - Modified `ChordLibrary._getOverlappingChords` to handle single user case by returning all their known chords in the same format as multi-user results
+  - Updated concept method to return user's full chord inventory with proper mastery levels for 1-user input
+  - Simplified `HandleGetCommonChordsForGroup` and `HandleGetPlayableSongsForGroup` syncs to always use `_getOverlappingChords` (removed special-case code)
+  - Updated API specification: changed requirement from "at least two user IDs" to "at least one user ID"
+  - Updated concept docstring to reflect new behavior
+  - Fixes bug where single-user jam groups returned empty chord arrays
