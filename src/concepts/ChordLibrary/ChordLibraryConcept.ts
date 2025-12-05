@@ -207,9 +207,10 @@ export default class ChordLibraryConcept {
   /**
    * _getOverlappingChords (userIds: User[]): overlapping chord data
    *
-   * **requires** At least two user IDs are provided. All users exist in ChordLibrary.
-   * **effects** Returns the set of chords that ALL specified users have in common,
-   *             along with the minimum mastery level across users for each chord
+   * **requires** At least one user ID is provided. All users exist in ChordLibrary.
+   * **effects** Returns the set of chords that ALL specified users have in common.
+   *             For a single user, returns all their known chords.
+   *             Returns the minimum mastery level across users for each chord
    *             (representing the "weakest link" for group playing).
    */
   async _getOverlappingChords(input: {
@@ -224,10 +225,6 @@ export default class ChordLibraryConcept {
   }> {
     const { userIds } = input;
 
-    if (userIds.length < 2) {
-      return { overlappingChords: [], userChordCounts: [] };
-    }
-
     // Mastery level ordering for comparison (lower index = lower mastery)
     const masteryOrder: MasteryLevel[] = [
       "not started",
@@ -235,6 +232,36 @@ export default class ChordLibraryConcept {
       "proficient",
       "mastered",
     ];
+
+    // Handle single user case - return all their chords
+    if (userIds.length === 1) {
+      const userId = userIds[0];
+      const chords = await this._getKnownChords({ user: userId });
+
+      const overlappingChords = chords.map(({ chord, mastery }) => ({
+        chord,
+        minMastery: mastery,
+        userMasteries: [{ userId, mastery }],
+      }));
+
+      // Sort by mastery level (highest first)
+      overlappingChords.sort((a, b) => {
+        return (
+          masteryOrder.indexOf(b.minMastery) -
+          masteryOrder.indexOf(a.minMastery)
+        );
+      });
+
+      return {
+        overlappingChords,
+        userChordCounts: [{ userId, chordCount: chords.length }],
+      };
+    }
+
+    // For empty array, return empty results
+    if (userIds.length === 0) {
+      return { overlappingChords: [], userChordCounts: [] };
+    }
 
     // Get all chords for each user
     const userChordMaps: Map<User, Map<Chord, MasteryLevel>> = new Map();

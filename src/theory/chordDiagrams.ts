@@ -694,12 +694,19 @@ export const CHORD_DIAGRAMS: Record<string, ChordDiagram[]> = {
   ],
 };
 
+import { generateChordDiagram, canGenerateChord, getSupportedChordTypes, getGeneratableChordCount } from "./chordGenerator.ts";
+
 /**
  * Get chord diagram(s) for a given chord name.
  * Returns multiple voicings if available.
+ * 
+ * Priority:
+ * 1. Hand-crafted diagrams in CHORD_DIAGRAMS (highest quality)
+ * 2. Enharmonic equivalents of hand-crafted diagrams
+ * 3. Algorithmically generated diagrams (fallback)
  */
 export function getChordDiagram(chordName: string): ChordDiagram[] | null {
-  // Direct lookup
+  // Direct lookup in hand-crafted diagrams
   if (CHORD_DIAGRAMS[chordName]) {
     return CHORD_DIAGRAMS[chordName];
   }
@@ -723,14 +730,40 @@ export function getChordDiagram(chordName: string): ChordDiagram[] | null {
     }
   }
 
+  // Fallback: Try algorithmic generation
+  const generated = generateChordDiagram(chordName);
+  if (generated) {
+    return generated;
+  }
+
   return null;
 }
 
 /**
- * Get all available chord names that have diagrams
+ * Get all available chord names that have diagrams (hand-crafted only)
  */
 export function getAvailableChordDiagrams(): string[] {
   return Object.keys(CHORD_DIAGRAMS).sort();
+}
+
+/**
+ * Get all chord names that can have diagrams (hand-crafted + generated)
+ */
+export function getAllAvailableChordDiagrams(): string[] {
+  const all = new Set(Object.keys(CHORD_DIAGRAMS));
+  
+  // Add all generatable chords
+  const roots = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
+  const suffixes = getSupportedChordTypes();
+  
+  for (const root of roots) {
+    for (const suffix of suffixes) {
+      const chord = suffix === "" ? root : `${root}${suffix}`;
+      all.add(chord);
+    }
+  }
+  
+  return Array.from(all).sort();
 }
 
 /**
@@ -738,4 +771,25 @@ export function getAvailableChordDiagrams(): string[] {
  */
 export function hasChordDiagram(chordName: string): boolean {
   return getChordDiagram(chordName) !== null;
+}
+
+/**
+ * Get statistics about chord diagram availability
+ */
+export function getChordDiagramStats(): {
+  handCrafted: number;
+  generatable: number;
+  totalAvailable: number;
+  supportedTypes: string[];
+} {
+  const { total: generatable } = getGeneratableChordCount();
+  const handCrafted = Object.keys(CHORD_DIAGRAMS).length;
+  const totalAvailable = getAllAvailableChordDiagrams().length;
+  
+  return {
+    handCrafted,
+    generatable,
+    totalAvailable,
+    supportedTypes: getSupportedChordTypes(),
+  };
 }

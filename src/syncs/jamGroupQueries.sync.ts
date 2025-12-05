@@ -116,6 +116,7 @@ export const HandleGetJamGroupById: Sync = (
 /**
  * Handles an authenticated request to get common chords for a jam group.
  * Returns the intersection of all members' known chords.
+ * Uses ChordLibrary._getOverlappingChords for all group sizes.
  */
 export const HandleGetCommonChordsForGroup: Sync = (
   {
@@ -124,8 +125,6 @@ export const HandleGetCommonChordsForGroup: Sync = (
     group: groupId,
     user,
     groupData,
-    member,
-    memberChords,
     commonChords,
   },
 ) => ({
@@ -171,50 +170,16 @@ export const HandleGetCommonChordsForGroup: Sync = (
       });
     }
 
-    // Get chords for each member
-    const allMemberChords: Set<string>[] = [];
-    for (const memberId of group.members) {
-      const memberFrames = new Frames({
-        ...originalFrame,
-        [member]: memberId,
-      });
-      const chordFrames = await memberFrames.query(
-        ChordLibrary._getKnownChords,
-        { user: member },
-        { chord: memberChords },
-      );
+    // Use _getOverlappingChords for all group sizes (now handles single users)
+    const overlappingData = await ChordLibrary._getOverlappingChords({
+      userIds: group.members,
+    });
 
-      const chordSet = new Set<string>();
-      for (const cf of chordFrames) {
-        const chordData = cf[memberChords] as unknown;
-        if (
-          chordData && typeof chordData === "object" && "chord" in chordData
-        ) {
-          const chord = (chordData as { chord: string }).chord;
-          chordSet.add(chord);
-        }
-      }
-      allMemberChords.push(chordSet);
-    }
-
-    // Compute intersection of all members' chords
-    if (allMemberChords.length === 0) {
-      return new Frames({
-        ...originalFrame,
-        [commonChords]: [],
-      });
-    }
-
-    let intersection = allMemberChords[0];
-    for (let i = 1; i < allMemberChords.length; i++) {
-      intersection = new Set(
-        [...intersection].filter((chord) => allMemberChords[i].has(chord)),
-      );
-    }
+    const chordNames = overlappingData.overlappingChords.map((c) => c.chord);
 
     return new Frames({
       ...originalFrame,
-      [commonChords]: Array.from(intersection),
+      [commonChords]: chordNames,
     });
   },
   then: actions([Requesting.respond, { request, commonChords }]),
@@ -225,6 +190,7 @@ export const HandleGetCommonChordsForGroup: Sync = (
 /**
  * Handles an authenticated request to get playable songs for a jam group.
  * Returns songs that can be played using the group's common chords.
+ * Uses ChordLibrary._getOverlappingChords for all group sizes.
  */
 export const HandleGetPlayableSongsForGroup: Sync = (
   {
@@ -233,8 +199,6 @@ export const HandleGetPlayableSongsForGroup: Sync = (
     group: groupId,
     user,
     groupData,
-    member,
-    memberChords,
     commonChords,
     song,
     results,
@@ -286,48 +250,14 @@ export const HandleGetPlayableSongsForGroup: Sync = (
       });
     }
 
-    // Get chords for each member
-    const allMemberChords: Set<string>[] = [];
-    for (const memberId of group.members) {
-      const memberFrames = new Frames({
-        ...originalFrame,
-        [member]: memberId,
-      });
-      const chordFrames = await memberFrames.query(
-        ChordLibrary._getKnownChords,
-        { user: member },
-        { chord: memberChords },
-      );
+    // Use _getOverlappingChords for all group sizes (now handles single users)
+    const overlappingData = await ChordLibrary._getOverlappingChords({
+      userIds: group.members,
+    });
 
-      const chordSet = new Set<string>();
-      for (const cf of chordFrames) {
-        const chordData = cf[memberChords] as unknown;
-        if (
-          chordData && typeof chordData === "object" && "chord" in chordData
-        ) {
-          const chord = (chordData as { chord: string }).chord;
-          chordSet.add(chord);
-        }
-      }
-      allMemberChords.push(chordSet);
-    }
-
-    // Compute intersection of all members' chords
-    if (allMemberChords.length === 0) {
-      return new Frames({
-        ...originalFrame,
-        [results]: [],
-      });
-    }
-
-    let intersection = allMemberChords[0];
-    for (let i = 1; i < allMemberChords.length; i++) {
-      intersection = new Set(
-        [...intersection].filter((chord) => allMemberChords[i].has(chord)),
-      );
-    }
-
-    const commonChordsArray = Array.from(intersection);
+    const commonChordsArray = overlappingData.overlappingChords.map(
+      (c) => c.chord,
+    );
 
     // Query for playable songs using common chords
     const songsFrames = new Frames({
