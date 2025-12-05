@@ -208,14 +208,20 @@ export default class UserAccountConcept {
   async setKidAccountStatus(
     { user: userId, status }: { user: User; status: boolean },
   ): Promise<{ success: true } | { error: string }> {
-    const result = await this.users.updateOne(
+    const user = await this.users.findOne({ _id: userId });
+    if (!user) return { error: "User not found" };
+
+    if (user.isKidAccount === true && status === false) {
+      return {
+        error:
+          "Kid accounts cannot be converted to standard accounts. Content admin to change settings.",
+      };
+    }
+
+    const _ = await this.users.updateOne(
       { _id: userId },
       { $set: { isKidAccount: status } },
     );
-
-    if (result.matchedCount === 0) {
-      return { error: "User not found" };
-    }
 
     return { success: true };
   }
