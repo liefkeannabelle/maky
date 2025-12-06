@@ -31,6 +31,10 @@ export interface Song {
   difficulty?: number;
   tags?: string[];
   source?: string;
+  
+  // Spotify metadata
+  previewUrl?: string;    // 30s audio preview URL (may be null, deprecated by Spotify)
+  albumArtUrl?: string;   // Album cover image URL
 }
 
 export default class SongConcept {
@@ -60,6 +64,9 @@ export default class SongConcept {
     difficulty?: number;
     tags?: string[];
     source?: string;
+    // Spotify metadata
+    previewUrl?: string;
+    albumArtUrl?: string;
   }): Promise<{ song: Song } | { error: string }> {
     const existing = await this.songs.findOne({
       title: params.title,
@@ -83,6 +90,8 @@ export default class SongConcept {
       difficulty: params.difficulty,
       tags: params.tags,
       source: params.source,
+      previewUrl: params.previewUrl,
+      albumArtUrl: params.albumArtUrl,
     };
 
     await this.songs.insertOne(newSong);

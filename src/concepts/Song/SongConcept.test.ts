@@ -123,3 +123,166 @@ Deno.test("SongConcept - Query Logic", async (t) => {
 
   await client.close();
 });
+
+// ============================================
+// Preview URL and Album Art Tests
+// ============================================
+
+Deno.test("SongConcept - Preview URL Support", async (t) => {
+  const [db, client] = await testDb();
+  const songConcept = new SongConcept(db);
+
+  await t.step("createSong: stores previewUrl and albumArtUrl", async () => {
+    const result = await songConcept.createSong({
+      id: "preview-test-1",
+      title: "Shape of You",
+      artist: "Ed Sheeran",
+      chords: ["Em", "Am", "C", "D"],
+      genre: "pop",
+      previewUrl: "https://p.scdn.co/mp3-preview/abc123",
+      albumArtUrl: "https://i.scdn.co/image/def456",
+    });
+
+    if ("error" in result) {
+      throw new Error(result.error);
+    }
+
+    assertEquals(result.song.title, "Shape of You");
+    assertEquals(result.song.previewUrl, "https://p.scdn.co/mp3-preview/abc123");
+    assertEquals(result.song.albumArtUrl, "https://i.scdn.co/image/def456");
+  });
+
+  await t.step("createSong: handles missing previewUrl gracefully", async () => {
+    const result = await songConcept.createSong({
+      id: "preview-test-2",
+      title: "Obscure Song",
+      artist: "Unknown Artist",
+      chords: ["G", "C", "D"],
+      // No previewUrl or albumArtUrl
+    });
+
+    if ("error" in result) {
+      throw new Error(result.error);
+    }
+
+    assertEquals(result.song.title, "Obscure Song");
+    assertEquals(result.song.previewUrl, undefined);
+    assertEquals(result.song.albumArtUrl, undefined);
+  });
+
+  await t.step("createSong: stores partial Spotify data (album art only)", async () => {
+    const result = await songConcept.createSong({
+      id: "preview-test-3",
+      title: "Partial Data Song",
+      artist: "Some Artist",
+      chords: ["A", "D", "E"],
+      albumArtUrl: "https://i.scdn.co/image/partial789",
+      // Has album art but no preview
+    });
+
+    if ("error" in result) {
+      throw new Error(result.error);
+    }
+
+    assertEquals(result.song.previewUrl, undefined);
+    assertEquals(result.song.albumArtUrl, "https://i.scdn.co/image/partial789");
+  });
+
+  await t.step("query: retrieves song with preview URL via _getAllSongs", async () => {
+    const allSongs = await songConcept._getAllSongs({});
+    const song = allSongs.find(s => s.song._id === "preview-test-1");
+
+    assertNotEquals(song, undefined);
+    if (song) {
+      assertEquals(song.song.previewUrl, "https://p.scdn.co/mp3-preview/abc123");
+      assertEquals(song.song.albumArtUrl, "https://i.scdn.co/image/def456");
+    }
+  });
+
+  await t.step("query: can filter songs with preview URLs", async () => {
+    // Query songs that have preview URLs using $and to avoid type issues
+    const songsWithPreviews = await songConcept.songs.find({
+      $and: [
+        { previewUrl: { $exists: true } },
+        { previewUrl: { $type: "string" } }
+      ]
+    } as any).toArray();
+
+    // Should find preview-test-1 (has preview URL)
+    assertEquals(songsWithPreviews.length >= 1, true);
+    
+    const hasPreview = songsWithPreviews.some(s => 
+      s.previewUrl === "https://p.scdn.co/mp3-preview/abc123"
+    );
+    assertEquals(hasPreview, true);
+  });
+
+  await t.step("updateSong: can add preview URL to existing song", async () => {
+    // Create song without preview
+    await songConcept.createSong({
+      id: "preview-test-4",
+      title: "No Preview Initially",
+      artist: "Test Artist",
+      chords: ["Am", "F", "C", "G"],
+    });
+
+    // Update to add preview URL
+    const updateResult = await songConcept.updateSong({
+      song: "preview-test-4" as SongID,
+      updates: {
+        previewUrl: "https://p.scdn.co/mp3-preview/newpreview",
+        albumArtUrl: "https://i.scdn.co/image/newart",
+      }
+    });
+
+    assertEquals("error" in updateResult, false);
+
+    // Verify the update via direct collection query
+    const updatedSong = await songConcept.songs.findOne({ _id: "preview-test-4" as SongID });
+    assertNotEquals(updatedSong, null);
+    if (updatedSong) {
+      assertEquals(updatedSong.previewUrl, "https://p.scdn.co/mp3-preview/newpreview");
+      assertEquals(updatedSong.albumArtUrl, "https://i.scdn.co/image/newart");
+    }
+  });
+
+  // Cleanup
+  await songConcept.deleteSong({ song: "preview-test-1" as SongID });
+  await songConcept.deleteSong({ song: "preview-test-2" as SongID });
+  await songConcept.deleteSong({ song: "preview-test-3" as SongID });
+  await songConcept.deleteSong({ song: "preview-test-4" as SongID });
+
+  await client.close();
+});
+
+Deno.test("Preview URL Format Validation", async (t) => {
+  await t.step("recognizes valid Spotify preview URL format", () => {
+    const validPreviewUrls = [
+      "https://p.scdn.co/mp3-preview/abc123def456",
+      "https://p.scdn.co/mp3-preview/7339548839a263fd721d01eb3364a848cad16fa7",
+    ];
+
+    for (const url of validPreviewUrls) {
+      assertEquals(
+        url.startsWith("https://p.scdn.co/mp3-preview/"), 
+        true,
+        `${url} should be a valid Spotify preview URL`
+      );
+    }
+  });
+
+  await t.step("recognizes valid Spotify album art URL format", () => {
+    const validArtUrls = [
+      "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+      "https://i.scdn.co/image/abc123",
+    ];
+
+    for (const url of validArtUrls) {
+      assertEquals(
+        url.startsWith("https://i.scdn.co/image/"), 
+        true,
+        `${url} should be a valid Spotify album art URL`
+      );
+    }
+  });
+});

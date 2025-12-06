@@ -27,6 +27,9 @@ type RawSong = {
   difficulty?: number;
   tags?: string[];
   source?: string;
+  // Spotify metadata
+  previewUrl?: string | null;   // 30s audio preview (may be null)
+  albumArtUrl?: string | null;  // Album cover image
 };
 
 async function main() {
@@ -73,6 +76,9 @@ async function main() {
         difficulty: s.difficulty,
         tags: s.tags,
         source: s.source ?? "curated",
+        // Spotify metadata
+        previewUrl: s.previewUrl ?? undefined,
+        albumArtUrl: s.albumArtUrl ?? undefined,
       });
 
       console.log(

@@ -76,6 +76,9 @@ Deno.test("Chord Diagram Integration Tests", testOptions, async (t) => {
   let userId: ID;
   let sessionId: ID;
   const username = `diagram_tester_${Date.now()}`;
+  
+  // Store song IDs for later tests
+  const testSongIds: Record<string, ID> = {};
 
   // ===========================
   // SETUP: Create Test Environment
@@ -161,8 +164,16 @@ Deno.test("Chord Diagram Integration Tests", testOptions, async (t) => {
       const res = await Song.createSong(song);
       if ("error" in res) {
         console.log(`  Note: Song "${song.title}" may already exist`);
+        // Try to find the existing song to get its ID
+        const allSongs = await Song._getAllSongs({ limit: 5000 });
+        const existingSong = allSongs.find((s) => s.song.title === song.title);
+        if (existingSong) {
+          testSongIds[song.title] = existingSong.song._id;
+          console.log(`  Found existing song ID: ${existingSong.song._id}`);
+        }
       } else {
-        console.log(`  ✓ Created song: ${song.title}`);
+        testSongIds[song.title] = res.song._id;
+        console.log(`  ✓ Created song: ${song.title} (ID: ${res.song._id})`);
       }
     }
   });
@@ -260,22 +271,21 @@ Deno.test("Chord Diagram Integration Tests", testOptions, async (t) => {
       });
 
       // Find "Advanced Song" which requires C, G, Am, F, Em, D
-      const allSongs = await Song._getAllSongs({});
-      const targetSong = allSongs.find((s) => s.song.title === "Advanced Song");
+      const targetSongId = testSongIds["Advanced Song"];
       
-      if (!targetSong) {
+      if (!targetSongId) {
         throw new Error("Advanced Song not found in catalog");
       }
 
-      console.log(`  Target song: ${targetSong.song.title}`);
-      console.log(`  Required chords: ${targetSong.song.chords.join(", ")}`);
+      console.log(`  Target song ID: ${targetSongId}`);
+      console.log(`  Required chords: C, G, Am, F, Em, D`);
       console.log(`  User knows: C`);
 
       // WHEN: Request learning path via Requesting API
       const reqRes = await Requesting.request({
         path: "/RecommendationEngine/recommendNextChordsForTargetSong",
         sessionId,
-        targetSong: targetSong.song._id,
+        targetSong: targetSongId,
       });
 
       const requestId = reqRes.request;

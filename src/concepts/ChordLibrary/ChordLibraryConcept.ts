@@ -225,6 +225,11 @@ export default class ChordLibraryConcept {
   }> {
     const { userIds } = input;
 
+    // Early return for less than 2 users - can't find overlapping chords
+    if (userIds.length < 2) {
+      return { overlappingChords: [], userChordCounts: [] };
+    }
+
     // Mastery level ordering for comparison (lower index = lower mastery)
     const masteryOrder: MasteryLevel[] = [
       "not started",
