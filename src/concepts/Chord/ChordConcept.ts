@@ -1,22 +1,24 @@
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
-import { 
-  listChordSymbols, 
-  normalizeChordSymbol,
-  generateChordVocabulary,
+import {
   CANONICAL_ROOTS,
   COMMON_CHORD_SUFFIXES,
+  generateChordVocabulary,
+  listChordSymbols,
+  normalizeChordSymbol,
 } from "../../theory/chords.ts";
-import { 
-  getChordDiagram, 
-  getAllAvailableChordDiagrams, 
+import {
+  ChordDiagram,
+  getAvailableChordDiagrams,
+  getChordDiagram,
   hasChordDiagram,
-  ChordDiagram 
 } from "../../theory/chordDiagrams.ts";
 
-
 const PREFIX = "Chord.";
+
+const escapeRegex = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * Note is represented as a string (e.g., "C", "F#", "Bb").
@@ -49,7 +51,9 @@ export default class ChordConcept {
    * **effects** Creates a new Chord `c`; sets the name of `c` to `name` and its `notes`
    * to the provided sequence; returns the new Chord `c` as `chord`.
    */
-  async createChord(params: { name: string; notes: Note[] }): Promise<{ chord: Chord } | { error: string }> {
+  async createChord(
+    params: { name: string; notes: Note[] },
+  ): Promise<{ chord: Chord } | { error: string }> {
     const name = params.name.trim();
 
     // Check strict requirement: No Chord with the given `name` already exists.
@@ -91,8 +95,16 @@ export default class ChordConcept {
    *
    * Internal query to fetch a chord by its name.
    */
-  async _getChordByName(params: { name: string }): Promise<{ chord: Chord | null }> {
-    const chord = await this.chords.findOne({ name: params.name.trim() });
+  async _getChordByName(
+    params: { name: string },
+  ): Promise<{ chord: Chord | null }> {
+    const normalized = params.name?.trim() ?? "";
+    if (!normalized) return { chord: null };
+
+    const pattern = `^${escapeRegex(normalized)}$`;
+    const chord = await this.chords.findOne({
+      name: { $regex: pattern, $options: "i" },
+    });
     return { chord };
   }
 
@@ -106,6 +118,27 @@ export default class ChordConcept {
     return { chords };
   }
 
+  /**
+   * _searchByChordName (query: String): (chords: Chord[])
+   *
+   * **effects** Returns chords whose names match the partial query (case-insensitive).
+   */
+  async _searchByChordName(
+    { query }: { query: string },
+  ): Promise<Array<{ chord: Chord }>> {
+    const trimmed = query?.trim();
+    if (!trimmed) {
+      return [];
+    }
+
+    const escaped = escapeRegex(trimmed);
+    const results = await this.chords.find({
+      name: { $regex: escaped, $options: "i" },
+    }).limit(20).toArray();
+
+    return results.map((chord) => ({ chord }));
+  }
+
   // ============ CHORD DIAGRAM QUERIES ============
 
   /**
@@ -114,7 +147,10 @@ export default class ChordConcept {
    * Get guitar fingering diagram(s) for a chord.
    * Returns multiple voicings if available, or null if no diagram exists.
    */
-  async _getChordDiagram(params: { name: string }): Promise<{ diagrams: ChordDiagram[] | null }> {
+  // deno-lint-ignore require-await
+  async _getChordDiagram(
+    params: { name: string },
+  ): Promise<{ diagrams: ChordDiagram[] | null }> {
     const diagrams = getChordDiagram(params.name.trim());
     return { diagrams };
   }
@@ -125,25 +161,28 @@ export default class ChordConcept {
    * Get guitar fingering diagrams for multiple chords at once.
    * Returns a map of chord name -> diagrams (empty array if not found).
    */
-  async _getChordDiagrams(params: { names: string[] }): Promise<{ diagrams: Record<string, ChordDiagram[]> }> {
+  // deno-lint-ignore require-await
+  async _getChordDiagrams(
+    params: { names: string[] },
+  ): Promise<{ diagrams: Record<string, ChordDiagram[]> }> {
     const result: Record<string, ChordDiagram[]> = {};
-    
+
     for (const name of params.names) {
       const diagrams = getChordDiagram(name.trim());
       result[name] = diagrams || [];
     }
-    
+
     return { diagrams: result };
   }
 
   /**
    * _getAvailableChordDiagrams (): (chords: string[])
    *
-   * Get list of all chord names that have diagrams available.
-   * Includes both hand-crafted and algorithmically generated diagrams.
+   * Get list of chord names that have curated diagrams available.
    */
+  // deno-lint-ignore require-await
   async _getAvailableChordDiagrams(): Promise<{ chords: string[] }> {
-    return { chords: getAllAvailableChordDiagrams() };
+    return { chords: getAvailableChordDiagrams() };
   }
 
   /**
@@ -151,7 +190,10 @@ export default class ChordConcept {
    *
    * Check if a diagram exists for a given chord.
    */
-  async _hasChordDiagram(params: { name: string }): Promise<{ exists: boolean }> {
+  // deno-lint-ignore require-await
+  async _hasChordDiagram(
+    params: { name: string },
+  ): Promise<{ exists: boolean }> {
     return { exists: hasChordDiagram(params.name.trim()) };
   }
 
@@ -162,11 +204,12 @@ export default class ChordConcept {
    *
    * Returns all possible chord symbols that the system recognizes.
    * This is generated from the theory module (12 roots × 53 suffixes).
-   * 
+   *
    * Use this to build a "chord dictionary" or reference page.
    */
-  async _getChordVocabulary(params: { 
-    includeSlashChords?: boolean 
+  // deno-lint-ignore require-await
+  async _getChordVocabulary(params: {
+    includeSlashChords?: boolean;
   } = {}): Promise<{
     chords: string[];
     roots: string[];
@@ -175,9 +218,11 @@ export default class ChordConcept {
     chordsWithDiagrams: string[];
   }> {
     const includeSlash = params.includeSlashChords ?? false;
-    const chords = generateChordVocabulary({ includeSlashChords: includeSlash });
-    const chordsWithDiagrams = getAllAvailableChordDiagrams();
-    
+    const chords = generateChordVocabulary({
+      includeSlashChords: includeSlash,
+    });
+    const chordsWithDiagrams = getAvailableChordDiagrams();
+
     return {
       chords,
       roots: [...CANONICAL_ROOTS],

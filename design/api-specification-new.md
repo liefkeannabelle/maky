@@ -3644,6 +3644,50 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 ---
 
+### POST /api/Chord/_searchByName
+
+**Description:** Searches chords by name using a case-insensitive partial match.
+
+**Requirements:**
+
+*   None.
+
+**Effects:**
+
+*   Returns up to 20 chords whose names contain the query substring.
+
+**Request Body:**
+
+```json
+{
+  "query": "string"
+}
+```
+
+**Success Response Body (Query):**
+
+```json
+[
+  {
+    "chord": {
+      "_id": "string",
+      "name": "string",
+      "notes": ["string"]
+    }
+  }
+]
+```
+
+**Error Response Body:**
+
+```json
+{
+  "error": "string"
+}
+```
+
+---
+
 ### POST /api/Chord/_getChordDiagram
 
 **Description:** Get guitar fingering diagram(s) for a specific chord name. Returns multiple voicings if available, or null if no diagram exists for this chord.
