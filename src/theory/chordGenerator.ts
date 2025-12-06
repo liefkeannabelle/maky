@@ -260,21 +260,26 @@ const A_SHAPE_MINOR6: ChordShape = {
 // ============ JAZZ CHORD SHAPES ============
 
 // Half-diminished (m7b5) - THE classic jazz chord
+// Notes: R, b3, b5, b7
+// Corrected voicing: includes all 4 chord tones
 const M7B5_SHAPE_A: ChordShape = {
   name: "m7b5-A-shape",
   rootString: 1,
-  relativeFrets: [null, 0, 1, 2, 1, null],
-  fingers: [0, 1, 2, 4, 3, 0],
-  hasBarre: false,
+  // x R b5 b7 b3 x - all 4 chord tones present
+  relativeFrets: [null, 0, 1, 0, 1, null],
+  fingers: [0, 1, 2, 1, 3, 0],
+  hasBarre: true,
+  barreStrings: [1, 3],
 };
 
+// Alternative m7b5 voicing from 6th string
 const M7B5_SHAPE_E: ChordShape = {
   name: "m7b5-E-shape",
   rootString: 0,
-  relativeFrets: [0, null, 0, 1, 0, null],
-  fingers: [2, 0, 1, 3, 1, 0],
-  hasBarre: true,
-  barreStrings: [2, 4],
+  // R x b7 b3 b5 x - common jazz voicing
+  relativeFrets: [0, null, -1, 0, -1, null],
+  fingers: [1, 0, 0, 2, 0, 0],
+  hasBarre: false,
 };
 
 // Dominant 7#9 (Hendrix chord)
@@ -426,12 +431,12 @@ const CHORD_SHAPES: Record<string, ChordShape[]> = {
   "m6": [A_SHAPE_MINOR6],
   
   // ========== JAZZ CHORDS ==========
-  // Half-diminished (minor 7 flat 5)
-  "m7b5": [M7B5_SHAPE_A, M7B5_SHAPE_E],
-  "ø": [M7B5_SHAPE_A, M7B5_SHAPE_E],       // Symbol notation
-  "ø7": [M7B5_SHAPE_A, M7B5_SHAPE_E],      // With 7
-  "min7b5": [M7B5_SHAPE_A, M7B5_SHAPE_E],  // Alternate spelling
-  "-7b5": [M7B5_SHAPE_A, M7B5_SHAPE_E],    // Jazz notation
+  // Half-diminished (minor 7 flat 5) - using only the proven A-shape
+  "m7b5": [M7B5_SHAPE_A],
+  "ø": [M7B5_SHAPE_A],       // Symbol notation
+  "ø7": [M7B5_SHAPE_A],      // With 7
+  "min7b5": [M7B5_SHAPE_A],  // Alternate spelling
+  "-7b5": [M7B5_SHAPE_A],    // Jazz notation
   
   // Altered dominants
   "7#9": [DOM7_SHARP9_SHAPE],      // Hendrix chord
