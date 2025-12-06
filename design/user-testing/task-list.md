@@ -1,23 +1,19 @@
 # Task List
 |#|Task Name | Instruction         | Rationale                                |
 |-|----------|---------------------|------------------------------------------|  
-|1|Register Account | Select a unique username, email, and password to create a new account      | Rationale                                |
-|2|Login | With your newly created account, login | Rationale                 |
-|3|Set Up Profile | Update the various fields of the user profile as desired    | Rationale |
-|4|Explore Songs | On the discover page, explore song bank for a target song        | Rationale                                |
-|5|Set Target Song | On the profile page, add the identified target song        | Rationale                                |
-|6|Learn Recommended Chords | On the learn page, start learning the first two recommended chords         | Rationale                                |
-|7|Start Learning Song | Find a song that piques your interest and start learning it        | Rationale                                |
-|8|Continue Learning | Explore the features of the learn page, adding and udpating chords and songs        | Rationale                                |
-|9|Capture Your Progress | Add a journal entry to reflect recent progress        | Rationale                                |
-|10|Make Update Public | After posting, make the most recent journal entry public       | Rationale                                |
-|11|Connect with Friends | On the feed page, add 2-3 DISPLAY NAMES as friends        | Rationale                                |
-|12|Interact with Feed | With friends added, react and comment to their feed posts      | Rationale                                |
-|13|Create a Jam Group| On the jam page, create a new jam group and add your recently added friends       | Rationale                                |
-|14|Start a Jam Session |        | Rationale                                |
-|15| |        | Rationale                                |
-|16|End Jam Session |        | Rationale                                |
-|17|Private Account |        | Rationale                                |
-|18| |        | Rationale                                |
-
-"Rationale for including the task, explaining why the task is worth testing, what you hope to learn or uncover about your design when testing this task with a user versus excuting it yourself as part of a cognitive walkthrough."
+|1|Register Account | Select a unique username, email, and password to create a new account      | We would like to ensure the registration process is intuitive from the starting screen.                                 |
+|2|Login | With your newly created account, login | This is necessary to engage with the app and would like to confirm there is no friction in the user experience.                 |
+|3|Set Up Profile | Update the various fields of the user profile as desired    | As developers, we are familiar with the purpose of each portion of the profile, but we want to see if the experience is intuitive and smooth for a new user. |
+|4|Explore Chords + Songs | On the discover page, explore song bank for a target song        | This is a more recent addition to our design and we would like to confirm that it adds value to the user experience.                                |
+|5|Set Target Song | On the profile page, add the identified target song        | We've trialed a few different interfaces for this feature and want to ensure it feels cohesive with the song discovery process.                                |
+|6|Learn Recommended Chords | On the learn page, start learning the first three recommended chords         | Some amount of chord data is necessary for subsequent steps of the user test.                                 |
+|7|Start Learning Song | Find a song that piques your interest and start learning it        | We would like to see how a user would go about finding a song to start learning                                |
+|8|Continue Learning | Explore the features of the learn page, adding and udpating chords and songs        | Since the core functionality of our app rests in the learning features, we would like to see what features the user gravitates towards and hear their insights while using.                                |
+|9|Capture Your Progress | Add a journal entry to reflect recent progress        | With the journal page separate from the learning page, we would like to see if this adds friction or if the modularity benefits the user experience.               |
+|10|Make Update Public | After posting, make the most recent journal entry public       | We are concerned that the current process of making a post public after it has been posted is unintuitive or confusing and would like to see if this negatively affects the user experience.                                |
+|11|Connect with Friends | On the feed page, add 2-3 DISPLAY NAMES as friends        | In order to test the social features, the user must connect with some friends.         |
+|12|Interact with Feed | With friends added, react and comment to their feed posts      | Though our social features are secondary, we want to make sure they are still intuitive relative to users' existing social media experience.     |
+|13|Create a Jam Group| On the jam page, create a new jam group and add your recently added friends       | Since this is a more unique social feature to our platform, we want to confirm that the process is sufficiently straightforward.               |
+|14|Start a Jam Session | With your newly formed group, start a jam session       | Similarly, we want to check that the process is clear and user-friendly.          |
+|15|Explore Jam Session | After starting a jam session, explore the jam session page        | With the jam session started, we want to see what features the user gravitates towards, struggles with, or wishes they had.           |
+|16|Private Account | Finally, on the account settings page, change your account to private       | Since this is a more recent addition, we want to check that it is logically placed, easy to use, and performs as desired for users.                   |
