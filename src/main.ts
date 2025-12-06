@@ -1,7 +1,7 @@
 /**
  * Entry point for an application built with concepts + synchronizations.
  * Requires the Requesting concept as a bootstrap concept.
- * Please run "deno run import" or "generate_imports.ts" to prepare "@concepts".
+ * Please run "deno run import" or "generate_imports.ts" to run "@concepts".
  */
 import * as concepts from "@concepts";
 
@@ -12,6 +12,7 @@ const { Engine } = concepts;
 import { Logging } from "@engine";
 import { startRequestingServer } from "@concepts/Requesting/RequestingConcept.ts";
 import syncs from "./syncs.ts";
+import { warmSongCache } from "@utils/songCache.ts";
 
 /**
  * Available logging levels:
@@ -26,3 +27,6 @@ Engine.register(syncs);
 
 // Start a server to provide the Requesting concept with external/system actions.
 startRequestingServer(concepts);
+
+// Pre-warm caches to avoid first-request delays (especially with remote MongoDB)
+warmSongCache();
