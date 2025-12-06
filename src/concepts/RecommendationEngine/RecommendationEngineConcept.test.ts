@@ -158,5 +158,46 @@ Deno.test("RecommendationEngineConcept", async (t) => {
     console.log("-> Stateless unlock query confirmed songs B and D");
   });
 
+  await t.step("Query: Enharmonic equivalents (Bb vs A#)", async () => {
+    console.log("Test: Verify Bb and A# are treated as equivalent");
+    
+    // Create songs with Bb (flat notation)
+    const idSongBb = freshID();
+    const songsWithBb: SongInput[] = [
+      { _id: idSongBb, chords: ["C", "F", "Bb"], difficulty: 2 },
+    ];
+    
+    // User knows C, F, and A# (sharp notation)
+    // Should NOT recommend Bb since A# is equivalent and already known
+    const results = await engine.requestChordRecommendation({
+      knownChords: ["C", "F", "A#"],
+      allSongs: songsWithBb,
+    });
+    
+    // Should return empty - no new chords to learn
+    assertEquals(results.length, 0, "A# should be treated as equivalent to Bb");
+    console.log("-> Enharmonic equivalence confirmed: A# matches Bb in songs");
+  });
+
+  await t.step("Query: Enharmonic recommendation normalized (Bb -> A#)", async () => {
+    console.log("Test: Verify recommended chord is normalized to sharp form");
+    
+    // Create songs with Bb (flat notation)
+    const idSongBb = freshID();
+    const songsWithBb: SongInput[] = [
+      { _id: idSongBb, chords: ["C", "F", "Bb"], difficulty: 2 },
+    ];
+    
+    // User knows C, F - should recommend Bb but normalized to A#
+    const results = await engine.requestChordRecommendation({
+      knownChords: ["C", "F"],
+      allSongs: songsWithBb,
+    });
+    
+    assertEquals(results.length, 1);
+    assertEquals(results[0].recommendedChord, "A#", "Bb should be normalized to A#");
+    console.log("-> Recommendation normalized: Bb -> A#");
+  });
+
   await client.close();
 });
