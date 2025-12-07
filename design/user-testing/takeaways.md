@@ -9,9 +9,12 @@ No major impediments in runninng and effectively using the app. Overall was sati
 - Add a "How To"/information button for reading diagrams, concept of jam groups.
 - Renaming/Merging/Moving things around in user profile & user account
 - Be more descriptive what journal is meant to be (to understand the privacy aspect)
+- Add date on journal 7 feed's posts
 
 **Medium Additions**
 - Change posts back to private when the account becomes kid/private
+- Tutorial on interpreting the app or like how to go about chords & learning songs & reading finger diagrams.
+- Adding video upload functionality in posts
 
 **Found bugs/inconsistencies**
 - Bug after setting target song. Shows up as "chrd-1340".
