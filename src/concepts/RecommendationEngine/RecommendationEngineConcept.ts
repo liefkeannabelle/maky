@@ -4,6 +4,53 @@ import { freshID } from "@utils/database.ts";
 
 const PREFIX = "RecommendationEngine.";
 
+// Enharmonic equivalents mapping (both directions)
+const ENHARMONIC_MAP: Record<string, string> = {
+  "A#": "Bb", "Bb": "A#",
+  "C#": "Db", "Db": "C#",
+  "D#": "Eb", "Eb": "D#",
+  "F#": "Gb", "Gb": "F#",
+  "G#": "Ab", "Ab": "G#",
+};
+
+/**
+ * Normalize a chord to its canonical form (sharps preferred).
+ * This ensures "Bb" -> "A#", "Db" -> "C#", etc.
+ */
+function normalizeToCanonical(chord: string): string {
+  // Replace flat roots with sharp equivalents
+  for (const [flat, sharp] of Object.entries(ENHARMONIC_MAP)) {
+    // Only convert flats to sharps (Bb -> A#, not A# -> Bb)
+    if (flat.includes("b") && chord.startsWith(flat)) {
+      return chord.replace(flat, sharp);
+    }
+  }
+  return chord;
+}
+
+/**
+ * Check if a chord is known, considering enharmonic equivalents.
+ * For example, if knownSet has "A#", this returns true for both "A#" and "Bb".
+ */
+function isChordKnown(chord: string, knownSet: Set<string>): boolean {
+  // Direct match
+  if (knownSet.has(chord)) return true;
+  
+  // Check enharmonic equivalent
+  const normalized = normalizeToCanonical(chord);
+  if (knownSet.has(normalized)) return true;
+  
+  // Check if the chord root has an enharmonic in the set
+  for (const [from, to] of Object.entries(ENHARMONIC_MAP)) {
+    if (chord.startsWith(from)) {
+      const altChord = chord.replace(from, to);
+      if (knownSet.has(altChord)) return true;
+    }
+  }
+  
+  return false;
+}
+
 // We define local interfaces for inputs to maintain Concept Independence.
 // We do not import "Song" or "Chord" types from other concepts.
 
@@ -44,12 +91,15 @@ export default class RecommendationEngineConcept {
     const knownSet = new Set(knownChords);
     
     // 1. Identify all potential chords (chords in songs that we don't know yet)
+    // Use normalized form to avoid duplicates like Bb and A#
     const candidateChords = new Set<string>();
     for (const song of allSongs) {
       if (!song.chords) continue;
       for (const chord of song.chords) {
-        if (!knownSet.has(chord)) {
-          candidateChords.add(chord);
+        // Check if chord is known (considering enharmonic equivalents)
+        if (!isChordKnown(chord, knownSet)) {
+          // Store the normalized (canonical) form to avoid Bb/A# duplicates
+          candidateChords.add(normalizeToCanonical(chord));
         }
       }
     }
@@ -61,9 +111,15 @@ export default class RecommendationEngineConcept {
 
     // 2. Evaluate each candidate chord
     for (const candidate of candidateChords) {
-      // Temporarily assume we know this candidate
+      // Temporarily assume we know this candidate (add both forms for matching)
       const testKnown = new Set(knownChords);
       testKnown.add(candidate);
+      // Also add the enharmonic equivalent for proper song matching
+      for (const [from, to] of Object.entries(ENHARMONIC_MAP)) {
+        if (candidate.startsWith(from)) {
+          testKnown.add(candidate.replace(from, to));
+        }
+      }
 
       const unlockedForCandidate: ID[] = [];
       let totalDifficulty = 0;
@@ -71,11 +127,11 @@ export default class RecommendationEngineConcept {
 
       for (const song of allSongs) {
         if (!song.chords) continue;
-        // Check if song is playable with testKnown
-        const isPlayableNow = song.chords.every(c => testKnown.has(c));
+        // Check if song is playable with testKnown (considering enharmonics)
+        const isPlayableNow = song.chords.every(c => isChordKnown(c, testKnown));
         
         // Check if song was ALREADY playable with just knownChords (we only want NEW unlocks)
-        const wasPlayableBefore = song.chords.every(c => knownSet.has(c));
+        const wasPlayableBefore = song.chords.every(c => isChordKnown(c, knownSet));
 
         if (isPlayableNow && !wasPlayableBefore) {
           unlockedForCandidate.push(song._id);
@@ -163,16 +219,16 @@ export default class RecommendationEngineConcept {
     { knownChords, allSongs }: { knownChords: string[]; allSongs: SongInput[] }
   ): Promise<Array<{ recommendedChord: string }>> {
     // Re-use logic structure but without DB side effects
-    // Note: In a real implementation, we might extract the logic to a private method.
-    // For this file constraint, I will duplicate the core pure logic briefly or simulate the result.
-    
-    // To avoid duplication in this specific output block, we perform the same search:
     const knownSet = new Set(knownChords);
+    
+    // Use normalized form to avoid duplicates like Bb and A#
     const candidateChords = new Set<string>();
     for (const song of allSongs) {
       if (!song.chords) continue;
       for (const chord of song.chords) {
-        if (!knownSet.has(chord)) candidateChords.add(chord);
+        if (!isChordKnown(chord, knownSet)) {
+          candidateChords.add(normalizeToCanonical(chord));
+        }
       }
     }
 
@@ -181,13 +237,29 @@ export default class RecommendationEngineConcept {
 
     for (const candidate of candidateChords) {
       let score = 0;
+      
+      // Build a test set that includes the candidate and its enharmonic
+      const testKnown = new Set(knownChords);
+      testKnown.add(candidate);
+      for (const [from, to] of Object.entries(ENHARMONIC_MAP)) {
+        if (candidate.startsWith(from)) {
+          testKnown.add(candidate.replace(from, to));
+        }
+      }
+      
       for (const song of allSongs) {
         if (!song.chords) continue;
-        const needsCandidate = song.chords.includes(candidate);
-        const remainderKnown = song.chords.every(c => c === candidate || knownSet.has(c));
+        // Check if song needs this candidate (considering enharmonics)
+        const needsCandidate = song.chords.some(c => 
+          normalizeToCanonical(c) === candidate && !isChordKnown(c, knownSet)
+        );
+        // Check if all other chords are known
+        const remainderKnown = song.chords.every(c => 
+          normalizeToCanonical(c) === candidate || isChordKnown(c, knownSet)
+        );
         // If the song needs this candidate AND all other chords are known, it's an unlock.
         if (needsCandidate && remainderKnown) {
-            score++;
+          score++;
         }
       }
 
