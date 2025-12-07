@@ -214,7 +214,7 @@ export default class UserAccountConcept {
     if (user.isKidAccount === true && status === false) {
       return {
         error:
-          "Kid accounts cannot be converted to standard accounts. Content admin to change settings.",
+          "Kid accounts cannot be converted to standard accounts. Contact admin to change settings.",
       };
     }
 

@@ -312,7 +312,7 @@ Deno.test(
     assert("error" in unSetResult, "Kid account status cannot be unset");
     assertEquals(
       unSetResult.error,
-      "Kid accounts cannot be converted to standard accounts. Content admin to change settings.",
+      "Kid accounts cannot be converted to standard accounts. Contact admin to change settings.",
     );
 
     userDoc = await userAccount.users.findOne({ _id: userId });
