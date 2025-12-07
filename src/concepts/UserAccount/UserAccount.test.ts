@@ -304,16 +304,19 @@ Deno.test(
     let userDoc = await userAccount.users.findOne({ _id: userId });
     assertEquals(userDoc?.isKidAccount, true);
 
-    // Set back to false
+    // Attempting to set back to false should fail
     const unSetResult = await userAccount.setKidAccountStatus({
       user: userId,
       status: false,
     });
-    assert("success" in unSetResult, "Unsetting kid status should succeed");
-    assertEquals(unSetResult.success, true);
+    assert("error" in unSetResult, "Kid account status cannot be unset");
+    assertEquals(
+      unSetResult.error,
+      "Kid accounts cannot be converted to standard accounts. Content admin to change settings.",
+    );
 
     userDoc = await userAccount.users.findOne({ _id: userId });
-    assertEquals(userDoc?.isKidAccount, false);
+    assertEquals(userDoc?.isKidAccount, true);
 
     // Fail for non-existent user
     const failResult = await userAccount.setKidAccountStatus({

@@ -188,10 +188,12 @@ export function parseChordSymbol(raw: string): ParsedChordSymbol | null {
     bassPart = input.slice(slashIndex + 1);
   }
 
-  // Parse head: find the longest root symbol at the start.
+  // Parse head: find the longest root symbol at the start (case-insensitive).
   let matchedRootAlias: string | null = null;
   for (const candidate of ROOT_SYMBOLS_DESC) {
-    if (head.startsWith(candidate)) {
+    if (head.length < candidate.length) continue;
+    const segment = head.slice(0, candidate.length);
+    if (segment.toUpperCase() === candidate.toUpperCase()) {
       matchedRootAlias = candidate;
       break;
     }
@@ -253,7 +255,8 @@ function normalizeSuffix(rawSuffix: string): ChordSuffix {
 function parseBassRoot(rawBass: string): ChordRoot | null {
   const bassInput = rawBass.trim();
   for (const candidate of ROOT_SYMBOLS_DESC) {
-    if (bassInput === candidate) {
+    if (bassInput.length !== candidate.length) continue;
+    if (bassInput.toUpperCase() === candidate.toUpperCase()) {
       return ROOT_ALIASES[candidate] ?? null;
     }
   }
@@ -289,8 +292,10 @@ export function normalizeChordSymbol(raw: string): string | null {
   if (!parsed) return null;
 
   const { root, suffix, bass } = parsed;
-  const head = suffix === "" ? root : `${root}${suffix}`;
-  if (bass) return `${head}/${bass}`;
+  const normalizedRoot = root.toUpperCase();
+  const normalizedBass = bass ? bass.toUpperCase() : undefined;
+  const head = suffix === "" ? normalizedRoot : `${normalizedRoot}${suffix}`;
+  if (normalizedBass) return `${head}/${normalizedBass}`;
   return head;
 }
 
