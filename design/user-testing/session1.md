@@ -29,11 +29,13 @@ Provide the tester with the [task list](task-list.md). Take notes corresponding 
 |16|Private Account | Thought it would be in profile page, wished there was description in the beginning                 | 
 
 ## Debrief
-- What worked well?
-Liked the social aspect overall
-- What could be improved?
-- What did you find confusing? 
-Shared incremental confusions but overall found it pretty smooth, unclear whether it is a learning tool or a coordinating tool (should make more clear + integrating the actual learning tools)
-Not sure the jam session serves a useful purpose, maybe be able to do things retroactively, makes more sense after explaining (could make it more clear to see what the thought process is)
-- Was there anything you were hoping to do/imagining doing?
+*What worked well?*
+- Liked the social aspect overall
+- Thought most of the workflow was fairly intuitive
+*What could be improved?*
+- Confusion could be avoided with more info about the purpose/functionality of varoius features (ie. private accounts, song+chord explorer, etc).
+*What did you find confusing?*
+- Shared incremental confusions but overall found it pretty smooth, unclear whether it is a learning tool or a coordinating tool (should make more clear + integrating the actual learning tools)
+- Not sure the jam session serves a useful purpose, maybe be able to do things retroactively, makes more sense after explaining (could make it more clear to see what the thought process is)
+*Was there anything you were hoping to do/imagining doing?*
 Would like to be able to log playing together even without having done a jam session (maybe attach users to feed posts)

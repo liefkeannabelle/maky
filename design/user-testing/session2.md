@@ -8,7 +8,7 @@ Overview:
 - I will be taking notes as you work through the process and we will debrief more specific thoughts after you are done.
 
 # Task List
-|#|Task Name | Instruction         | Rationale                                |
+|#|Task Name | Instruction         | Notes                                |
 |-|----------|---------------------|------------------------------------------|  
 |1|Register Account | Select a unique username, email, and password to create a new account      | would like to see password just typed in when registering and logging in.                                 |
 |2|Login | With your newly created account, login |                 |
