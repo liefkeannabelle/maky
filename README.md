@@ -5,6 +5,7 @@
 - [Alpha: Updated Development Plan](/design/alpha-dev-plan.md)
 - [Beta: Updated Development Plan](/design/beta-dev-plan.md)
 - [User Testing](/design/user-testing/overview.md)
+- [Final Report](/design/final-report.md)
 
 ## Mentor Meetings
 - [11/13 Meeting](/meetings/11-13/agenda.md)
