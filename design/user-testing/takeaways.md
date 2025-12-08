@@ -19,6 +19,7 @@ In addition to these points of clarity, Sean pointed out a handful of suggested 
 - Make song the target song from discover page
 - Be able to search/sort own song bank like you can the playable song list
 - Current color scheme (particularly background) requires high-brightness to be able to see necessary contrast
+
 *More Complex Additions*
 - Be able to retroactively log jam sessions
   - The ability to attach a jam session to a post
