@@ -274,6 +274,21 @@ export default class PostConcept {
   }
 
   /**
+   * _getAllPostsForUser (user: User): (post: PostDoc)
+   *
+   * **requires** The `user` exists.
+   * **effects** Returns every post authored by the given `user`, ordered by creation date (newest first).
+   */
+  async _getAllPersonalPosts(
+    { user }: { user: User },
+  ): Promise<{ post: PostDoc }[]> {
+    const posts = await this.posts.find({ author: user })
+      .sort({ createdAt: -1 })
+      .toArray();
+    return posts.map((post) => ({ post }));
+  }
+
+  /**
    * _getPostAuthor (post: Post): (author: User)
    *
    * **requires** The `post` exists.

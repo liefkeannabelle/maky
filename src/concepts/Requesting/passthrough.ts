@@ -38,7 +38,7 @@ export const inclusions: Record<string, string> = {
   "/api/RecommendationEngine/_getRecommendation":
     "Public query for recommendation details",
   "/api/Chord/_getChordDiagram": "Query to get chord diagrams",
-    "/api/Chord/_searchByName": "Public chord search query (case-insensitive)",
+  "/api/Chord/_searchByName": "Public chord search query (case-insensitive)",
 };
 
 /**
@@ -152,6 +152,7 @@ export const exclusions: Array<string> = [
   "/api/Post/_getPublicPostsForUsers",
   "/api/Post/_getPrivatePostsForUser",
   "/api/Post/_getPublicPostsForUsers",
+  "/api/Post/_getPersonalAllPosts",
 
   "/api/UserAccount/setPrivateAccountStatus",
 

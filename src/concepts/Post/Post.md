@@ -26,6 +26,11 @@ editPost (postId: String, editor: User, newContent: String, newItems: List<Item>
 *   **requires** The `postId` exists. The `editor` (User) is the `author` of the `Post`. Callers must always provide both `newItems` and `newPostType`; when no change is desired, pass the literal string `"UNDEFINED"` for that argument.
 *   **effects** Updates the `content` of the `Post` identified by `postId` to `newContent`. Replaces `items` with `newItems` unless it is `"UNDEFINED"`, and updates `postType` to `newPostType` unless it is `"UNDEFINED"`. Sets `editedAt` to the current DateTime and returns `success: true`.
 
+**queries**
+_getAllPersonalPosts (user: User): (post: Post)
+*   **requires** The `user` exists.
+*   **effects** Returns every `Post` authored by the `user`, regardless of visibility, ordered by `createdAt` descending so authenticated syncs can surface a complete personal history.
+
 **notes**
 - the items component allows users to associate posts with certain songs or chords that are relevant to the update
 - postType will be used to capture the general content a post is focused on: "I mastered this song!", "Just practicing!", or a general update 

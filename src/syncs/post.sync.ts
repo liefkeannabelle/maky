@@ -559,6 +559,57 @@ export const HandleGetPersonalPublicPostsRequest: Sync = (
   },
   then: actions([Requesting.respond, { request, results, error }]),
 });
+
+export const HandleGetGetAllPersonalPostsRequest: Sync = (
+  { request, sessionId, user: targetUser, post, results, viewer, error },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/Post/_getAllPersonalPosts", sessionId, user: targetUser },
+    { request },
+  ]),
+  where: async (frames) => {
+    const originalFrame = frames[0];
+    const withViewer = await frames.query(Sessioning._getUser, { sessionId }, {
+      user: viewer,
+    });
+
+    if (withViewer.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Invalid session",
+        [results]: [],
+      });
+    }
+
+    const authorized = withViewer.filter((frame) =>
+      frame[viewer] === frame[targetUser]
+    );
+
+    if (authorized.length === 0) {
+      return new Frames({
+        ...originalFrame,
+        [error]: "Unauthorized",
+        [results]: [],
+      });
+    }
+
+    const queried = await authorized.query(
+      Post._getAllPersonalPosts,
+      { user: targetUser },
+      { post },
+    );
+
+    const posts = queried.map((frame) => ({ post: frame[post] }));
+    const responseFrame = {
+      ...originalFrame,
+      [results]: posts,
+      [error]: null,
+    };
+    return new Frames(responseFrame);
+  },
+  then: actions([Requesting.respond, { request, results, error }]),
+});
 // // --- Get Public Posts Of Users With Session (future follower checks) ---
 
 // export const HandleGetPublicPostsOfUsersRequest: Sync = (
