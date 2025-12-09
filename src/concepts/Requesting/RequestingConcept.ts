@@ -273,28 +273,17 @@ export function startRequestingServer(
         path: actionPath,
       };
 
-      console.log(`[Requesting] Received request for path: ${inputs.path}`);
-      console.log(`[Requesting] Request payload keys:`, Object.keys(inputs));
-      console.log(`[Requesting] Request payload sizes:`, {
-        knownChords: Array.isArray(inputs.knownChords) ? inputs.knownChords.length : 'N/A',
-        allSongs: Array.isArray(inputs.allSongs) ? inputs.allSongs.length : 'N/A',
-        potentialChord: inputs.potentialChord || 'N/A'
-      });
+      console.log(`[Requesting] ${inputs.path} - knownChords: ${Array.isArray(inputs.knownChords) ? inputs.knownChords.length : 'N/A'}, allSongs: ${Array.isArray(inputs.allSongs) ? inputs.allSongs.length : 'N/A'}`);
 
       // 1. Trigger the 'request' action.
-      console.log(`[Requesting] Calling Requesting.request...`);
       const { request } = await Requesting.request(inputs);
-      console.log(`[Requesting] Created request ID:`, request);
 
       // 2. Await the response via the query. This is where the server waits for
       //    synchronizations to trigger the 'respond' action.
-      console.log(`[Requesting] Waiting for response (timeout: ${REQUESTING_TIMEOUT}ms)...`);
       const responseArray = await Requesting._awaitResponse({ request });
-      console.log(`[Requesting] Received response for request:`, request);
 
       // 3. Send the response back to the client.
       const { response } = responseArray[0];
-      console.log(`[Requesting] Sending response:`, typeof response === 'object' ? Object.keys(response) : response);
       return c.json(response);
     } catch (e) {
       if (e instanceof Error) {
