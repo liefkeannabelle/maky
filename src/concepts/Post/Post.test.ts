@@ -364,6 +364,36 @@ describe("PostConcept", () => {
     });
   });
 
+  describe("_getAllPersonalPosts", () => {
+    it("returns posts of any visibility sorted newest first", async () => {
+      await postConcept.createPost({
+        author: userA,
+        content: "Private first",
+        postType: "GENERAL",
+        items: [],
+        visibility: "PRIVATE",
+      });
+
+      await postConcept.createPost({
+        author: userA,
+        content: "Public second",
+        postType: "GENERAL",
+        items: [],
+        visibility: "PUBLIC",
+      });
+
+      const results = await postConcept._getAllPersonalPosts({ user: userA });
+      assertEquals(results.length, 2);
+      assertEquals(results[0].post.content, "Public second");
+      assertEquals(results[1].post.content, "Private first");
+    });
+
+    it("returns empty array when user has no posts", async () => {
+      const results = await postConcept._getAllPersonalPosts({ user: userB });
+      assertEquals(results.length, 0);
+    });
+  });
+
   // `_getPostsViewableToUsers` removed: tests that relied on aggregating public+private
   // results across users have been updated to use per-user queries. Integration-level
   // feed composition is validated in sync-level tests / runtime behavior.

@@ -355,5 +355,3 @@ export function listChordSymbols(): string[] {
   // If you have generateChordVocabulary:
   return generateChordVocabulary({ includeSlashChords: true });
 }
-
-

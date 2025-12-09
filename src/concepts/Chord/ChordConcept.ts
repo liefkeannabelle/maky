@@ -10,8 +10,8 @@ import {
 } from "../../theory/chords.ts";
 import {
   ChordDiagram,
-  getAvailableChordDiagrams,
   getAllAvailableChordDiagrams,
+  getAvailableChordDiagrams,
   getChordDiagram,
   hasChordDiagram,
 } from "../../theory/chordDiagrams.ts";
