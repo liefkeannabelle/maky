@@ -1,5 +1,13 @@
 import { actions, Sync } from "@engine";
-import { JamSession, Requesting, Sessioning } from "@concepts";
+import { JamGroup, JamSession, Requesting, Sessioning } from "@concepts";
+import { ID } from "@utils/types.ts";
+
+const wrapGetJamGroupMembers = async (
+  { group }: { group: ID },
+): Promise<Array<{ members: ID[] }>> => {
+  const groups = await JamGroup._getJamGroupById({ group });
+  return groups.map((groupDoc) => ({ members: groupDoc.members }));
+};
 
 // --- Schedule JamSession (Authenticated) ---
 
@@ -144,7 +152,7 @@ export const RespondToJoinSessionError: Sync = ({ request, error }) => ({
  * Handles an authenticated request to share a song in a session.
  */
 export const HandleShareSongInSession: Sync = (
-  { request, sessionId, session, song, currentStatus, participant },
+  { request, sessionId, session, song, frequency, participant },
 ) => ({
   when: actions([
     Requesting.request,
@@ -153,7 +161,7 @@ export const HandleShareSongInSession: Sync = (
       sessionId,
       session,
       song,
-      currentStatus,
+      frequency,
     },
     { request },
   ]),
@@ -161,7 +169,7 @@ export const HandleShareSongInSession: Sync = (
     frames.query(Sessioning._getUser, { sessionId }, { user: participant }),
   then: actions([
     JamSession.shareSongInSession,
-    { session, participant, song, currentStatus },
+    { session, participant, song, frequency },
   ]),
 });
 
@@ -195,59 +203,63 @@ export const RespondToShareSongError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
-// --- Update Shared Song Status (Authenticated) ---
+// --- Update Songs Log Frequency (Authenticated) ---
 
 /**
- * Handles an authenticated request to update a shared song's status.
+ * Handles an authenticated request to update a songs log entry frequency.
  */
-export const HandleUpdateSharedSongStatus: Sync = (
-  { request, sessionId, session, song, newStatus, participant },
+export const HandleUpdateSongLogFrequency: Sync = (
+  { request, sessionId, session, song, newFrequency, participant },
 ) => ({
   when: actions([
     Requesting.request,
     {
-      path: "/JamSession/updateSharedSongStatus",
+      path: "/JamSession/updateSongLogFrequency",
       sessionId,
       session,
       song,
-      newStatus,
+      newFrequency,
     },
     { request },
   ]),
   where: (frames) =>
     frames.query(Sessioning._getUser, { sessionId }, { user: participant }),
   then: actions([
-    JamSession.updateSharedSongStatus,
-    { session, participant, song, newStatus },
+    JamSession.updateSongLogFrequency,
+    { session, participant, song, newFrequency },
   ]),
 });
 
 /**
- * Responds to a successful status update.
+ * Responds to a successful songs log update.
  */
-export const RespondToUpdateStatusSuccess: Sync = ({ request, success }) => ({
+export const RespondToUpdateSongLogFrequencySuccess: Sync = (
+  { request, success },
+) => ({
   when: actions(
     [
       Requesting.request,
-      { path: "/JamSession/updateSharedSongStatus" },
+      { path: "/JamSession/updateSongLogFrequency" },
       { request },
     ],
-    [JamSession.updateSharedSongStatus, {}, { success }],
+    [JamSession.updateSongLogFrequency, {}, { success }],
   ),
   then: actions([Requesting.respond, { request, success }]),
 });
 
 /**
- * Responds to a failed status update.
+ * Responds to a failed songs log update.
  */
-export const RespondToUpdateStatusError: Sync = ({ request, error }) => ({
+export const RespondToUpdateSongLogFrequencyError: Sync = (
+  { request, error },
+) => ({
   when: actions(
     [
       Requesting.request,
-      { path: "/JamSession/updateSharedSongStatus" },
+      { path: "/JamSession/updateSongLogFrequency" },
       { request },
     ],
-    [JamSession.updateSharedSongStatus, {}, { error }],
+    [JamSession.updateSongLogFrequency, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
 });
@@ -289,4 +301,24 @@ export const RespondToEndSessionError: Sync = ({ request, error }) => ({
     [JamSession.endJamSession, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
+});
+
+// --- Auto-invite JamGroup members when sessions are created ---
+
+export const AutoInviteMembersForScheduledSession: Sync = (
+  { session, group, members },
+) => ({
+  when: actions([JamSession.scheduleJamSession, { group }, { session }]),
+  where: (frames) =>
+    frames.query(wrapGetJamGroupMembers, { group }, { members }),
+  then: actions([JamSession.bulkJoinUsers, { session, users: members }]),
+});
+
+export const AutoInviteMembersForStartedSession: Sync = (
+  { session, group, members },
+) => ({
+  when: actions([JamSession.startJamSession, { group }, { session }]),
+  where: (frames) =>
+    frames.query(wrapGetJamGroupMembers, { group }, { members }),
+  then: actions([JamSession.bulkJoinUsers, { session, users: members }]),
 });

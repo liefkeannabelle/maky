@@ -1,5 +1,5 @@
 import { actions, Frames, Sync } from "@engine";
-import { Friendship, Requesting, Sessioning, UserProfile } from "@concepts";
+import { Requesting, Sessioning, UserProfile } from "@concepts";
 
 const UNDEFINED_SENTINEL = "UNDEFINED";
 const normalizeOptionalString = (value: unknown): string | undefined =>
@@ -473,27 +473,15 @@ export const HandleSearchByDisplayNameRequest: Sync = (
 
 /**
  * Handles a request to get the full profile for a specific user.
- * Requires authentication and allows access if the session user is either the
- * user whose profile is being requested, or is friends with that user.
+ * Public endpoint—no authentication or relationship checks required.
  */
 export const HandleGetProfileRequest: Sync = (
-  {
-    request,
-    sessionId,
-    user: targetUser,
-    sessionUser,
-    areFriendsResult,
-    pendingRequestsForSession,
-    profile,
-    results,
-    error,
-  },
+  { request, user: targetUser, profile, results },
 ) => ({
   when: actions([
     Requesting.request,
     {
       path: "/UserProfile/_getProfile",
-      sessionId,
       user: targetUser,
     },
     { request },
@@ -501,93 +489,21 @@ export const HandleGetProfileRequest: Sync = (
   where: async (frames) => {
     const originalFrame = frames[0];
 
-    // 1. Authenticate: Get the user from the session
-    const withSessionUser = await frames.query(Sessioning._getUser, {
-      sessionId,
-    }, {
-      user: sessionUser,
-    });
-
-    if (withSessionUser.length === 0) {
-      return new Frames({
-        ...originalFrame,
-        [error]: "Invalid session",
-        [results]: [],
-      });
-    }
-
-    // 2. Authorize: Check if the requester is viewing their own profile or a friend's profile
-    const authorizedFrames = new Frames();
-    for (const frame of withSessionUser) {
-      const isSelf = frame[sessionUser] === frame[targetUser];
-      if (isSelf) {
-        authorizedFrames.push(frame);
-        continue; // Authorized, move to next frame
-      }
-
-      // If not viewing self, check friendship status
-      const singleFrame = new Frames(frame);
-      const friendCheck = await singleFrame.query(
-        Friendship.areFriends,
-        { user1: sessionUser, user2: targetUser },
-        { isFriend: areFriendsResult },
-      );
-
-      const isFriend = friendCheck.some((resultFrame) =>
-        resultFrame[areFriendsResult] === true
-      );
-
-      if (isFriend) {
-        authorizedFrames.push(frame); // Authorized as a friend
-        continue;
-      }
-
-      // Check pending friendship where session user is the recipient
-      const pendingForSession = await singleFrame.query(
-        Friendship._getPendingFriendships,
-        { user: sessionUser },
-        { pendingFriendships: pendingRequestsForSession },
-      );
-
-      const hasIncomingPending = pendingForSession.some((pendingFrame) => {
-        const pending = pendingFrame[pendingRequestsForSession];
-        if (!Array.isArray(pending)) return false;
-        const pendingList = pending as Array<{ requester?: unknown }>;
-        return pendingList.some((entry) =>
-          !!entry && entry.requester === frame[targetUser]
-        );
-      });
-
-      if (hasIncomingPending) {
-        authorizedFrames.push(frame);
-      }
-    }
-
-    if (authorizedFrames.length === 0) {
-      return new Frames({
-        ...originalFrame,
-        [error]: "Unauthorized",
-        [results]: [],
-      });
-    }
-
-    // 3. Query Profile: If authorized, fetch the profile data for the target user
-    const profileFrames = await authorizedFrames.query(
+    const profileFrames = await frames.query(
       UserProfile._getProfile,
       { user: targetUser },
       { profile },
     );
 
-    // 4. Format Response: Handle case where profile may not exist (which is a valid success)
     if (profileFrames.length === 0) {
-      return new Frames({ ...originalFrame, [results]: [], [error]: null });
+      return new Frames({ ...originalFrame, [results]: [] });
     }
 
     const payload = profileFrames.map((frame) => ({ profile: frame[profile] }));
-    return new Frames({ ...originalFrame, [results]: payload, [error]: null });
+    return new Frames({ ...originalFrame, [results]: payload });
   },
   then: actions([
     Requesting.respond,
-    { request, results, error },
+    { request, results },
   ]),
 });

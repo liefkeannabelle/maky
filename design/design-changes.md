@@ -120,7 +120,7 @@
 
 - Implemented `JamSession` concept
   - Purpose: To facilitate real-time or asynchronous collaborative music sessions within a jam group
-  - Actions: `scheduleJamSession`, `startJamSession`, `joinSession`, `shareSongInSession`, `updateSharedSongStatus`, `endJamSession`
+  - Actions: `scheduleJamSession`, `startJamSession`, `joinSession`, `bulkJoinUsers`, `shareSongInSession`, `updateSongLogFrequency`, `endJamSession`
   - Queries: `_getJamSessionsForGroup`, `_getJamSessionById`, `_getActiveSessionForGroup`
   - Session status management: ACTIVE, COMPLETED, SCHEDULED
   - Shared songs tracking with participant status updates

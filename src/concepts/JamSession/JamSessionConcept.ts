@@ -15,16 +15,16 @@ const PREFIX = "JamSession" + ".";
 export type SessionStatus = "ACTIVE" | "COMPLETED" | "SCHEDULED";
 
 /**
- * Represents a shared song within a session.
- * a set of SharedSongs with
+ * Represents a songs log entry within a session.
+ * a SongsLog entry with
  *   a song Item
  *   a participant User
- *   a currentStatus String
+ *   a frequency Number
  */
-interface SharedSongDoc {
+interface SongsLogEntry {
   song: Item;
   participant: User;
-  currentStatus: string;
+  frequency: number;
 }
 
 /**
@@ -35,7 +35,7 @@ interface SharedSongDoc {
  *   a startTime DateTime
  *   an optional endTime DateTime
  *   a participants set of User
- *   a sharedSongs set of SharedSongs
+ *   a songsLog set of SongsLog entries
  *   a status of ACTIVE or COMPLETED or SCHEDULED
  */
 interface JamSessionDoc {
@@ -44,7 +44,7 @@ interface JamSessionDoc {
   startTime: Date;
   endTime?: Date;
   participants: User[];
-  sharedSongs: SharedSongDoc[];
+  songsLog: SongsLogEntry[];
   status: SessionStatus;
 }
 
@@ -56,7 +56,9 @@ export default class JamSessionConcept {
   jamSessions: Collection<JamSessionDoc>;
 
   constructor(private readonly db: Db) {
-    this.jamSessions = this.db.collection<JamSessionDoc>(PREFIX + "jamSessions");
+    this.jamSessions = this.db.collection<JamSessionDoc>(
+      PREFIX + "jamSessions",
+    );
   }
 
   /**
@@ -65,7 +67,7 @@ export default class JamSessionConcept {
    * **requires** The `group` exists. The `startTime` is in the future.
    *
    * **effects** Creates a new `JamSession` with a unique `sessionId`; sets `jamGroup`, `startTime`, and `status` to `SCHEDULED`;
-   *           initializes empty sets for `participants` and `sharedSongs`; returns the new `session`.
+   *           initializes empty sets for `participants` and `songsLog`; returns the new `session`.
    */
   async scheduleJamSession(
     { group, startTime }: {
@@ -83,7 +85,7 @@ export default class JamSessionConcept {
       jamGroup: group,
       startTime,
       participants: [],
-      sharedSongs: [],
+      songsLog: [],
       status: "SCHEDULED",
     };
 
@@ -110,7 +112,7 @@ export default class JamSessionConcept {
       jamGroup: group,
       startTime: new Date(),
       participants: [creator],
-      sharedSongs: [],
+      songsLog: [],
       status: "ACTIVE",
     };
 
@@ -139,7 +141,9 @@ export default class JamSessionConcept {
     }
 
     if (sessionDoc.participants.includes(user)) {
-      return { error: `User ${user} is already a participant in session ${session}.` };
+      return {
+        error: `User ${user} is already a participant in session ${session}.`,
+      };
     }
 
     const result = await this.jamSessions.updateOne(
@@ -155,19 +159,60 @@ export default class JamSessionConcept {
   }
 
   /**
-   * shareSongInSession (session: JamSession, participant: User, song: Item, currentStatus: String)
+   * bulkJoinUsers (session: JamSession, users: User[])
    *
-   * **requires** The `session` exists and is `ACTIVE`. The `participant` is in the `participants` set.
-   *           The `song` is not already shared by this `participant` in this `session`.
+   * **requires** The `session` exists and is not `COMPLETED`.
    *
-   * **effects** Creates a new `SharedSong` with `song`, `participant`, and `currentStatus` and adds it to the `sharedSongs` set of the `session`.
+   * **effects** Adds all provided users to the `participants` set, ignoring duplicates and users already present.
+   */
+  async bulkJoinUsers(
+    { session, users }: { session: JamSession; users: User[] },
+  ): Promise<{ success: true } | { error: string }> {
+    const sessionDoc = await this.jamSessions.findOne({ _id: session });
+
+    if (!sessionDoc) {
+      return { error: `JamSession with id ${session} not found.` };
+    }
+
+    if (sessionDoc.status === "COMPLETED") {
+      return { error: `JamSession ${session} has already completed.` };
+    }
+
+    if (!users.length) {
+      return { success: true };
+    }
+
+    const uniqueUsers = [...new Set(users)];
+    const usersToAdd = uniqueUsers.filter((user) =>
+      !sessionDoc.participants.includes(user)
+    );
+
+    if (usersToAdd.length === 0) {
+      return { success: true };
+    }
+
+    await this.jamSessions.updateOne(
+      { _id: session },
+      { $addToSet: { participants: { $each: usersToAdd } } },
+    );
+
+    return { success: true };
+  }
+
+  /**
+   * shareSongInSession (session: JamSession, participant: User, song: Item, frequency: Number)
+   *
+  * **requires** The `session` exists and is `ACTIVE`. The `participant` is in the `participants` set.
+  *           The `song` is not already logged by this `participant` in this `session`.
+
+  * **effects** Creates a new SongsLog entry with `song`, `participant`, and `frequency` and adds it to the `songsLog` set of the `session`.
    */
   async shareSongInSession(
-    { session, participant, song, currentStatus }: {
+    { session, participant, song, frequency }: {
       session: JamSession;
       participant: User;
       song: Item;
-      currentStatus: string;
+      frequency: number;
     },
   ): Promise<{ success: true } | { error: string }> {
     const sessionDoc = await this.jamSessions.findOne({ _id: session });
@@ -181,27 +226,37 @@ export default class JamSessionConcept {
     }
 
     if (!sessionDoc.participants.includes(participant)) {
-      return { error: `User ${participant} is not a participant in session ${session}.` };
+      return {
+        error:
+          `User ${participant} is not a participant in session ${session}.`,
+      };
+    }
+
+    if (frequency <= 0) {
+      return { error: "Frequency must be a positive number." };
     }
 
     // Check if this participant already shared this song
-    const alreadyShared = sessionDoc.sharedSongs.some(
+    const alreadyShared = sessionDoc.songsLog.some(
       (shared) => shared.participant === participant && shared.song === song,
     );
 
     if (alreadyShared) {
-      return { error: `Song ${song} is already shared by participant ${participant} in session ${session}.` };
+      return {
+        error:
+          `Song ${song} is already logged by participant ${participant} in session ${session}.`,
+      };
     }
 
-    const newSharedSong: SharedSongDoc = {
+    const newSongsLogEntry: SongsLogEntry = {
       song,
       participant,
-      currentStatus,
+      frequency,
     };
 
     const result = await this.jamSessions.updateOne(
       { _id: session },
-      { $push: { sharedSongs: newSharedSong } },
+      { $push: { songsLog: newSongsLogEntry } },
     );
 
     if (result.modifiedCount === 0) {
@@ -212,18 +267,18 @@ export default class JamSessionConcept {
   }
 
   /**
-   * updateSharedSongStatus (session: JamSession, participant: User, song: Item, newStatus: String)
+   * updateSongLogFrequency (session: JamSession, participant: User, song: Item, newFrequency: Number)
    *
-   * **requires** The `session` exists and is `ACTIVE`. A `SharedSong` exists in the `session` for this `participant` and `song`.
+   * **requires** The `session` exists and is `ACTIVE`. A SongsLog entry exists in the `session` for this `participant` and `song`.
    *
-   * **effects** Updates the `currentStatus` of the matching `SharedSong` to `newStatus`.
+   * **effects** Updates the `frequency` of the matching SongsLog entry to `newFrequency`.
    */
-  async updateSharedSongStatus(
-    { session, participant, song, newStatus }: {
+  async updateSongLogFrequency(
+    { session, participant, song, newFrequency }: {
       session: JamSession;
       participant: User;
       song: Item;
-      newStatus: string;
+      newFrequency: number;
     },
   ): Promise<{ success: true } | { error: string }> {
     const sessionDoc = await this.jamSessions.findOne({ _id: session });
@@ -236,17 +291,24 @@ export default class JamSessionConcept {
       return { error: `JamSession ${session} is not active.` };
     }
 
+    if (newFrequency <= 0) {
+      return { error: "Frequency must be a positive number." };
+    }
+
     const result = await this.jamSessions.updateOne(
       {
         _id: session,
-        "sharedSongs.participant": participant,
-        "sharedSongs.song": song,
+        "songsLog.participant": participant,
+        "songsLog.song": song,
       },
-      { $set: { "sharedSongs.$.currentStatus": newStatus } },
+      { $set: { "songsLog.$.frequency": newFrequency } },
     );
 
     if (result.matchedCount === 0) {
-      return { error: `Shared song not found for participant ${participant} and song ${song} in session ${session}.` };
+      return {
+        error:
+          `Song log entry not found for participant ${participant} and song ${song} in session ${session}.`,
+      };
     }
 
     return { success: true };
@@ -333,4 +395,3 @@ export default class JamSessionConcept {
     return activeSession ? [activeSession] : [];
   }
 }
-

@@ -722,7 +722,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 
 **Description:** Retrieves all profile information for a given user.
 
-**Authentication:** Requires a valid `sessionId`. The session user must either match the requested `user`, already be accepted friends with that user, or have an incoming pending friend request from that user.    
+**Authentication:** None. This is a public query.
 
 **Requirements:**
 - The `user` must exist. The requester must be the same user, an accepted friend, or currently have a pending friend request sent by the requested user.
@@ -2302,7 +2302,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
 - The `group` exists and the user associated with `sessionId` is a member. The `startTime` is in the future.
 
 **Effects:**
-- Creates a new `JamSession` with a unique `sessionId`; sets `jamGroup`, `startTime`, and `status` to `SCHEDULED`; initializes empty sets for `participants` and `sharedSongs`; returns the new `session`.
+- Creates a new `JamSession` with a unique `sessionId`; sets `jamGroup`, `startTime`, and `status` to `SCHEDULED`; initializes empty sets for `participants` and `songsLog`; returns the new `session`.
 
 **Request Body:**
 ```json
@@ -2397,15 +2397,15 @@ After a user logs in, all authenticated API requests should include a `sessionId
 ---
 ### POST /api/JamSession/shareSongInSession
 
-**Description:** Allows a participant to share a song they are practicing in the session.
+**Description:** Allows a participant to log how frequently they are practicing a song in the session.
 
 **Authentication:** Requires a valid `sessionId`. The participant is automatically extracted from the session.
 
 **Requirements:**
-- The `session` exists and is `ACTIVE`. The user associated with `sessionId` is in the `participants` set. The `song` is not already shared by this participant in this `session`.
+- The `session` exists and is `ACTIVE`. The user associated with `sessionId` is in the `participants` set. The `song` is not already logged by this participant in this `session`.
 
 **Effects:**
-- Creates a new `SharedSong` with `song`, authenticated user as `participant`, and `currentStatus` and adds it to the `sharedSongs` set of the `session`.
+- Creates a new SongsLog entry with `song`, authenticated user as `participant`, and `frequency` and adds it to the `songsLog` set of the `session`.
 
 **Request Body:**
 ```json
@@ -2413,7 +2413,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "sessionId": "string",
   "session": "string",
   "song": "string",
-  "currentStatus": "string"
+  "frequency": 0
 }
 ```
 
@@ -2431,17 +2431,17 @@ After a user logs in, all authenticated API requests should include a `sessionId
 }
 ```
 ---
-### POST /api/JamSession/updateSharedSongStatus
+### POST /api/JamSession/updateSongLogFrequency
 
-**Description:** Updates the status of a song a participant is sharing in the session.
+**Description:** Updates the logged practice frequency for a song a participant previously recorded in the session.
 
 **Authentication:** Requires a valid `sessionId`. The participant is automatically extracted from the session.
 
 **Requirements:**
-- The `session` exists and is `ACTIVE`. A `SharedSong` exists in the `session` for the user associated with `sessionId` and the specified `song`.
+- The `session` exists and is `ACTIVE`. A SongsLog entry exists in the `session` for the user associated with `sessionId` and the specified `song`.
 
 **Effects:**
-- Updates the `currentStatus` of the matching `SharedSong` to `newStatus`.
+- Updates the `frequency` of the matching SongsLog entry to `newFrequency`.
 
 **Request Body:**
 ```json
@@ -2449,7 +2449,7 @@ After a user logs in, all authenticated API requests should include a `sessionId
   "sessionId": "string",
   "session": "string",
   "song": "string",
-  "newStatus": "string"
+  "newFrequency": 0
 }
 ```
 
@@ -2533,11 +2533,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
         "startTime": "string",
         "endTime": "string",
         "participants": ["string"],
-        "sharedSongs": [
+        "songsLog": [
           {
             "song": "string",
             "participant": "string",
-            "currentStatus": "string"
+            "frequency": 0
           }
         ],
         "status": "ACTIVE | COMPLETED | SCHEDULED"
@@ -2586,11 +2586,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
         "startTime": "string",
         "endTime": "string",
         "participants": ["string"],
-        "sharedSongs": [
+        "songsLog": [
           {
             "song": "string",
             "participant": "string",
-            "currentStatus": "string"
+            "frequency": 0
           }
         ],
         "status": "ACTIVE | COMPLETED | SCHEDULED"
@@ -2638,11 +2638,11 @@ After a user logs in, all authenticated API requests should include a `sessionId
         "jamGroup": "string",
         "startTime": "string",
         "participants": ["string"],
-        "sharedSongs": [
+        "songsLog": [
           {
             "song": "string",
             "participant": "string",
-            "currentStatus": "string"
+            "frequency": 0
           }
         ],
         "status": "ACTIVE"

@@ -219,6 +219,34 @@ JamGroup.removeUserFromAllGroups(user)
 
 ---
 
+**sync** AutoInviteMembersForScheduledSession \
+**when**
+    JamSession.scheduleJamSession (group) -> session \
+**where**
+    JamGroup._getJamGroupById (group) provides members \
+**then**
+    JamSession.bulkJoinUsers (session, members)
+
+**notes**
+- Automatically invites every member of the JamGroup right after a session is scheduled
+- Uses `bulkJoinUsers` to avoid duplicates or missing participants
+
+---
+
+**sync** AutoInviteMembersForStartedSession \
+**when**
+    JamSession.startJamSession (group) -> session \
+**where**
+    JamGroup._getJamGroupById (group) provides members \
+**then**
+    JamSession.bulkJoinUsers (session, members)
+
+**notes**
+- Ensures instant sessions also include all JamGroup members without manual joins
+- Complements the scheduled auto-invite so both creation paths behave consistently
+
+---
+
 **sync** HandleJoinSession \
 **when**
     Requesting.request (path: "/JamSession/joinSession", sessionId, session) \
@@ -235,30 +263,30 @@ JamGroup.removeUserFromAllGroups(user)
 
 **sync** HandleShareSongInSession \
 **when**
-    Requesting.request (path: "/JamSession/shareSongInSession", sessionId, session, song, currentStatus) \
+    Requesting.request (path: "/JamSession/shareSongInSession", sessionId, session, song, frequency) \
 **where**
     in Sessioning: user of session sessionId is participant \
 **then**
-    JamSession.shareSongInSession (session, participant, song, currentStatus)
+    JamSession.shareSongInSession (session, participant, song, frequency)
 
 **notes**
 - Authenticates the user before sharing a song
 - Participant must be in the session (enforced by concept)
-- Enables real-time coordination of what each person is practicing
+- Enables real-time coordination of how often each person is practicing
 
 ---
 
-**sync** HandleUpdateSharedSongStatus \
+**sync** HandleUpdateSongLogFrequency \
 **when**
-    Requesting.request (path: "/JamSession/updateSharedSongStatus", sessionId, session, song, newStatus) \
+    Requesting.request (path: "/JamSession/updateSongLogFrequency", sessionId, session, song, newFrequency) \
 **where**
     in Sessioning: user of session sessionId is participant \
 **then**
-    JamSession.updateSharedSongStatus (session, participant, song, newStatus)
+    JamSession.updateSongLogFrequency (session, participant, song, newFrequency)
 
 **notes**
-- Authenticates the user before updating status
-- Allows participants to update what they're working on (e.g., "soloing", "practicing verse")
+- Authenticates the user before updating their log entry
+- Allows participants to update their practice frequency for a song
 
 ---
 

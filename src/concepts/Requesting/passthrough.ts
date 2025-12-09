@@ -171,7 +171,7 @@ export const exclusions: Array<string> = [
   "/api/JamSession/startJamSession",
   "/api/JamSession/joinSession",
   "/api/JamSession/shareSongInSession",
-  "/api/JamSession/updateSharedSongStatus",
+  "/api/JamSession/updateSongLogFrequency",
   "/api/JamSession/endJamSession",
   "/api/JamSession/_getJamSessionsForGroup",
   "/api/JamSession/_getJamSessionById",
