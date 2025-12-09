@@ -14,6 +14,29 @@ const ENHARMONIC_MAP: Record<string, string> = {
 };
 
 /**
+ * Validate if a chord symbol is well-formed.
+ * Rejects malformed chords like "Eno3d", "Ano3d", etc.
+ */
+function isValidChord(chord: string): boolean {
+  if (!chord || chord.length === 0) return false;
+  
+  // Must start with a valid note (A-G, optionally with # or b)
+  const validRootPattern = /^[A-G](#|b)?/;
+  if (!validRootPattern.test(chord)) return false;
+  
+  // Reject chords ending with invalid suffixes like "no3d" (should be "no3")
+  // Common valid suffixes: m, maj, 7, 9, 11, 13, sus, add, dim, aug, no3, etc.
+  // Invalid patterns: ending with random letters like "d" after a number
+  const invalidSuffixPattern = /\d[a-z]+$/i;
+  if (invalidSuffixPattern.test(chord) && !chord.match(/sus|add|dim|aug|maj|min/i)) {
+    // Exception: "no3" is valid, "no3d" is not
+    if (chord.match(/no\d+[a-z]/i)) return false;
+  }
+  
+  return true;
+}
+
+/**
  * Normalize a chord to its canonical form (sharps preferred).
  * This ensures "Bb" -> "A#", "Db" -> "C#", etc.
  */
@@ -227,6 +250,11 @@ export default class RecommendationEngineConcept {
     for (const song of allSongs) {
       if (!song.chords) continue;
       for (const chord of song.chords) {
+        // Skip invalid chords (e.g., "Eno3d" instead of "Eno3")
+        if (!isValidChord(chord)) {
+          console.log(`[RecEngine] Skipping invalid chord: ${chord}`);
+          continue;
+        }
         if (!isChordKnown(chord, knownSet)) {
           candidateChords.add(normalizeToCanonical(chord));
         }
@@ -236,9 +264,10 @@ export default class RecommendationEngineConcept {
     console.log(`[RecEngine] Found ${candidateChords.size} candidate chords from ${allSongs.length} songs`);
 
     // Pre-compute normalized song chords to avoid repeated normalization
+    // Filter out invalid chords from songs
     const normalizedSongs = allSongs.map(song => ({
-      chords: song.chords ? song.chords.map(c => normalizeToCanonical(c)) : [],
-      originalChords: song.chords || []
+      chords: song.chords ? song.chords.filter(c => isValidChord(c)).map(c => normalizeToCanonical(c)) : [],
+      originalChords: song.chords ? song.chords.filter(c => isValidChord(c)) : []
     }));
 
     let bestChord: string | null = null;
@@ -305,7 +334,12 @@ export default class RecommendationEngineConcept {
 
     for (const song of allSongs) {
       if (!song.chords) continue;
-      const isPlayable = song.chords.every(c => knownSet.has(c));
+      
+      // Filter out invalid chords from the song
+      const validChords = song.chords.filter(c => isValidChord(c));
+      if (validChords.length === 0) continue;
+      
+      const isPlayable = validChords.every(c => knownSet.has(c));
       if (isPlayable) {
         playableSongs.push(song);
       }
@@ -369,8 +403,13 @@ export default class RecommendationEngineConcept {
 
     for (const song of allSongs) {
       if (!song.chords) continue;
-      const isPlayableWithNew = song.chords.every(c => c === potentialChord || knownSet.has(c));
-      const wasPlayableBefore = song.chords.every(c => knownSet.has(c));
+      
+      // Filter out invalid chords from the song
+      const validChords = song.chords.filter(c => isValidChord(c));
+      if (validChords.length === 0) continue;
+      
+      const isPlayableWithNew = validChords.every(c => c === potentialChord || knownSet.has(c));
+      const wasPlayableBefore = validChords.every(c => knownSet.has(c));
 
       if (isPlayableWithNew && !wasPlayableBefore) {
         unlocked.push(song._id);
