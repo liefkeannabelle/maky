@@ -273,7 +273,7 @@ export function startRequestingServer(
         path: actionPath,
       };
 
-      console.log(`[Requesting] Received request for path: ${inputs.path}`);
+      console.log(`[Requesting] ${inputs.path} - knownChords: ${Array.isArray(inputs.knownChords) ? inputs.knownChords.length : 'N/A'}, allSongs: ${Array.isArray(inputs.allSongs) ? inputs.allSongs.length : 'N/A'}`);
 
       // 1. Trigger the 'request' action.
       const { request } = await Requesting.request(inputs);
