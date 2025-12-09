@@ -30,7 +30,9 @@ async function init() {
 async function dropAllCollections(db: Db): Promise<void> {
   try {
     // Get all collection names
-    const collections = await db.listCollections().toArray();
+    const collectionsCursor = db.listCollections();
+    const collections = await collectionsCursor.toArray();
+    await collectionsCursor.close();
 
     // Drop each collection
     for (const collection of collections) {

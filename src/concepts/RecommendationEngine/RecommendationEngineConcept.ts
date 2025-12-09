@@ -288,13 +288,15 @@ export default class RecommendationEngineConcept {
       for (const normalizedSong of normalizedSongs) {
         if (normalizedSong.chords.length === 0) continue;
         
-        // Check if song needs this candidate
-        const needsCandidate = normalizedSong.chords.includes(candidate) && 
-          !normalizedSong.originalChords.some(c => isChordKnown(c, knownSet));
+        // Check if song contains this candidate chord
+        if (!normalizedSong.chords.includes(candidate)) continue;
         
-        if (!needsCandidate) continue;
+        // Check if song is not already fully playable (has at least one unknown chord)
+        const alreadyPlayable = normalizedSong.originalChords.every(c => isChordKnown(c, knownSet));
+        if (alreadyPlayable) continue;
         
-        // Check if all other chords are known
+        // Check if learning this candidate would make the song playable
+        // (all other chords besides the candidate are already known)
         const allOtherChordsKnown = normalizedSong.originalChords.every(c => 
           normalizeToCanonical(c) === candidate || isChordKnown(c, knownSet)
         );

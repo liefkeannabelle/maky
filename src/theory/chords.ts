@@ -84,9 +84,13 @@ export const COMMON_CHORD_SUFFIXES = [
   "add2",
   "add9",
   "add4",
+  "add11",
+  "add13",
   "madd2",
   "madd9",
   "madd4",
+  "madd11",
+  "madd13",
   "add2add4",
   "madd2add4",
 
@@ -94,6 +98,8 @@ export const COMMON_CHORD_SUFFIXES = [
   "dim",
   "dim7",
   "5",
+  "no3",   // no third (power chord variant)
+  "no5",   // no fifth
 
   "6",
   "m6",
@@ -127,6 +133,7 @@ export const COMMON_CHORD_SUFFIXES = [
 
   "mmaj7",
   "mmaj9",
+  "maj911s",  // maj9 with 11 and/or sharp extensions
 
   "7#9",
   "7b9",
@@ -174,25 +181,17 @@ export function sanitizeChordInput(raw: string): string {
  *  - roots in sharps or flats: C, C#, Db, Eb, etc.
  *  - suffixes from COMMON_CHORD_SUFFIXES
  *  - optional slash chord bass note, e.g. "Cmaj7/G"
+ *  - suffixes with "/" like "6/9", "m6/9", "maj6/7" (not slash chords)
  */
 export function parseChordSymbol(raw: string): ParsedChordSymbol | null {
   const input = sanitizeChordInput(raw);
   if (!input) return null;
 
-  // Handle slash chords: split into head and bass.
-  let head = input;
-  let bassPart: string | undefined;
-  const slashIndex = input.indexOf("/");
-  if (slashIndex >= 0) {
-    head = input.slice(0, slashIndex);
-    bassPart = input.slice(slashIndex + 1);
-  }
-
   // Parse head: find the longest root symbol at the start (case-insensitive).
   let matchedRootAlias: string | null = null;
   for (const candidate of ROOT_SYMBOLS_DESC) {
-    if (head.length < candidate.length) continue;
-    const segment = head.slice(0, candidate.length);
+    if (input.length < candidate.length) continue;
+    const segment = input.slice(0, candidate.length);
     if (segment.toUpperCase() === candidate.toUpperCase()) {
       matchedRootAlias = candidate;
       break;
@@ -204,11 +203,45 @@ export function parseChordSymbol(raw: string): ParsedChordSymbol | null {
   }
 
   const canonicalRoot = ROOT_ALIASES[matchedRootAlias] as ChordRoot;
-  const suffixRaw = head.slice(matchedRootAlias.length);
-  const suffix = normalizeSuffix(suffixRaw);
-
-  if (!COMMON_CHORD_SUFFIXES.includes(suffix)) {
-    return null; // unknown/unsupported chord type
+  const afterRoot = input.slice(matchedRootAlias.length);
+  
+  // Check if any known suffix matches (some suffixes contain "/")
+  // We need to check these BEFORE splitting on slash for bass notes
+  let suffix: ChordSuffix = "__INVALID__" as ChordSuffix;
+  let bassPart: string | undefined;
+  
+  // Try to match against known suffixes first (longest first)
+  const sortedSuffixes = [...COMMON_CHORD_SUFFIXES].sort((a, b) => b.length - a.length);
+  for (const candidateSuffix of sortedSuffixes) {
+    if (candidateSuffix === "") continue; // handle empty suffix separately
+    
+    if (afterRoot.startsWith(candidateSuffix)) {
+      // Check if there's anything after the suffix
+      const remainder = afterRoot.slice(candidateSuffix.length);
+      if (remainder === "") {
+        // Perfect match, no bass note
+        suffix = candidateSuffix;
+        break;
+      } else if (remainder.startsWith("/")) {
+        // This could be a slash chord after the suffix
+        suffix = candidateSuffix;
+        bassPart = remainder.slice(1); // everything after the "/"
+        break;
+      }
+    }
+  }
+  
+  // If no suffix matched, check for empty suffix (plain major triad)
+  if (suffix === "__INVALID__" as ChordSuffix) {
+    if (afterRoot === "") {
+      suffix = "" as ChordSuffix;
+    } else if (afterRoot.startsWith("/")) {
+      // Plain major triad with bass note, e.g. "C/E"
+      suffix = "" as ChordSuffix;
+      bassPart = afterRoot.slice(1);
+    } else {
+      return null; // unknown suffix
+    }
   }
 
   let bass: ChordRoot | undefined;

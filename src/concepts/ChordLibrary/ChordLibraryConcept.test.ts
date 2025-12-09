@@ -3,7 +3,11 @@ import { testDb } from "@utils/database.ts";
 import { ID } from "@utils/types.ts";
 import ChordLibraryConcept, { MasteryLevel } from "./ChordLibraryConcept.ts";
 
-Deno.test("ChordLibrary Concept", async (t) => {
+Deno.test({
+  name: "ChordLibrary Concept",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async (t) => {
   const [db, client] = await testDb();
   const chordLib = new ChordLibraryConcept(db);
 
@@ -200,4 +204,5 @@ Deno.test("ChordLibrary Concept", async (t) => {
   });
 
   await client.close();
+  },
 });
