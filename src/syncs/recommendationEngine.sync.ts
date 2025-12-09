@@ -124,24 +124,36 @@ export const HandleRequestChordRecommendation: Sync = ({ request, knownChords, a
     [Requesting.request, { path: "/RecommendationEngine/requestChordRecommendation", knownChords, allSongs }, { request }]
   ),
   where: async (frames) => {
+    console.log('[SYNC] HandleRequestChordRecommendation triggered', {
+      framesCount: frames.length,
+      firstFrameKeys: frames.length > 0 ? Object.keys(frames[0]) : []
+    })
+    
     // allSongs is now passed from the frontend request
     const allSongsList = await Song._getAllSongsForRecommendation({});
+    console.log('[SYNC] Fetched all songs from DB:', allSongsList.length)
 
     const newFrames = [];
     for (const frame of frames) {
       const kChords = frame[knownChords] as string[];
+      console.log('[SYNC] Processing frame with knownChords:', kChords)
+      
       const result = await RecommendationEngine.requestChordRecommendation({
         knownChords: kChords,
         allSongs: allSongsList
       });
+      console.log('[SYNC] RecommendationEngine.requestChordRecommendation result:', result)
+      
       // result is Array<{ recommendedChord: string }>
       const rec = result.length > 0 ? result[0].recommendedChord : null;
+      console.log('[SYNC] Extracted recommendedChord:', rec)
       
       // Fetch diagram for the recommended chord
       let diagramResult = null;
       if (rec) {
         const diagrams = await Chord._getChordDiagram({ name: rec });
         diagramResult = diagrams.diagrams;
+        console.log('[SYNC] Fetched diagram for', rec, ':', diagramResult?.length || 0, 'voicings')
       }
       
       newFrames.push({ 
@@ -150,6 +162,8 @@ export const HandleRequestChordRecommendation: Sync = ({ request, knownChords, a
         [diagram]: diagramResult
       });
     }
+    
+    console.log('[SYNC] Returning', newFrames.length, 'frames')
     return new Frames(...newFrames);
   },
   then: actions(
@@ -162,23 +176,36 @@ export const HandleRequestSongUnlockRecommendation: Sync = ({ request, knownChor
     [Requesting.request, { path: "/RecommendationEngine/requestSongUnlockRecommendation", knownChords, allSongs, potentialChord }, { request }]
   ),
   where: async (frames) => {
+    console.log('[SYNC] HandleRequestSongUnlockRecommendation triggered', {
+      framesCount: frames.length
+    })
+    
     // allSongs is now passed from the frontend request  
     const allSongsObjs = await Song._getAllSongsForRecommendation({});
     const allSongsList = allSongsObjs;
+    console.log('[SYNC] Fetched all songs from DB:', allSongsList.length)
 
     const newFrames = [];
     for (const frame of frames) {
       const kChords = frame[knownChords] as string[];
       const pChord = frame[potentialChord] as string;
+      console.log('[SYNC] Processing frame - knownChords:', kChords.length, 'potentialChord:', pChord)
+      
       const result = await RecommendationEngine.requestSongUnlockRecommendation({
         knownChords: kChords,
         potentialChord: pChord,
         allSongs: allSongsList
       });
+      console.log('[SYNC] RecommendationEngine.requestSongUnlockRecommendation result:', result)
+      
       // result is Array<{ unlockedSongs: ID[] }>
       const unlocked = result.length > 0 ? result[0].unlockedSongs : [];
+      console.log('[SYNC] Extracted unlockedSongs count:', unlocked.length)
+      
       newFrames.push({ ...frame, [unlockedSongs]: unlocked });
     }
+    
+    console.log('[SYNC] Returning', newFrames.length, 'frames')
     return new Frames(...newFrames);
   },
   then: actions(
