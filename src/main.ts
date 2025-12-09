@@ -25,8 +25,10 @@ Engine.logging = Logging.TRACE;
 // Register synchronizations
 Engine.register(syncs);
 
+// Pre-warm caches before starting server (critical for remote MongoDB)
+console.log("Initializing application...");
+await warmSongCache();
+console.log("Cache warmed, starting server...");
+
 // Start a server to provide the Requesting concept with external/system actions.
 startRequestingServer(concepts);
-
-// Pre-warm caches to avoid first-request delays (especially with remote MongoDB)
-warmSongCache();
