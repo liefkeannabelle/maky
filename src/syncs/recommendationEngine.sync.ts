@@ -119,12 +119,12 @@ export const SendChordRecommendationResponse: Sync = (
  * 3. Fetch the chord diagram for the recommendation
  * 4. Respond with both the chord and its diagram
  */
-export const HandleRequestChordRecommendation: Sync = ({ request, knownChords, recommendedChord, diagram }) => ({
+export const HandleRequestChordRecommendation: Sync = ({ request, knownChords, allSongs, recommendedChord, diagram }) => ({
   when: actions(
-    [Requesting.request, { path: "/RecommendationEngine/requestChordRecommendation", knownChords }, { request }]
+    [Requesting.request, { path: "/RecommendationEngine/requestChordRecommendation", knownChords, allSongs }, { request }]
   ),
   where: async (frames) => {
-    // Fetch all songs once (optimized projection)
+    // allSongs is now passed from the frontend request
     const allSongsList = await Song._getAllSongsForRecommendation({});
 
     const newFrames = [];
@@ -157,11 +157,12 @@ export const HandleRequestChordRecommendation: Sync = ({ request, knownChords, r
   )
 });
 
-export const HandleRequestSongUnlockRecommendation: Sync = ({ request, knownChords, potentialChord, unlockedSongs }) => ({
+export const HandleRequestSongUnlockRecommendation: Sync = ({ request, knownChords, allSongs, potentialChord, unlockedSongs }) => ({
   when: actions(
-    [Requesting.request, { path: "/RecommendationEngine/requestSongUnlockRecommendation", knownChords, potentialChord }, { request }]
+    [Requesting.request, { path: "/RecommendationEngine/requestSongUnlockRecommendation", knownChords, allSongs, potentialChord }, { request }]
   ),
   where: async (frames) => {
+    // allSongs is now passed from the frontend request  
     const allSongsObjs = await Song._getAllSongsForRecommendation({});
     const allSongsList = allSongsObjs;
 
