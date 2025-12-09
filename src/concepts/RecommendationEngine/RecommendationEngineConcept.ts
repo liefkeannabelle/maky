@@ -218,6 +218,7 @@ export default class RecommendationEngineConcept {
   async requestChordRecommendation(
     { knownChords, allSongs }: { knownChords: string[]; allSongs: SongInput[] }
   ): Promise<Array<{ recommendedChord: string }>> {
+    const startTime = Date.now();
     // Re-use logic structure but without DB side effects
     const knownSet = new Set(knownChords);
     
@@ -231,6 +232,14 @@ export default class RecommendationEngineConcept {
         }
       }
     }
+    
+    console.log(`[RecEngine] Found ${candidateChords.size} candidate chords from ${allSongs.length} songs`);
+
+    // Pre-compute normalized song chords to avoid repeated normalization
+    const normalizedSongs = allSongs.map(song => ({
+      chords: song.chords ? song.chords.map(c => normalizeToCanonical(c)) : [],
+      originalChords: song.chords || []
+    }));
 
     let bestChord: string | null = null;
     let maxUnlocked = -1;
@@ -247,18 +256,21 @@ export default class RecommendationEngineConcept {
         }
       }
       
-      for (const song of allSongs) {
-        if (!song.chords) continue;
-        // Check if song needs this candidate (considering enharmonics)
-        const needsCandidate = song.chords.some(c => 
-          normalizeToCanonical(c) === candidate && !isChordKnown(c, knownSet)
-        );
+      for (const normalizedSong of normalizedSongs) {
+        if (normalizedSong.chords.length === 0) continue;
+        
+        // Check if song needs this candidate
+        const needsCandidate = normalizedSong.chords.includes(candidate) && 
+          !normalizedSong.originalChords.some(c => isChordKnown(c, knownSet));
+        
+        if (!needsCandidate) continue;
+        
         // Check if all other chords are known
-        const remainderKnown = song.chords.every(c => 
+        const allOtherChordsKnown = normalizedSong.originalChords.every(c => 
           normalizeToCanonical(c) === candidate || isChordKnown(c, knownSet)
         );
-        // If the song needs this candidate AND all other chords are known, it's an unlock.
-        if (needsCandidate && remainderKnown) {
+        
+        if (allOtherChordsKnown) {
           score++;
         }
       }
@@ -268,6 +280,9 @@ export default class RecommendationEngineConcept {
         bestChord = candidate;
       }
     }
+
+    const elapsed = Date.now() - startTime;
+    console.log(`[RecEngine] Computed recommendation in ${elapsed}ms, best: ${bestChord}, unlocks: ${maxUnlocked}`);
 
     if (!bestChord) return [];
     return [{ recommendedChord: bestChord }];
