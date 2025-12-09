@@ -39,6 +39,7 @@ export const inclusions: Record<string, string> = {
     "Public query for recommendation details",
   "/api/Chord/_getChordDiagram": "Query to get chord diagrams",
   "/api/Chord/_searchByName": "Public chord search query (case-insensitive)",
+  "/api/Chord/_searchByChordName": "Public chord search query (fuzzy match)",
 };
 
 /**
@@ -96,6 +97,8 @@ export const exclusions: Array<string> = [
   "/api/Post/editPost",
   "/api/Post/removeAllPostsForUser",
   "/api/Post/_getPostsViewableToUser",
+  "/api/Post/_getAllPersonalPosts",
+  "/api/Post/_getPostAuthor",
   "/api/Reaction/addReactionToPost",
   "/api/Reaction/changeReactionType",
   "/api/Reaction/removeReactionFromPost",
@@ -176,6 +179,7 @@ export const exclusions: Array<string> = [
   "/api/JamSession/_getJamSessionsForGroup",
   "/api/JamSession/_getJamSessionById",
   "/api/JamSession/_getActiveSessionForGroup",
+  "/api/JamSession/bulkJoinUsers",
 ];
 
 /** */
