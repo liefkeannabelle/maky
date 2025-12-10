@@ -8,7 +8,7 @@ On the social side of things, we eliminated the "following" user relationship, o
 
 We also decided to do away with the opening questionnaire because we were worried it would make the registration process too daunting, particularly for true beginners. Instead, the same information can be entered on the profile page upon login, but can also be added after the user has explored the app more.
 
-From an aesthetic standpoint, much of our design has stayed true to our UI sketches. From a color-scheme perspective, we found that our original design was a bit overwhelming, so we toned down the colors for greater navigability. 
+From an aesthetic standpoint, much of our design has stayed true to our UI sketches. From a color-scheme perspective, we found that our original design was a bit overwhelming, so we toned down the colors for greater navigability. We also added two more themes and a button for the users to choose their favorite.
 
 ## Reflection
 A reflection on your experiences in the final project, focusing on what you learned from the experience, divided into a subsection for each team member.
