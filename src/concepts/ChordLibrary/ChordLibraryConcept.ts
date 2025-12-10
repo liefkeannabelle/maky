@@ -225,11 +225,6 @@ export default class ChordLibraryConcept {
   }> {
     const { userIds } = input;
 
-    // Early return for less than 2 users - can't find overlapping chords
-    if (userIds.length < 2) {
-      return { overlappingChords: [], userChordCounts: [] };
-    }
-
     // Mastery level ordering for comparison (lower index = lower mastery)
     const masteryOrder: MasteryLevel[] = [
       "not started",
@@ -237,6 +232,11 @@ export default class ChordLibraryConcept {
       "proficient",
       "mastered",
     ];
+
+    // For empty array, return empty results
+    if (userIds.length === 0) {
+      return { overlappingChords: [], userChordCounts: [] };
+    }
 
     // Handle single user case - return all their chords
     if (userIds.length === 1) {
@@ -261,11 +261,6 @@ export default class ChordLibraryConcept {
         overlappingChords,
         userChordCounts: [{ userId, chordCount: chords.length }],
       };
-    }
-
-    // For empty array, return empty results
-    if (userIds.length === 0) {
-      return { overlappingChords: [], userChordCounts: [] };
     }
 
     // Get all chords for each user

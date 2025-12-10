@@ -535,6 +535,11 @@ _getKnownChords (user: User): (knownChords: {chord: Chord, mastery: MasteryLevel
 *   **requires** The `user` exists.
 *   **effects** Returns the set of all `KnownChord` entries for the given `user`, each containing a chord and its mastery level.
 
+_getOverlappingChords (userIds: User[]): (overlappingChords: {chord: Chord, minMastery: MasteryLevel, userMasteries: {userId: User, mastery: MasteryLevel}[]}[], userChordCounts: {userId: User, chordCount: number}[])
+
+*   **requires** At least one user ID is provided. All users exist in ChordLibrary.
+*   **effects** Returns the set of chords that ALL specified users have in common. For a single user, returns all their known chords. For multiple users, returns only chords that all users share. Returns the minimum mastery level across users for each chord (representing the "weakest link" for group playing). Also returns the chord count for each user. Results are sorted by mastery level (highest first).
+
 **notes**
 - We are still working through how best to divide the "mastery" of a chord while supporting the song recommendation feature.
 - Like the song library, the state has both a library of all chords and the set known by each user with their mastery level.

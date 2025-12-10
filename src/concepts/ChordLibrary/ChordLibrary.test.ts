@@ -166,9 +166,33 @@ Deno.test({
     assertEquals(user3Count?.chordCount, 5); // C, G, Am, D, E
   });
 
-  await t.step("returns empty for less than 2 users", async () => {
+  await t.step("returns all chords for single user", async () => {
     const result = await ChordLibrary._getOverlappingChords({
       userIds: [user1],
+    });
+
+    // Should return all of user1's chords: C, G, Am, F
+    assertEquals(result.overlappingChords.length, 4);
+    assertEquals(result.userChordCounts.length, 1);
+    assertEquals(result.userChordCounts[0].userId, user1);
+    assertEquals(result.userChordCounts[0].chordCount, 4);
+
+    // Check that all chords are present
+    const chordNames = result.overlappingChords.map((c) => c.chord).sort();
+    assertEquals(chordNames, ["Am", "C", "F", "G"]);
+
+    // Check that mastery levels are correct
+    const cChord = result.overlappingChords.find((c) => c.chord === "C");
+    assertExists(cChord);
+    assertEquals(cChord.minMastery, "mastered");
+    assertEquals(cChord.userMasteries.length, 1);
+    assertEquals(cChord.userMasteries[0].userId, user1);
+    assertEquals(cChord.userMasteries[0].mastery, "mastered");
+  });
+
+  await t.step("returns empty for zero users", async () => {
+    const result = await ChordLibrary._getOverlappingChords({
+      userIds: [],
     });
 
     assertEquals(result.overlappingChords.length, 0);

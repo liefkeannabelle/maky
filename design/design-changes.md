@@ -167,3 +167,11 @@
   - Updated API specification: changed requirement from "at least two user IDs" to "at least one user ID"
   - Updated concept docstring to reflect new behavior
   - Fixes bug where single-user jam groups returned empty chord arrays
+
+- Re-fixed `_getOverlappingChords` single-user handling (regression fix)
+  - Purpose: Fix regression where single-user jam groups were returning empty chord arrays again
+  - Issue: Early return check `if (userIds.length < 2)` was preventing single-user handling code from executing
+  - Fix: Removed early return for `< 2` users, reordered logic to check for empty array first (returns empty), then single user (returns all their chords), then multiple users (returns overlapping chords)
+  - Updated test in `ChordLibrary.test.ts`: Changed "returns empty for less than 2 users" to "returns all chords for single user" and added separate test for zero users case
+  - Behavior: Now correctly returns all known chords for a single user, empty results only for zero users
+  - Fixes bug where jam group common chords feature was not working for one person

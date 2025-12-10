@@ -28,7 +28,16 @@ One big thing I learned from this experience was how to structure technical comm
 From a more technical standpoint, I was able to become much more confident with the various tools we used (i.e. Deno, Render, MongoDB, etc) compared to where I was at the end of the personal project. I also became more comfortable with a full-stack workflow as compared to the two-step development we used earlier in the semester.
 
 Overall, I feel like I learned a lot from the group project component of the class and am really proud of the app we were able to create over the past month!
+
+
 ### Kalina
+
+I'm really proud of our team and the app we built together, but especially of how responsibly everyone approached the project (there were periods when we would meet every day) and how well we collaborated on a fairly complex, multi-component system. One thing that worked particularly well for us was making the app modular from the start. By clearly separating concepts and syncs, we were able to work largely independently and only deal with merge conflicts when it was truly necessary. This significantly sped up development and made the overall process feel smooth rather than stressful.
+
+I also really appreciated how much we could rely on each other’s strengths. Being able to ask teammates for help on things that I might otherwise have spent a long time debugging or researching saved a lot of time and made the project more enjoyable. Since we all came in with slightly different backgrounds and areas of expertise, combining that knowledge led to solutions that were better thought-out and more robust than what we could have achieved individually.
+
+In terms of learning, this project helped solidify many of the ideas from the individual project, but more importantly, it gave me a much clearer sense of how to organize and execute work in a team setting. From structuring the project and dividing responsibilities, to coordinating implementation and debugging, I feel like I gained practical experience in collaborative software development. I also think the way the assignments were structured - emphasizing thinking and design before rushing into implementation - helped reinforce good habits that I’ll carry forward into future team-based projects.
+
 
 ### Yahir 
 
