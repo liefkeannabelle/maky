@@ -31,5 +31,8 @@ Overall, I feel like I learned a lot from the group project component of the cla
 ### Kalina
 
 ### Yahir 
+Working in a team project was super fun! Being able to discuss ideas and see different perspectives made me feel more secure and confident about design decisions compared to the personal project where I was unsure if I was making the best option on my own. 
 
+I definitely learned a lot from the group project and developed good work habits. I learned a lot more about effective + efficient: collaboration, communication, and teamwork. This meant learning skills to take an idea into a fully polished app within a short time frame such as communicating issues quickly, planning for failure before implementation, redelegating tasks, and making a thorough conceptual design as a team. In technical skill, I was able to learn so much more about full stack development, especially troubleshooting between the frontend/backend and backend development. I was able to focus on implementing concepts that handled failure and writing iterative test cases on concepts and syncs. Additionally, I was also able to look into integrating large amounts of data and adding optimizations to create enjoyable user experiences where our app isn't slow. With team members, I was able to focus on my own work and understand my own code while also understanding how other components of the app were being designed and integrated. 
 
+Overall, this was a super awesome group project. I loved my team. Working with them was easy and efficient and I am more than proud of the app we are submitting :-)
